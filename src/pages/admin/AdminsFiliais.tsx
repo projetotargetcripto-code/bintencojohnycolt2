@@ -74,7 +74,9 @@ export default function AdminsFiliaisPage() {
               message = text || message;
             }
           }
-        } catch {}
+        } catch (parseError) {
+          console.error(parseError);
+        }
         throw new Error(message);
       }
 
