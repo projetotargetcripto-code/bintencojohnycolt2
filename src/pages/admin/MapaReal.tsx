@@ -150,7 +150,7 @@ function MapView({ selected }: { selected?: Empreendimento }) {
     (async () => {
       try {        
         // Load lotes via RPC
-        const { data: fc, error: lotesError } = await supabase.rpc('lotes_geojson', { p_empreendimento: selected.id });
+        const { data: fc, error: lotesError } = await supabase.rpc('lotes_geojson', { p_empreendimento_id: selected.id });
         
         if (!lotesError && fc) {
           // Remove previous lots layer
