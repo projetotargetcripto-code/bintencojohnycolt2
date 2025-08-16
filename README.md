@@ -36,6 +36,16 @@ npm i
 npm run dev
 ```
 
+### Quick development logins
+
+The application includes an optional quick-login widget for local development. To enable it, create a `.env.local` file and set:
+
+```
+VITE_ENABLE_DEV_LOGIN=true
+```
+
+When this flag is not set, the quick-login UI and its credentials are excluded from the production build.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).
