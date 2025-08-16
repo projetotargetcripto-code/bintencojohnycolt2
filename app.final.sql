@@ -1,7 +1,8 @@
 -- ===============================================================
--- BlockURB · app.final.sql
--- Unificação do schema + RPCs usadas pelo app (idempotente)
--- ATENÇÃO: este script NÃO apaga dados. Apenas cria/ajusta objetos.
+-- BlockURB · app.final.sql (CORRIGIDO v4 - compat com schema atual)
+-- Compatibilidade com seu estado atual de 'empreendimentos' (slug/published/bbox).
+-- Garante colunas que faltam (ex.: filial_id) e políticas que funcionam
+-- mesmo se ainda não houver user_profiles/filiais.
 -- ===============================================================
 
 -- ============== EXTENSIONS ====================
@@ -9,7 +10,6 @@ create extension if not exists "pgcrypto";
 create extension if not exists "postgis";
 
 -- ============== HELPERS =======================
--- atualiza coluna updated_at
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
 begin
@@ -17,21 +17,8 @@ begin
   return new;
 end $$;
 
--- helper de privilégio admin/superadmin com base em user_profiles
-create or replace function public.is_admin(uid uuid)
-returns boolean language sql stable as $$
-  select exists (
-    select 1 from public.user_profiles up
-    where up.user_id = uid and up.is_active and lower(up.role) in ('admin','superadmin')
-  );
-$$;
-create or replace function public.is_admin()
-returns boolean language sql stable as $$
-  select public.is_admin(auth.uid());
-$$;
-
 -- ============== TABLES ========================
--- FILIAIS (inclui colunas que o app seleciona)
+-- FILIAIS
 create table if not exists public.filiais (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
@@ -42,10 +29,8 @@ create table if not exists public.filiais (
   billing_status text null,
   domain text null,
   is_active boolean not null default true,
-  created_at timestamptz not null default now(),
-  constraint filiais_nome_key unique (nome)
+  created_at timestamptz not null default now()
 );
--- colunas que podem não existir ainda
 alter table public.filiais add column if not exists kind text;
 alter table public.filiais add column if not exists owner_name text;
 alter table public.filiais add column if not exists owner_email text;
@@ -56,43 +41,87 @@ alter table public.filiais add column if not exists is_active boolean not null d
 alter table public.filiais add column if not exists created_at timestamptz not null default now();
 create index if not exists idx_filiais_active on public.filiais(is_active);
 
--- EMPREENDIMENTOS
+-- EMPREENDIMENTOS (compat: mantemos suas colunas e adicionamos as novas)
 create table if not exists public.empreendimentos (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
-  descricao text null,
-  status text not null default 'pendente',
-  total_lotes integer null default 0,
-  bounds jsonb null,
-  geojson_url text null,
-  masterplan_url text null,
-  filial_id uuid not null,
-  created_by uuid null,
-  created_by_email text null,
-  approved_by uuid null,
-  approved_at timestamptz null,
-  rejection_reason text null,
+  slug text not null,
+  published boolean not null default false,
+  bbox geometry(Polygon,4326),
   created_at timestamptz not null default now(),
-  updated_at timestamptz null default now(),
-  constraint empreendimentos_filial_id_fkey foreign key (filial_id) references public.filiais(id) on delete cascade
+  updated_at timestamptz not null default now()
 );
+-- adiciona colunas usadas pelo app, sem quebrar seu schema atual
+alter table public.empreendimentos add column if not exists descricao text;
+alter table public.empreendimentos add column if not exists status text not null default 'pendente';
+alter table public.empreendimentos add column if not exists total_lotes integer default 0;
+alter table public.empreendimentos add column if not exists bounds jsonb;
+alter table public.empreendimentos add column if not exists geojson_url text;
+alter table public.empreendimentos add column if not exists masterplan_url text;
+alter table public.empreendimentos add column if not exists filial_id uuid;
+alter table public.empreendimentos add column if not exists created_by uuid;
+alter table public.empreendimentos add column if not exists created_by_email text;
+alter table public.empreendimentos add column if not exists approved_by uuid;
+alter table public.empreendimentos add column if not exists approved_at timestamptz;
+alter table public.empreendimentos add column if not exists rejection_reason text;
+-- FK condicional
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'empreendimentos_filial_id_fkey'
+      and conrelid = 'public.empreendimentos'::regclass
+  ) then
+    alter table public.empreendimentos
+      add constraint empreendimentos_filial_id_fkey
+      foreign key (filial_id) references public.filiais(id) on delete cascade;
+  end if;
+end $$;
 create index if not exists idx_emp_filial on public.empreendimentos(filial_id);
 create index if not exists idx_emp_status on public.empreendimentos(status);
+create index if not exists idx_emp_published on public.empreendimentos(published);
 
 -- USER_PROFILES
 create table if not exists public.user_profiles (
   user_id uuid primary key,
-  email text null,
-  full_name text null,
+  email text,
+  full_name text,
   role text not null,
-  panels text[] null,
+  panels text[],
   is_active boolean not null default true,
-  filial_id uuid not null,
-  updated_at timestamptz null default now(),
-  constraint user_profiles_email_key unique (email),
-  constraint user_profiles_filial_id_fkey foreign key (filial_id) references public.filiais(id),
-  constraint user_profiles_user_id_fkey foreign key (user_id) references auth.users(id) on delete cascade
+  filial_id uuid,
+  updated_at timestamptz default now()
 );
+alter table public.user_profiles add column if not exists email text;
+alter table public.user_profiles add column if not exists full_name text;
+alter table public.user_profiles add column if not exists role text;
+alter table public.user_profiles alter column role set not null;
+alter table public.user_profiles add column if not exists panels text[];
+alter table public.user_profiles add column if not exists is_active boolean not null default true;
+alter table public.user_profiles add column if not exists filial_id uuid;
+alter table public.user_profiles add column if not exists updated_at timestamptz default now();
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'user_profiles_user_id_fkey'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint user_profiles_user_id_fkey
+      foreign key (user_id) references auth.users(id) on delete cascade;
+  end if;
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'user_profiles_filial_id_fkey'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint user_profiles_filial_id_fkey
+      foreign key (filial_id) references public.filiais(id);
+  end if;
+end $$;
+create unique index if not exists user_profiles_email_key on public.user_profiles(email);
 create index if not exists idx_up_filial on public.user_profiles(filial_id);
 
 -- TRIGGER updated_at em user_profiles
@@ -104,34 +133,55 @@ begin
   end if;
 end$$;
 
--- Lotes (compatível com as páginas Lotes/Mapa/MapView)
+-- LOTES
 create table if not exists public.lotes (
   id uuid primary key default gen_random_uuid(),
   empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
   nome text not null,
-  numero integer null,
+  numero integer,
   status text not null default 'disponivel',
-  area_m2 numeric(10,2) null,
-  perimetro_m numeric(10,2) null,
-  area_hectares numeric(12,4) null,
-  valor numeric(12,2) null default 0.00,     -- usado em Lotes.tsx
-  preco numeric(12,2) null,                   -- usado em MapView via RPC (alias para compatibilidade)
-  coordenadas jsonb null,
-  geometria jsonb null,
-  properties jsonb null,
-  comprador_nome text null,
-  comprador_email text null,
-  data_venda timestamptz null,
-  observacoes text null,
-  geom geometry null,
+  area_m2 numeric(10,2),
+  perimetro_m numeric(10,2),
+  area_hectares numeric(12,4),
+  valor numeric(12,2) default 0.00,
+  preco numeric(12,2),
+  coordenadas jsonb,
+  geometria jsonb,
+  properties jsonb,
+  comprador_nome text,
+  comprador_email text,
+  data_venda timestamptz,
+  observacoes text,
+  geom geometry,
   created_at timestamptz not null default now(),
-  updated_at timestamptz null default now()
+  updated_at timestamptz default now()
 );
+-- ==== Compat: garante colunas requeridas em LOTES (caso a tabela preexista sem elas)
+alter table public.lotes add column if not exists nome text;
+alter table public.lotes add column if not exists numero integer;
+alter table public.lotes add column if not exists status text;
+alter table public.lotes alter column status drop not null;
+alter table public.lotes alter column status set default 'disponivel';
+alter table public.lotes add column if not exists area_m2 numeric(10,2);
+alter table public.lotes add column if not exists perimetro_m numeric(10,2);
+alter table public.lotes add column if not exists area_hectares numeric(12,4);
+alter table public.lotes add column if not exists valor numeric(12,2) default 0.00;
+alter table public.lotes add column if not exists preco numeric(12,2);
+alter table public.lotes add column if not exists coordenadas jsonb;
+alter table public.lotes add column if not exists geometria jsonb;
+alter table public.lotes add column if not exists properties jsonb;
+alter table public.lotes add column if not exists comprador_nome text;
+alter table public.lotes add column if not exists comprador_email text;
+alter table public.lotes add column if not exists data_venda timestamptz;
+alter table public.lotes add column if not exists geom geometry;
+alter table public.lotes add column if not exists created_at timestamptz default now();
+alter table public.lotes add column if not exists updated_at timestamptz default now();
+
 create index if not exists idx_lotes_emp on public.lotes(empreendimento_id);
 create index if not exists idx_lotes_status on public.lotes(status);
 create index if not exists idx_lotes_geom on public.lotes using gist (geom);
 
--- sincroniza preco/valor (manter compat)
+-- triggers dos lotes
 create or replace function public.sync_valor_preco()
 returns trigger language plpgsql as $$
 begin
@@ -142,7 +192,6 @@ begin
   end if;
   return new;
 end $$;
-
 do $$
 begin
   if not exists (select 1 from pg_trigger where tgname = 'tg_lotes_sync_valor_preco') then
@@ -162,15 +211,14 @@ create table if not exists public.masterplan_overlays (
   id uuid primary key default gen_random_uuid(),
   empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
   image_path text not null,
-  bounds jsonb not null,       -- GeoJSON Polygon
+  bounds jsonb not null,
   opacity numeric(4,2) not null default 0.5,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
-  updated_at timestamptz null default now()
+  updated_at timestamptz default now()
 );
 create index if not exists idx_mpo_emp on public.masterplan_overlays(empreendimento_id);
 create index if not exists idx_mpo_is_active on public.masterplan_overlays(is_active);
-
 do $$
 begin
   if not exists (select 1 from pg_trigger where tgname = 'tg_mpo_updated_at') then
@@ -180,13 +228,39 @@ begin
   end if;
 end$$;
 
--- Filial Allowed Panels (whitelist de painéis)
+-- Filial Allowed Panels
 create table if not exists public.filial_allowed_panels (
   filial_id uuid not null references public.filiais(id) on delete cascade,
   panel text not null,
   created_at timestamptz not null default now(),
   constraint filial_allowed_panels_pk primary key (filial_id, panel)
 );
+
+-- ============== SEED / COMPAT ================
+-- Cria uma filial "Default" e associa empreendimentos sem filial_id a ela
+do $$
+declare fid uuid;
+begin
+  if not exists (select 1 from public.filiais) then
+    insert into public.filiais (nome, is_active) values ('Default', true) returning id into fid;
+  else
+    select id into fid from public.filiais order by created_at asc limit 1;
+  end if;
+  update public.empreendimentos set filial_id = coalesce(filial_id, fid);
+end $$;
+
+-- ============== FUNÇÕES ADMIN ================
+create or replace function public.is_admin(uid uuid)
+returns boolean language sql stable as $$
+  select exists (
+    select 1 from public.user_profiles up
+    where up.user_id = uid and up.is_active and lower(up.role) in ('admin','superadmin')
+  );
+$$;
+create or replace function public.is_admin()
+returns boolean language sql stable as $$
+  select public.is_admin(auth.uid());
+$$;
 
 -- ============== RLS ===========================
 alter table public.filiais enable row level security;
@@ -196,29 +270,41 @@ alter table public.lotes enable row level security;
 alter table public.masterplan_overlays enable row level security;
 alter table public.filial_allowed_panels enable row level security;
 
--- políticas básicas (por filial) + admins têm acesso total
 -- FILIAIS
-create policy if not exists filiais_select on public.filiais
+drop policy if exists filiais_select on public.filiais;
+create policy filiais_select on public.filiais
 for select to authenticated
 using (public.is_admin() or exists (
   select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = filiais.id
 ));
-create policy if not exists filiais_admin_write on public.filiais
+drop policy if exists filiais_admin_write on public.filiais;
+create policy filiais_admin_write on public.filiais
 for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
--- EMPREENDIMENTOS (por filial)
-create policy if not exists emp_select on public.empreendimentos
+-- EMPREENDIMENTOS (libera público se published=true)
+drop policy if exists emp_select_public on public.empreendimentos;
+create policy emp_select_public on public.empreendimentos
+for select to anon using (published is true);
+
+drop policy if exists emp_select on public.empreendimentos;
+create policy emp_select on public.empreendimentos
 for select to authenticated
-using (public.is_admin() or exists (
-  select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
-));
-create policy if not exists emp_write on public.empreendimentos
+using (
+  public.is_admin()
+  or published is true
+  or exists (
+    select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
+  )
+);
+drop policy if exists emp_write on public.empreendimentos;
+create policy emp_write on public.empreendimentos
 for insert to authenticated with check (
   public.is_admin() or exists (
     select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
   )
 );
-create policy if not exists emp_update on public.empreendimentos
+drop policy if exists emp_update on public.empreendimentos;
+create policy emp_update on public.empreendimentos
 for update to authenticated
 using (public.is_admin() or exists (
   select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
@@ -227,104 +313,140 @@ with check (public.is_admin() or exists (
   select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
 ));
 
--- USER_PROFILES (self + admins)
-create policy if not exists up_self_read on public.user_profiles
+-- USER_PROFILES
+drop policy if exists up_self_read on public.user_profiles;
+create policy up_self_read on public.user_profiles
 for select to authenticated using (user_id = auth.uid() or public.is_admin());
-create policy if not exists up_self_insert on public.user_profiles
+drop policy if exists up_self_insert on public.user_profiles;
+create policy up_self_insert on public.user_profiles
 for insert to authenticated with check (public.is_admin() or user_id = auth.uid());
-create policy if not exists up_self_update on public.user_profiles
+drop policy if exists up_self_update on public.user_profiles;
+create policy up_self_update on public.user_profiles
 for update to authenticated using (public.is_admin() or user_id = auth.uid()) with check (public.is_admin() or user_id = auth.uid());
 
--- LOTES (por filial via join)
-create policy if not exists lotes_select on public.lotes
-for select to authenticated
-using (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-));
-create policy if not exists lotes_write on public.lotes
-for insert to authenticated with check (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-));
-create policy if not exists lotes_update on public.lotes
-for update to authenticated
-using (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-))
-with check (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-));
+-- LOTES (libera público via published do empreendimento)
+drop policy if exists lotes_select_public on public.lotes;
+create policy lotes_select_public on public.lotes
+for select to anon
+using (
+  exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.lotes.empreendimento_id and e.published is true
+  )
+);
 
--- MASTERPLAN_OVERLAYS (mesma regra por filial)
-create policy if not exists mpo_select on public.masterplan_overlays
+drop policy if exists lotes_select on public.lotes;
+create policy lotes_select on public.lotes
 for select to authenticated
-using (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-));
-create policy if not exists mpo_write on public.masterplan_overlays
-for insert to authenticated with check (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-));
-create policy if not exists mpo_update on public.masterplan_overlays
-for update to authenticated using (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-)) with check (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
-));
+using (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+  or exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.lotes.empreendimento_id and e.published is true
+  )
+);
+
+drop policy if exists lotes_write on public.lotes;
+create policy lotes_write on public.lotes
+for insert to authenticated with check (
+  public.is_admin() or exists (
+    select 1 from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+);
+drop policy if exists lotes_update on public.lotes;
+create policy lotes_update on public.lotes
+for update to authenticated
+using (
+  public.is_admin() or exists (
+    select 1 from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+)
+with check (
+  public.is_admin() or exists (
+    select 1 from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+);
+
+-- MASTERPLAN_OVERLAYS (segue a mesma lógica)
+drop policy if exists mpo_select_public on public.masterplan_overlays;
+create policy mpo_select_public on public.masterplan_overlays
+for select to anon
+using (
+  exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.masterplan_overlays.empreendimento_id and e.published is true
+  )
+);
+
+drop policy if exists mpo_select on public.masterplan_overlays;
+create policy mpo_select on public.masterplan_overlays
+for select to authenticated
+using (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+  or exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.masterplan_overlays.empreendimento_id and e.published is true
+  )
+);
+
+drop policy if exists mpo_write on public.masterplan_overlays;
+create policy mpo_write on public.masterplan_overlays
+for insert to authenticated with check (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+);
+drop policy if exists mpo_update on public.masterplan_overlays;
+create policy mpo_update on public.masterplan_overlays
+for update to authenticated
+using (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+)
+with check (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+);
 
 -- FILIAL_ALLOWED_PANELS
-create policy if not exists fap_select on public.filial_allowed_panels
+drop policy if exists fap_select on public.filial_allowed_panels;
+create policy fap_select on public.filial_allowed_panels
 for select to authenticated using (public.is_admin() or exists (
   select 1 from public.user_profiles up
   where up.user_id = auth.uid() and up.is_active and up.filial_id = filial_allowed_panels.filial_id
 ));
-create policy if not exists fap_write on public.filial_allowed_panels
+drop policy if exists fap_write on public.filial_allowed_panels;
+create policy fap_write on public.filial_allowed_panels
 for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
--- ============== STORAGE =======================
--- Buckets privados, com select e insert para autenticados
-do $$ begin
-  if not exists (select 1 from storage.buckets where id = 'empreendimentos') then
-    perform storage.create_bucket('empreendimentos', false, null);
-  end if;
-  if not exists (select 1 from storage.buckets where id = 'masterplans') then
-    perform storage.create_bucket('masterplans', false, null);
-  end if;
-end $$;
-
--- Policies de acesso
-create policy if not exists "auth select empreendimentos"
-on storage.objects for select to authenticated
-using (bucket_id = 'empreendimentos');
-create policy if not exists "auth insert empreendimentos"
-on storage.objects for insert to authenticated
-with check (bucket_id = 'empreendimentos');
-
-create policy if not exists "auth select masterplans"
-on storage.objects for select to authenticated
-using (bucket_id = 'masterplans');
-create policy if not exists "auth insert masterplans"
-on storage.objects for insert to authenticated
-with check (bucket_id = 'masterplans');
-
 -- ============== RPCs ==========================
-
--- 1) get_my_allowed_panels: retorna whitelist da filial do usuário
 create or replace function public.get_my_allowed_panels()
 returns text[] language sql stable as $$
   with me as (
@@ -335,7 +457,6 @@ returns text[] language sql stable as $$
   join me on me.filial_id = fap.filial_id;
 $$;
 
--- 2) set_filial_allowed_panels: sobrescreve a whitelist
 create or replace function public.set_filial_allowed_panels(p_filial_id uuid, p_panels text[])
 returns void language plpgsql as $$
 begin
@@ -344,7 +465,6 @@ begin
   select p_filial_id, unnest(p_panels);
 end $$;
 
--- 3) update_lote_status (assinatura usada no app: p_novo_status)
 create or replace function public.update_lote_status(p_lote_id uuid, p_novo_status text)
 returns boolean language plpgsql as $$
 begin
@@ -355,7 +475,6 @@ begin
   return found;
 end $$;
 
--- 4) update_lote_valor (assinatura usada no app: p_novo_valor)
 create or replace function public.update_lote_valor(p_lote_id uuid, p_novo_valor numeric)
 returns boolean language plpgsql as $$
 begin
@@ -363,7 +482,6 @@ begin
   return found;
 end $$;
 
--- 5) lotes_geojson: FeatureCollection para Leaflet
 create or replace function public.lotes_geojson(p_empreendimento_id uuid)
 returns jsonb language sql stable as $$
   with feats as (
@@ -387,7 +505,6 @@ returns jsonb language sql stable as $$
   from feats;
 $$;
 
--- 6) get_filial_empreendimentos: devolve apenas ids (o app busca detalhes depois)
 create or replace function public.get_filial_empreendimentos(p_filial_id uuid)
 returns table(empreendimento_id uuid) language sql stable as $$
   select e.id as empreendimento_id
@@ -395,7 +512,6 @@ returns table(empreendimento_id uuid) language sql stable as $$
   where e.filial_id = p_filial_id;
 $$;
 
--- 7) get_empreendimento_lotes: usado pelo MapView/Mapas
 create or replace function public.get_empreendimento_lotes(p_empreendimento_id uuid)
 returns table(
   id uuid, nome text, numero integer, status text,
@@ -409,13 +525,11 @@ returns table(
   where l.empreendimento_id = p_empreendimento_id;
 $$;
 
--- 8) get_all_empreendimentos_overview: ids (usado no mapa superadmin)
 create or replace function public.get_all_empreendimentos_overview()
 returns table(empreendimento_id uuid) language sql stable as $$
   select id as empreendimento_id from public.empreendimentos;
 $$;
 
--- 9) approve_empreendimento (aprova/rejeita)
 create or replace function public.approve_empreendimento(p_empreendimento_id uuid, p_approved boolean, p_reason text default null)
 returns void language plpgsql as $$
 begin
@@ -430,7 +544,6 @@ begin
   end if;
 end $$;
 
--- 10) Vendas stats por empreendimento (Mapa Interativo)
 create or replace function public.get_vendas_stats(p_empreendimento_id uuid)
 returns table(
   total_lotes int,
@@ -460,7 +573,6 @@ returns table(
   from base b;
 $$;
 
--- 11) Admin helpers
 create or replace function public.admin_update_user_role(p_user_id uuid, p_role text)
 returns void language plpgsql as $$
 begin
@@ -497,8 +609,6 @@ begin
    where id = p_filial_id;
 end $$;
 
--- 12) Processar GeoJSON de lotes (conforme usado em EmpreendimentoNovo)
--- OBS: versão enxuta – remove lotes do empreendimento e insere novos
 create or replace function public.process_geojson_lotes(
   p_empreendimento_id uuid,
   p_geojson jsonb,
@@ -523,7 +633,6 @@ begin
     );
     lote_nome_final := p_empreendimento_nome || ' - ' || lote_nome_original;
 
-    -- extrai numero se existir
     begin
       lote_numero := (regexp_match(lote_nome_original, '\d+'))[1]::int;
     exception when others then
