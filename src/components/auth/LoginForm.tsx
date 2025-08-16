@@ -7,6 +7,7 @@ import { Eye, EyeOff, Crown, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { scopeRoutes } from "@/config/authConfig";
 
 export interface LoginFormProps {
   title: string;
@@ -38,7 +39,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormPro
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin");
+        navigate(redirectPath || scopeRoutes.admin);
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");
@@ -63,7 +64,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormPro
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin");
+        navigate(redirectPath || scopeRoutes.admin);
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");
