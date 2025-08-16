@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Crown, User } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { quickLoginCredentials } from "@/config/quickLogin";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,25 +76,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormPro
   const preserve = scope ? `?scope=${encodeURIComponent(scope)}` : '';
 
   // Credenciais de teste para desenvolvimento
-  const getQuickLoginCredentials = () => {
-    // Retorna a lista completa de todos os usuários, ignorando o 'scope' da página.
-    return [
-      { email: 'superadmin@blockurb.com', password: 'BlockUrb2024!', label: 'Super Admin', icon: Crown },
-      { email: 'admin@blockurb.com', password: 'Admin2024!', label: 'Admin Filial', icon: User },
-      { email: 'urbanista@blockurb.com', password: 'Urban2024!', label: 'Urbanista', icon: User },
-      { email: 'juridico@blockurb.com', password: 'Legal2024!', label: 'Jurídico', icon: User },
-      { email: 'contabilidade@blockurb.com', password: 'Conta2024!', label: 'Contabilidade', icon: User },
-      { email: 'marketing@blockurb.com', password: 'Market2024!', label: 'Marketing', icon: User },
-      { email: 'comercial@blockurb.com', password: 'Venda2024!', label: 'Comercial', icon: User },
-      { email: 'imobiliaria@blockurb.com', password: 'Imob2024!', label: 'Imobiliária', icon: User },
-      { email: 'corretor@blockurb.com', password: 'Corret2024!', label: 'Corretor', icon: User },
-      { email: 'obras@blockurb.com', password: 'Obras2024!', label: 'Obras', icon: User },
-      { email: 'investidor@blockurb.com', password: 'Invest2024!', label: 'Investidor', icon: User },
-      { email: 'terrenista@blockurb.com', password: 'Terra2024!', label: 'Terrenista', icon: User },
-    ];
-  };
-
-  const quickCredentials = getQuickLoginCredentials();
+  const quickCredentials = quickLoginCredentials;
 
   return (
     <div className="space-y-6">

@@ -1,34 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Crown, User, Settings, Zap } from "lucide-react";
+import { Settings, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-interface QuickLoginCredential {
-  email: string;
-  password: string;
-  label: string;
-  role: string;
-  panel: string;
-  icon: any;
-}
-
-const allCredentials: QuickLoginCredential[] = [
-  { email: 'superadmin@blockurb.com', password: 'BlockUrb2024!', label: 'Super Admin', role: 'superadmin', panel: '/super-admin', icon: Crown },
-  { email: 'admin@blockurb.com', password: 'Admin2024!', label: 'Admin Filial', role: 'admin', panel: '/admin', icon: User },
-  { email: 'urbanista@blockurb.com', password: 'Urban2024!', label: 'Urbanista', role: 'urbanista', panel: '/urbanista', icon: User },
-  { email: 'juridico@blockurb.com', password: 'Legal2024!', label: 'Jurídico', role: 'juridico', panel: '/juridico', icon: User },
-  { email: 'contabilidade@blockurb.com', password: 'Conta2024!', label: 'Contabilidade', role: 'contabilidade', panel: '/contabilidade', icon: User },
-  { email: 'marketing@blockurb.com', password: 'Market2024!', label: 'Marketing', role: 'marketing', panel: '/marketing', icon: User },
-  { email: 'comercial@blockurb.com', password: 'Venda2024!', label: 'Comercial', role: 'comercial', panel: '/comercial', icon: User },
-  { email: 'imobiliaria@blockurb.com', password: 'Imob2024!', label: 'Imobiliária', role: 'imobiliaria', panel: '/imobiliaria', icon: User },
-  { email: 'corretor@blockurb.com', password: 'Corret2024!', label: 'Corretor', role: 'corretor', panel: '/corretor', icon: User },
-  { email: 'obras@blockurb.com', password: 'Obras2024!', label: 'Obras', role: 'obras', panel: '/obras', icon: User },
-  { email: 'investidor@blockurb.com', password: 'Invest2024!', label: 'Investidor', role: 'investidor', panel: '/investidor', icon: User },
-  { email: 'terrenista@blockurb.com', password: 'Terra2024!', label: 'Terrenista', role: 'terrenista', panel: '/terrenista', icon: User },
-];
+import { quickLoginCredentials, type QuickLoginCredential } from "@/config/quickLogin";
 
 interface QuickLoginWidgetProps {
   compact?: boolean;
@@ -83,7 +60,7 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
           <Card className="border-dashed border-2 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
             <CardContent className="p-3">
               <div className="grid gap-1 max-h-60 overflow-y-auto">
-                {allCredentials.map((cred, index) => {
+                {quickLoginCredentials.map((cred, index) => {
                   const IconComponent = cred.icon;
                   const isLoading = loading === cred.email;
                   
@@ -122,7 +99,7 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
       </CardHeader>
       <CardContent className="pt-0">
         <div className="grid gap-2 max-h-64 overflow-y-auto">
-          {allCredentials.map((cred, index) => {
+          {quickLoginCredentials.map((cred, index) => {
             const IconComponent = cred.icon;
             const isLoading = loading === cred.email;
             
