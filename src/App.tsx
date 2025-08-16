@@ -91,6 +91,7 @@ const App = () => (
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Configurações" /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
             <Route path="/super-admin/usuarios" element={<Protected allowedRoles={['superadmin']}><UsuariosPage /></Protected>} />
+            <Route path="/super-admin/tokenizacao" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Tokenização" /></Protected>} />
 
             {/* Admin Filial - Rotas padronizadas em /admin-filial */}
             <Route path="/admin-filial" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelHomePage menuKey="adminfilial" title="Admin Filial" /></Protected>} />
