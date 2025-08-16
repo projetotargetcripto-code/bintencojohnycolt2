@@ -99,7 +99,7 @@ export default function AprovacaoEmpreendimentos() {
       const { error } = await supabase.rpc('approve_empreendimento', {
         p_empreendimento_id: id,
         p_approved: false,
-        p_rejection_reason: rejectionReason
+        p_reason: rejectionReason
       });
 
       if (error) throw error;
