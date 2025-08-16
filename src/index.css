@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 165 25% 7%; /* #0D1714 base escura */
+    --foreground: 0 0% 100%; /* branco */
+
+    --card: 165 20% 9%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 165 20% 9%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Primário: verde-esmeralda */
+    --primary: 156 100% 38%; /* #00C26E */
+    --primary-foreground: 0 0% 100%;
+
+    /* Superfície secundária escura */
+    --secondary: 165 16% 12%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Tons de apoio em dark */
+    --muted: 165 12% 14%;
+    --muted-foreground: 210 14% 83%; /* cinza claro #D1D5DB */
+
+    /* Detalhe: dourado para destaques */
+    --accent: 51 100% 50%; /* #FFD700 */
+    --accent-foreground: 222.2 47.4% 11.2%; /* texto escuro quando necessário */
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 165 10% 24%;
+    --input: 165 10% 24%;
+    --ring: 156 100% 38%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 165 25% 7%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 156 100% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 51 100% 50%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 165 10% 18%;
+    --sidebar-ring: 156 100% 38%;
+
+    /* Aliases for app shell tokens */
+    --bg: var(--background);
+    --bg-2: var(--card);
+    --text: var(--foreground);
+    --text-2: var(--muted-foreground);
+    --primary-2: 156 86% 48%;
+    --stroke: var(--border);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 88 50% 53%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  .hover-scale { @apply transition-transform duration-200 hover:scale-105; }
+  .badge-scalable { @apply inline-flex items-center gap-2 rounded-full bg-secondary text-secondary-foreground px-3 py-1 text-xs border border-border; }
+  .glass { @apply bg-background/70 backdrop-blur border border-border; }
+  .gradient-text { @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent; }
+  .pattern-grid { background-image: linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px); background-size: 20px 20px; background-position: -1px -1px; }
+  .pattern-dots { background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px); background-size: 18px 18px; }
+  .pattern-circuit { background-image: 
+      linear-gradient(0deg, hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 40px 40px; }
+  .hero-radial { background:
+      radial-gradient(1200px 600px at 20% 30%, hsl(var(--primary) / 0.28), transparent 50%),
+      radial-gradient(900px 500px at 80% 70%, hsl(var(--accent) / 0.22), transparent 55%);
+  }
+  .title-accent { @apply mt-2 h-1 w-16 rounded-full bg-gradient-to-r from-primary to-accent; }
+  .divider { @apply h-px w-full bg-gradient-to-r from-transparent via-accent/40 to-transparent; }
+  .card-hover { @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md; }
+  .card-elevated { @apply p-7 md:p-8 rounded-lg ring-1 ring-border bg-background transition-all duration-200 shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/30; }
+  .image-card { @apply overflow-hidden rounded-lg ring-1 ring-border border border-border bg-background transition-all duration-200 hover:-translate-y-0.5 hover:ring-primary/30; }
+  .btn-glow { @apply shadow-md hover:shadow-lg ring-1 ring-primary/20 hover:ring-primary/40 transition-shadow; }
+  .desat { filter: saturate(.85) contrast(1.05); }
+  .icon-chip { @apply inline-flex items-center justify-center rounded-full ring-1 ring-accent/30 bg-secondary text-primary; }
+  .story-link { position: relative; display: inline-block; }
+  .story-link::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 100%; height: 2px; background-color: hsl(var(--primary)); transform: scaleX(0); transform-origin: bottom right; transition: transform 0.3s ease; }
+  .story-link:hover::after { transform: scaleX(1); transform-origin: bottom left; }
+  .story-link[aria-current="page"] { @apply text-primary; }
+  .story-link[aria-current="page"]::after { transform: scaleX(1); transform-origin: bottom left; }
+
+  /* Golden glow utility for spotlight cards */
+  .glow-gold { position: relative; }
+  .glow-gold::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: inherit;
+    background: radial-gradient(60% 60% at 50% 50%, hsl(var(--accent) / 0.22), transparent 70%);
+    filter: blur(12px);
+    opacity: .8;
+    transition: opacity .3s ease, transform .3s ease, box-shadow .3s ease;
+    animation: gold-pulse 2.2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-gold:hover::after {
+    opacity: 1;
+    transform: scale(1.06);
+    box-shadow: 0 0 48px 12px hsl(var(--accent) / 0.35);
+  }
+  .glow-gold > * { position: relative; z-index: 1; }
+
+  /* App shell helpers */
+  .shadow-elevated { box-shadow: 0 8px 24px hsl(0 0% 0% / 0.4); }
+}
+@keyframes gold-pulse {
+  0%, 100% { box-shadow: 0 0 24px 6px hsl(var(--accent) / 0.22); }
+  50% { box-shadow: 0 0 36px 10px hsl(var(--accent) / 0.30); }
+}
+
+/* Marquee horizontal infinito para parcerias e depoimentos */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee { position: relative; overflow: hidden; }
+.marquee-track {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  width: max-content;
+  padding-block: 0.25rem;
+  animation: marquee-left var(--marquee-duration, 55s) linear infinite;
+}
+
