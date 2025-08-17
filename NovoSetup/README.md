@@ -62,6 +62,18 @@ Variáveis de login rápido para desenvolvimento podem ser adicionadas seguindo 
   - `sqlsemreferencia.sql`
   - `migrations/`
 
+## 👑 Criar o primeiro superadmin
+Após configurar o banco de dados e o storage, crie o usuário inicial com acesso total:
+
+1. **Cadastrar no Auth do Supabase**
+   - No dashboard, vá em **Authentication → Users** e crie um usuário, ex.: `superadmin@blockurb.com`.
+   - Defina uma senha e marque o e-mail como confirmado.
+2. **Inserir o perfil `superadmin`**
+   - No **SQL Editor**, execute o script descrito em [`CRIAR_SUPERADMIN.md`](CRIAR_SUPERADMIN.md) para adicionar o perfil na tabela `user_profiles`.
+   - Substitua o `ID` pelo valor exibido no Auth.
+
+Após essas etapas, esse usuário terá acesso a todos os painéis do sistema.
+
 ## 🧩 Solução de problemas
 - **Aparece "Modo Mock":** verifique variáveis de ambiente e se o SQL foi executado.
 - **Upload falha:** confira se o bucket foi criado e se as políticas foram aplicadas.
