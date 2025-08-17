@@ -60,6 +60,23 @@ create index if not exists idx_up_filial on public.user_profiles(filial_id); -- 
 create trigger tg_up_updated_at before update on public.user_profiles
     for each row execute function public.set_updated_at(); -- app.final.sql
 
+-- Preenche user_profiles ao criar um novo usuário
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.user_profiles (user_id, email, full_name, role)
+  values (new.id, new.email, coalesce(new.raw_user_meta_data->>'full_name', ''), 'investidor');
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
 -- Auditoria de mudanças de cargo/painéis
 create table if not exists public.audit_role_changes (
     changed_at timestamptz default now(),
