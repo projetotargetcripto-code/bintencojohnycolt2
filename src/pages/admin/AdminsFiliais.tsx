@@ -1,161 +1,150 @@
+import { useEffect, useState } from "react";
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
-import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/dataClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DataTable, Column } from "@/components/app/DataTable";
 
-type Filial = { id: string; nome: string };
+interface Filial { id: string; nome: string }
+interface Usuario { id: string; email: string; nome: string; filial_id: string }
 
 export default function AdminsFiliaisPage() {
   const [filiais, setFiliais] = useState<Filial[]>([]);
-  const [admins, setAdmins] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ filial_id: "", email: "", full_name: "", password: "" });
+  const [form, setForm] = useState({ filial_id: "", email: "", nome: "", senha: "" });
 
   useEffect(() => {
-    document.title = "Contas Admin Filiais | BlockURB";
     load();
   }, []);
 
-  const load = async () => {
+  async function load() {
     setLoading(true);
     const [{ data: f }, { data: u }] = await Promise.all([
       supabase.from("filiais").select("id, nome").order("nome"),
       supabase
-        .from("user_profiles")
-        .select("user_id, email, full_name, filial_id, role")
+        .from("usuarios")
+        .select("id, email, nome, filial_id")
         .eq("role", "adminfilial")
-        .order("full_name", { ascending: true }),
+        .order("nome"),
     ]);
     setFiliais(f || []);
-    setAdmins(u || []);
+    setUsuarios(u || []);
     setLoading(false);
-  };
+  }
 
-  const handleCreate = async () => {
-    if (!form.filial_id || !form.email.trim()) {
-      toast.error("Selecione a filial e informe o e-mail.");
+  async function handleCreate() {
+    if (!form.filial_id || !form.email.trim() || !form.nome.trim() || !form.senha.trim()) {
+      toast.error("Preencha todos os campos.");
       return;
     }
-    if (form.password && form.password.length < 8) {
-      toast.error("A senha deve ter pelo menos 8 caracteres.");
+    if (form.senha.length < 8) {
+      toast.error("Senha deve ter ao menos 8 caracteres.");
       return;
     }
     setCreating(true);
-    try {
-      const payload: any = {
-        email: form.email.trim(),
-        full_name: form.full_name?.trim(),
-        filial_id: form.filial_id,
-      };
-      if (form.password) payload.password = form.password;
-
-      console.debug("[AdminsFiliais] Criar admin de filial - payload:", payload);
-
-      const { data: result, error } = await supabase.functions.invoke("create-admin-filial", {
-        body: payload,
-      });
-      if (error) {
-        let message = error.message || "Falha ao criar admin de filial";
-        try {
-          const resp: any = (error as any).context?.response;
-          if (resp) {
-            const text = await resp.text();
-            try {
-              const json = JSON.parse(text);
-              message = json.error || message;
-            } catch {
-              message = text || message;
-            }
-          }
-        } catch (parseError) {
-          console.error(parseError);
-        }
-        throw new Error(message);
-      }
-
-      toast.success(`Admin de filial criado: ${result.email}`);
-      setForm({ filial_id: "", email: "", full_name: "", password: "" });
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao criar admin de filial");
-    } finally {
-      setCreating(false);
+    const { error } = await supabase.from("usuarios").insert({
+      email: form.email.trim(),
+      nome: form.nome.trim(),
+      senha: form.senha,
+      filial_id: form.filial_id,
+      role: "adminfilial",
+    });
+    setCreating(false);
+    if (error) {
+      toast.error("Erro ao criar admin: " + error.message);
+      return;
     }
-  };
+    toast.success("Admin de filial criado");
+    setForm({ filial_id: "", email: "", nome: "", senha: "" });
+    load();
+  }
 
-  const filialById = useMemo(() => Object.fromEntries(filiais.map(f => [f.id, f.nome])), [filiais]);
+  const columns: Column[] = [
+    { key: "nome", header: "Nome" },
+    { key: "email", header: "E-mail" },
+    { key: "filial", header: "Filial" },
+  ];
+
+  const rows = usuarios.map((u) => ({
+    id: u.id,
+    nome: u.nome,
+    email: u.email,
+    filial: filiais.find((f) => f.id === u.filial_id)?.nome || u.filial_id,
+  }));
 
   return (
     <Protected allowedRoles={["superadmin"]}>
-      <AppShell menuKey="superadmin" breadcrumbs={[{ label: "Super Admin" }, { label: "Contas Admin Filiais" }]}>
+      <AppShell
+        menuKey="superadmin"
+        breadcrumbs={[
+          { label: "Super Admin" },
+          { label: "Admins de Filiais" },
+        ]}
+      >
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Novo Admin de Filial</CardTitle>
-              <CardDescription>Crie uma conta administrativa vinculada a uma filial.</CardDescription>
+              <CardDescription>Crie uma conta administrativa.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
                 <label className="text-sm text-muted-foreground">Filial</label>
                 <Select value={form.filial_id} onValueChange={(v) => setForm((s) => ({ ...s, filial_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
                   <SelectContent>
                     {filiais.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Nome</label>
-                <Input value={form.full_name} onChange={(e) => setForm((s) => ({ ...s, full_name: e.target.value }))} placeholder="Nome completo" />
+                <Input value={form.nome} onChange={(e) => setForm((s) => ({ ...s, nome: e.target.value }))} />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">E-mail</label>
-                <Input type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} placeholder="email@empresa.com" />
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+                />
               </div>
               <div>
-                <label className="text-sm text-muted-foreground">Senha (opcional)</label>
-                <Input type="password" value={form.password} onChange={(e) => setForm((s) => ({ ...s, password: e.target.value }))} placeholder="Mínimo 8 caracteres" />
+                <label className="text-sm text-muted-foreground">Senha</label>
+                <Input
+                  type="password"
+                  value={form.senha}
+                  onChange={(e) => setForm((s) => ({ ...s, senha: e.target.value }))}
+                />
               </div>
-              <Button onClick={handleCreate} disabled={creating}>{creating ? "Criando..." : "Criar"}</Button>
+              <Button onClick={handleCreate} disabled={creating}>
+                {creating ? "Criando..." : "Criar"}
+              </Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle>Admins de Filiais</CardTitle>
-              <CardDescription>Gerencie contas existentes.</CardDescription>
+              <CardDescription>Contas existentes.</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <p className="text-center text-muted-foreground">Carregando...</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>E-mail</TableHead>
-                      <TableHead>Filial</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {admins.map((a) => (
-                      <TableRow key={a.user_id}>
-                        <TableCell className="font-medium">{a.full_name}</TableCell>
-                        <TableCell>{a.email}</TableCell>
-                        <TableCell>{filialById[a.filial_id] || a.filial_id}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable columns={columns} rows={rows} pageSize={5} />
               )}
             </CardContent>
           </Card>
@@ -164,3 +153,4 @@ export default function AdminsFiliaisPage() {
     </Protected>
   );
 }
+
