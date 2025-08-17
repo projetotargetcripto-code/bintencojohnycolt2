@@ -42,12 +42,12 @@ export function labelFromScope(scope?: string | null): string | undefined {
 }
 
 export function pathFromScope(scope?: string | null): string {
-  if (!scope) return "/acessos";
+  if (!scope) return "/acesso";
 
   const key = scope.toLowerCase();
   if (key in scopeRoutes) {
     return scopeRoutes[key as AuthScope];
   }
 
-  return "/acessos";
+  return "/acesso";
 }
