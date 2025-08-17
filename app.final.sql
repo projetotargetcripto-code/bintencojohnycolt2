@@ -72,6 +72,7 @@ alter table public.filiais add column if not exists is_active boolean not null d
 alter table public.filiais add column if not exists status text not null default 'provisionando';
 alter table public.filiais add column if not exists created_at timestamptz not null default now();
 create index if not exists idx_filiais_active on public.filiais(is_active);
+create index if not exists idx_filiais_domain on public.filiais(domain);
 
 -- EMPREENDIMENTOS (compat: mantemos suas colunas e adicionamos as novas)
 create table if not exists public.empreendimentos (

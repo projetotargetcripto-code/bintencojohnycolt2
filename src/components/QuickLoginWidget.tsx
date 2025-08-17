@@ -10,21 +10,26 @@ import { quickLoginCredentials, type QuickLoginCredential } from "@/config/quick
 interface QuickLoginWidgetProps {
   compact?: boolean;
   className?: string;
+  allowedPanels?: string[];
 }
 
-export function QuickLoginWidget({ compact = false, className = "" }: QuickLoginWidgetProps) {
+export function QuickLoginWidget({ compact = false, className = "", allowedPanels }: QuickLoginWidgetProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  if (!import.meta.env.DEV) {
-    return null;
-  }
+    if (!import.meta.env.DEV) {
+      return null;
+    }
 
-  if (quickLoginCredentials.length === 0) {
-    return null;
-  }
+    const creds = allowedPanels
+      ? quickLoginCredentials.filter((c) => allowedPanels.includes(c.role))
+      : quickLoginCredentials;
+
+    if (creds.length === 0) {
+      return null;
+    }
 
   const quickLogin = async (cred: QuickLoginCredential) => {
     setError(null);
@@ -68,7 +73,7 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
           <Card className="border-dashed border-2 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
             <CardContent className="p-3">
               <div className="grid gap-1 max-h-60 overflow-y-auto">
-                {quickLoginCredentials.map((cred, index) => {
+                  {creds.map((cred, index) => {
                   const IconComponent = cred.icon;
                   const isLoading = loading === cred.email;
                   
@@ -107,7 +112,7 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
       </CardHeader>
       <CardContent className="pt-0">
         <div className="grid gap-2 max-h-64 overflow-y-auto">
-          {quickLoginCredentials.map((cred, index) => {
+            {creds.map((cred, index) => {
             const IconComponent = cred.icon;
             const isLoading = loading === cred.email;
             

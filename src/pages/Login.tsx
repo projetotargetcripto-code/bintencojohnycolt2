@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -7,14 +7,18 @@ import { QuickLoginWidget } from "@/components/QuickLoginWidget";
 
 export default function LoginPage() {
   const [params] = useSearchParams();
-  const scope = params.get("scope");
+  const scopeParam = params.get("scope");
   const msg = params.get("msg");
+  const [defaultScope, setDefaultScope] = useState<string | null>(null);
+  const [allowedPanels, setAllowedPanels] = useState<string[] | undefined>();
+  const [brand, setBrand] = useState<string | null>(null);
+  const scope = scopeParam || defaultScope;
   const label = labelFromScope(scope);
   const redirectPath = pathFromScope(scope);
-  const title = label ? `Entrar — ${label}` : "Entrar na plataforma";
+  const title = label ? `Entrar — ${label}` : brand ? `Entrar — ${brand}` : "Entrar na plataforma";
 
-  useEffect(() => {
-    document.title = `${title} | BlockURB`;
+    useEffect(() => {
+      document.title = `${title} | ${brand || 'BlockURB'}`;
     const meta = (document.querySelector('meta[name="description"]') as HTMLMetaElement) ?? (() => {
       const m = document.createElement('meta');
       m.name = 'description';
@@ -22,7 +26,26 @@ export default function LoginPage() {
       return m as HTMLMetaElement;
     })();
     meta.content = 'Acesse sua conta com segurança na plataforma BlockURB.';
-  }, [title]);
+    }, [title, brand]);
+
+    useEffect(() => {
+      const host = window.location.host;
+      const mapPanelToScope = (p: string) => (p === 'adminfilial' ? 'admin' : p);
+      fetch(`/resolve-domain?domain=${host}`)
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data) {
+            setBrand(data.nome || null);
+            if (Array.isArray(data.panels)) {
+              setAllowedPanels(data.panels);
+              if (!scopeParam && data.panels.length > 0) {
+                setDefaultScope(mapPanelToScope(data.panels[0]));
+              }
+            }
+          }
+        })
+        .catch(() => {});
+    }, [scopeParam]);
 
   return (
     <AuthLayout>
@@ -32,14 +55,20 @@ export default function LoginPage() {
             Verifique seu e-mail para confirmar o cadastro.
           </div>
         )}
-        <LoginForm title={title} subtitle={label ? `Área: ${label}` : undefined} scope={scope} redirectPath={redirectPath} />
+          <LoginForm
+            title={title}
+            subtitle={label ? `Área: ${label}` : undefined}
+            scope={scope}
+            redirectPath={redirectPath}
+            allowedPanels={allowedPanels}
+          />
         
         {/* Widget de Login Rápido na página de login sem scope específico */}
-        {!scope && (
-          <div className="border-t pt-6">
-            <QuickLoginWidget />
-          </div>
-        )}
+          {!scope && (
+            <div className="border-t pt-6">
+              <QuickLoginWidget allowedPanels={allowedPanels} />
+            </div>
+          )}
       </div>
     </AuthLayout>
   );
