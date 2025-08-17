@@ -16,6 +16,7 @@ import { AuthorizationProvider } from "@/providers/AuthorizationProvider";
 import { PanelHomePage, PanelSectionPage } from "@/components/panels/PanelPages";
 import ConfigPage from "./pages/admin/Config";
 import EmpreendimentoNovo from "./pages/admin/EmpreendimentoNovo";
+import EmpreendimentosPage from "./pages/admin/Empreendimentos";
 import AdminMapa from "./pages/admin/Mapa";
 import MapaInterativo from "./pages/admin/MapaInterativo";
 import LotesVendas from "./pages/admin/LotesVendas";
@@ -86,7 +87,7 @@ const App = () => (
             <Route path="/admin-filial/relatorios" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Relatórios" /></Protected>} />
             <Route path="/admin-filial/config" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Configurações" /></Protected>} />
             <Route path="/admin-filial/equipe" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Equipe" /></Protected>} />
-            <Route path="/admin-filial/empreendimentos" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Empreendimentos" /></Protected>} />
+            <Route path="/admin-filial/empreendimentos" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentosPage /></Protected>} />
             <Route path="/admin-filial/empreendimentos/novo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentoNovo /></Protected>} />
             <Route path="/admin-filial/empreendimentos/editar/:id" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentoNovo /></Protected>} />
             <Route path="/admin-filial/mapa" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AdminMapa /></Protected>} />

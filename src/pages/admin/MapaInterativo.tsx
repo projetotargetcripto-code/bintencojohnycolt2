@@ -1,6 +1,7 @@
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -40,6 +41,8 @@ export default function MapaInterativo() {
   const [selectedLote, setSelectedLote] = useState<LoteData | null>(null);
   const [stats, setStats] = useState<VendasStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [params] = useSearchParams();
+  const paramEmp = params.get('emp');
 
   // Carregar empreendimentos
   const loadEmpreendimentos = useCallback(async () => {
@@ -57,17 +60,17 @@ export default function MapaInterativo() {
       }
 
       setEmpreendimentos(data || []);
-      
-      // Selecionar primeiro empreendimento automaticamente
+
+      // Selecionar empreendimento do parâmetro ou primeiro da lista
       if (data && data.length > 0 && !selectedEmp) {
-        setSelectedEmp(data[0].id);
+        setSelectedEmp(paramEmp || data[0].id);
       }
     } catch (error) {
       console.error('Erro ao carregar empreendimentos:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [paramEmp, selectedEmp]);
 
   // Carregar estatísticas de vendas
   const loadStats = async (empId: string) => {

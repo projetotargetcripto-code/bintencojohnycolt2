@@ -1,6 +1,7 @@
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,8 @@ export default function LotesVendas() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [filter, setFilter] = useState<string>('todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [params] = useSearchParams();
+  const paramEmp = params.get('emp');
 
   // Estados do formulário de edição
   const [editForm, setEditForm] = useState({
@@ -56,7 +59,7 @@ export default function LotesVendas() {
 
         setEmpreendimentos(data || []);
         if (data && data.length > 0) {
-          setSelectedEmp(data[0].id);
+          setSelectedEmp(paramEmp || data[0].id);
         }
       } catch (error) {
         console.error('Erro ao carregar empreendimentos:', error);
@@ -64,7 +67,7 @@ export default function LotesVendas() {
     };
 
     loadEmpreendimentos();
-  }, []);
+  }, [paramEmp]);
 
   // Carregar lotes do empreendimento selecionado
   useEffect(() => {
