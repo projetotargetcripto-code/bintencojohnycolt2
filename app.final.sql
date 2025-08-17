@@ -609,6 +609,19 @@ begin
    where id = p_filial_id;
 end $$;
 
+create or replace function public.admin_list_users()
+returns setof auth.users
+language plpgsql
+security definer
+as $$
+begin
+  if not public.is_admin(auth.uid()) then
+    raise exception 'admin required';
+  end if;
+  return query select * from auth.users;
+end $$;
+grant execute on function public.admin_list_users() to authenticated;
+
 create or replace function public.process_geojson_lotes(
   p_empreendimento_id uuid,
   p_geojson jsonb,
