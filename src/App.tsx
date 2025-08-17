@@ -179,13 +179,13 @@ const App = () => (
             <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
             
             {/* Debug route */}
-            <Route
-              path="/debug/connection"
-              lazy={async () => {
-                const Component = (await import("./app/debug/connection/page")).default;
-                return { Component };
-              }}
-            />
+              <Route
+                path="/debug/connection"
+                lazy={async () => {
+                  const Component = (await import("./pages/debug/Connection")).default;
+                  return { Component };
+                }}
+              />
             
             {/* Rota Catch-all no final */}
             <Route path="*" element={<NotFound />} />
