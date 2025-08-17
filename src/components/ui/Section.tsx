@@ -17,7 +17,7 @@ export function Section({ id, className, container = true, children }: PropsWith
   );
 
   return (
-    <section id={id} ref={ref as any} className="opacity-0 py-16">
+    <section id={id} ref={ref} className="opacity-0 py-16">
       {container ? <div className="container">{children}</div> : Inner}
     </section>
   );

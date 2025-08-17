@@ -2,9 +2,13 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export interface Column { key: string; header: string }
-export interface DataTableProps { columns: Column[]; rows: Record<string, any>[]; pageSize?: number }
+export interface DataTableProps<T extends Record<string, unknown>> {
+  columns: Column[];
+  rows: T[];
+  pageSize?: number;
+}
 
-export function DataTable({ columns, rows, pageSize = 5 }: DataTableProps) {
+export function DataTable<T extends Record<string, unknown>>({ columns, rows, pageSize = 5 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);

@@ -15,8 +15,8 @@ export function LogoRowSection() {
       <div className="flex flex-col gap-6">
         <Heading as="h3" className="text-center text-xl sm:text-2xl">Parcerias e mídias</Heading>
         {/* TODO: Substituir por logos reais e links quando houver integrações oficiais */}
-        <div className="marquee" aria-label="Logos de parcerias e mídias em rolagem contínua">
-          <div className="marquee-track" style={{ ['--marquee-duration' as any]: '55s' }}>
+          <div className="marquee" aria-label="Logos de parcerias e mídias em rolagem contínua">
+            <div className="marquee-track" style={{ ['--marquee-duration' as string]: '55s' }}>
             {loop.map((name, i) => (
               <div
                 key={i}

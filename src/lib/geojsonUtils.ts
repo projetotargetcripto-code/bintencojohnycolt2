@@ -9,13 +9,23 @@ export interface LoteData {
   area_m2: number;
   coordenadas: { lat: number; lng: number };
   geometria: number[][][];
-  properties: any;
+  properties: GeoJSONProperties;
   status?: 'disponivel' | 'reservado' | 'vendido';
+}
+
+export interface GeoJSONProperties {
+  Name?: string;
+  name?: string;
+  NOME?: string;
+  nome?: string;
+  label?: string;
+  description?: string;
+  [key: string]: unknown;
 }
 
 export interface GeoJSONFeature {
   type: 'Feature';
-  properties: { [key: string]: any };
+  properties: GeoJSONProperties;
   geometry: {
     type: 'Polygon';
     coordinates: number[][][];
@@ -108,7 +118,7 @@ export function calculateBounds(features: GeoJSONFeature[]): { sw: { lat: number
 /**
  * Extrai nome do lote das properties
  */
-export function extractLoteName(properties: any, index: number): string {
+export function extractLoteName(properties: GeoJSONProperties, index: number): string {
   const name = properties?.Name || 
                properties?.name || 
                properties?.NOME || 

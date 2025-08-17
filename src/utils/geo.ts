@@ -1,6 +1,14 @@
-import { FeatureCollection, Geometry } from "geojson";
+import { FeatureCollection, Geometry, Polygon, MultiPolygon } from "geojson";
 
-export type ValidGeoJSON = FeatureCollection<Geometry, any>;
+export interface GeoFeatureProperties {
+  codigo?: string;
+  status?: string;
+  preco?: number;
+  area?: number;
+  [key: string]: unknown;
+}
+
+export type ValidGeoJSON = FeatureCollection<Geometry, GeoFeatureProperties>;
 
 export function guessStatusStyle(status?: string) {
   const s = (status || "").toString().toLowerCase();
@@ -13,15 +21,17 @@ export function guessStatusStyle(status?: string) {
 export function computeBBox(fc: ValidGeoJSON): [number, number, number, number] {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-  const update = (coords: any) => {
-    if (typeof coords[0] === "number" && typeof coords[1] === "number") {
-      const [x, y] = coords as [number, number];
-      if (x < minX) minX = x;
-      if (y < minY) minY = y;
-      if (x > maxX) maxX = x;
-      if (y > maxY) maxY = y;
-    } else if (Array.isArray(coords)) {
-      for (const c of coords) update(c);
+  const update = (coords: unknown): void => {
+    if (Array.isArray(coords)) {
+      if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+        const [x, y] = coords as [number, number];
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      } else {
+        for (const c of coords) update(c);
+      }
     }
   };
 
@@ -30,7 +40,7 @@ export function computeBBox(fc: ValidGeoJSON): [number, number, number, number] 
     if (!f.geometry) continue;
     const t = f.geometry.type;
     if (t !== "Polygon" && t !== "MultiPolygon") continue;
-    update((f.geometry as any).coordinates);
+    update((f.geometry as Polygon | MultiPolygon).coordinates);
   }
 
   if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
@@ -42,27 +52,39 @@ export function computeBBox(fc: ValidGeoJSON): [number, number, number, number] 
 
 export async function parseAndValidateGeoJSON(input?: File | string | null): Promise<{ fc: ValidGeoJSON; featuresCount: number; bbox: [number, number, number, number]; }>{
   const text = await readText(input);
-  let obj: any;
+  let obj: unknown;
   try {
     obj = JSON.parse(text);
-  } catch (e) {
+  } catch {
     throw new Error("JSON inválido");
   }
 
-  if (!obj || obj.type !== "FeatureCollection" || !Array.isArray(obj.features) || obj.features.length === 0) {
+  if (!obj || typeof obj !== "object") {
     throw new Error("O GeoJSON deve ser um FeatureCollection com features");
   }
 
+  const candidate = obj as { type?: unknown; features?: unknown };
+
+  if (
+    candidate.type !== "FeatureCollection" ||
+    !Array.isArray(candidate.features) ||
+    candidate.features.length === 0
+  ) {
+    throw new Error("O GeoJSON deve ser um FeatureCollection com features");
+  }
+
+  const fc = obj as ValidGeoJSON;
+
   // Validate geometries
-  for (const f of obj.features) {
+  for (const f of fc.features) {
     const t = f?.geometry?.type;
     if (t !== "Polygon" && t !== "MultiPolygon") {
       throw new Error("Somente Polygon ou MultiPolygon são aceitos");
     }
   }
 
-  const bbox = computeBBox(obj);
-  return { fc: obj as ValidGeoJSON, featuresCount: obj.features.length, bbox };
+  const bbox = computeBBox(fc);
+  return { fc, featuresCount: fc.features.length, bbox };
 }
 
 async function readText(input?: File | string | null): Promise<string> {

@@ -10,8 +10,8 @@ export default function DebugConnection() {
       try {
         const { error } = await supabase.from('empreendimentos').select('id').limit(1)
         setMsg(error ? `Conectado, mas erro de consulta: ${error.message}` : 'Conectado — consulta OK.')
-      } catch (e: any) {
-        setMsg(`Erro de conexão: ${e?.message || 'Erro desconhecido'}`)
+        } catch (e) {
+          setMsg(`Erro de conexão: ${e instanceof Error ? e.message : 'Erro desconhecido'}`)
       }
     })()
   }, [])

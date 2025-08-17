@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { NAV, inferMenuKey } from "@/config/nav";
+import { NAV, inferMenuKey, type NavEntry } from "@/config/nav";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   LayoutDashboard,
@@ -32,10 +32,15 @@ import {
   Circle,
   CheckCircle,
   PlusCircle,
+  type LucideIcon,
 } from "lucide-react";
 
-function IconByName({ name }: { name?: string }) {
-  const map: Record<string, any> = {
+interface IconByNameProps {
+  name?: string;
+}
+
+function IconByName({ name }: IconByNameProps) {
+  const map: Record<string, LucideIcon> = {
     layout: LayoutDashboard,
     "layout-dashboard": LayoutDashboard,
     users: Users,
@@ -55,19 +60,23 @@ function IconByName({ name }: { name?: string }) {
     "check-circle": CheckCircle,
     "plus-circle": PlusCircle,
   };
-  const Comp = (name && map[name]) || Circle;
+  const Comp: LucideIcon = (name && map[name]) || Circle;
   return <Comp className="mr-2 h-4 w-4" />;
 }
 
-export function AppSidebar({ menuKey }: { menuKey?: string }) {
+export interface AppSidebarProps {
+  menuKey?: string;
+}
+
+export function AppSidebar({ menuKey }: AppSidebarProps) {
   const location = useLocation();
   const current = location.pathname;
   const key = menuKey || inferMenuKey(current);
   const { profile } = useAuth();
-  const rawItems = NAV[key] || [];
+  const rawItems: NavEntry[] = NAV[key] || [];
   const isSuperAdmin = profile?.role === 'superadmin';
   const panels = Array.isArray(profile?.panels) ? (profile?.panels as string[]) : [];
-  const items = rawItems.filter((item: any) => {
+  const items = rawItems.filter((item) => {
     // Se não tiver panelKey, sempre mostra
     if (!item.panelKey) return true;
     // Super Admin sempre vê
@@ -89,12 +98,12 @@ export function AppSidebar({ menuKey }: { menuKey?: string }) {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {items.map((item: NavEntry) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={current === item.href}>
                     <NavLink to={item.href} className={({ isActive }) => cn(isActive && "text-primary font-medium") }>
                       <IconByName name={item.icon} />
-                      <span>{(item as any).label ?? (item as any).title}</span>
+                      <span>{item.label ?? item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

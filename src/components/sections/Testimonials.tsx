@@ -40,8 +40,8 @@ export function TestimonialsSection() {
   return (
     <Section id="testemunhos">
       <Heading as="h3" className="text-xl sm:text-2xl">O que dizem os parceiros</Heading>
-      <div className="mt-6 marquee" aria-label="Depoimentos de parceiros em rolagem contínua">
-        <div className="marquee-track" style={{ ['--marquee-duration' as any]: '65s' }}>
+        <div className="mt-6 marquee" aria-label="Depoimentos de parceiros em rolagem contínua">
+          <div className="marquee-track" style={{ ['--marquee-duration' as string]: '65s' }}>
           {loop.map((t, i) => (
             <div key={i} className="w-[320px]">
               <TestimonialCard {...t} />
