@@ -54,6 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Busca os painéis permitidos pela filial (via RPC segura)
         const { data: allowedPanelsData } = await supabase.rpc('get_my_allowed_panels');
 
+        if (profileData?.filial_id && currentSession?.user?.user_metadata?.filial_id !== profileData.filial_id) {
+          await supabase.auth.updateUser({ data: { filial_id: profileData.filial_id } });
+        }
+
         if (profileData || allowedPanelsData) {
           setProfile(prev => ({
             role: userRole,
@@ -98,6 +102,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
           const { data: allowedPanelsData } = await supabase.rpc('get_my_allowed_panels');
+
+          if (profileData?.filial_id && newUser.user_metadata?.filial_id !== profileData.filial_id) {
+            await supabase.auth.updateUser({ data: { filial_id: profileData.filial_id } });
+          }
 
           if (profileData || allowedPanelsData) {
             setProfile(prev => ({
