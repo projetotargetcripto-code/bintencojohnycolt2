@@ -23,19 +23,13 @@ interface Filial {
   billing_status?: string | null;
   domain?: string | null;
   is_active?: boolean;
+  status?: string;
 }
 
 export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" }) {
   const [filiais, setFiliais] = useState<Filial[]>([]);
-  const [novaFilialNome, setNovaFilialNome] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [novaKind, setNovaKind] = useState<string>('interna');
-  const [novaOwnerName, setNovaOwnerName] = useState("");
-  const [novaOwnerEmail, setNovaOwnerEmail] = useState("");
-  const [novaPlan, setNovaPlan] = useState("");
-  const [novaBilling, setNovaBilling] = useState("");
-  const [novaDomain, setNovaDomain] = useState("");
   const [editing, setEditing] = useState<Record<string, Partial<Filial>>>({});
   // Admins de Filial (unificado)
   const [admins, setAdmins] = useState<any[]>([]);
@@ -62,7 +56,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     setLoading(true);
     const { data, error } = await supabase
       .from('filiais')
-      .select('id, nome, created_at, kind, owner_name, owner_email, billing_plan, billing_status, domain, is_active')
+      .select('id, nome, created_at, kind, owner_name, owner_email, billing_plan, billing_status, domain, is_active, status')
       .order('nome', { ascending: true });
 
     if (error) {
@@ -73,38 +67,18 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     setLoading(false);
   };
 
-  const handleAddFilial = async () => {
-    if (!novaFilialNome.trim()) {
-      toast.warning("O nome da filial não pode estar vazio.");
+  const provisionFilial = async (payload: any, success: string) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.functions.invoke('provision-filial', {
+      body: payload,
+    });
+    setIsSubmitting(false);
+    if (error) {
+      toast.error(error.message);
       return;
     }
-    setIsSubmitting(true);
-    const { error } = await supabase
-      .from('filiais')
-      .insert([{ 
-        nome: novaFilialNome.trim(),
-        kind: novaKind,
-        owner_name: novaOwnerName || null,
-        owner_email: novaOwnerEmail || null,
-        billing_plan: novaPlan || null,
-        billing_status: novaBilling || null,
-        domain: novaDomain || null,
-      }]);
-
-    if (error) {
-      toast.error(`Erro ao adicionar filial: ${error.message}`);
-    } else {
-      toast.success(`Filial "${novaFilialNome.trim()}" adicionada com sucesso!`);
-      setNovaFilialNome("");
-      setNovaKind('interna');
-      setNovaOwnerName("");
-      setNovaOwnerEmail("");
-      setNovaPlan("");
-      setNovaBilling("");
-      setNovaDomain("");
-      fetchFiliais(); // Re-fetch the list
-    }
-    setIsSubmitting(false);
+    toast.success(success);
+    fetchFiliais();
   };
 
   const setEdit = (id: string, field: keyof Filial, value: any) => {
@@ -253,14 +227,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                   <Button variant="ghost" onClick={() => setOpenInternal(false)}>Cancelar</Button>
                   <Button onClick={async () => {
                     if (!formInternal.nome.trim()) { toast.error('Informe o nome'); return; }
-                    setIsSubmitting(true);
-                    const { error } = await supabase.from('filiais').insert([{ nome: formInternal.nome.trim(), kind: 'interna' }]);
-                    setIsSubmitting(false);
-                    if (error) { toast.error(error.message); return; }
-                    toast.success('Filial interna criada');
+                    await provisionFilial({ nome: formInternal.nome.trim(), kind: 'interna' }, 'Filial interna criada');
                     setFormInternal({ nome: '' });
                     setOpenInternal(false);
-                    fetchFiliais();
                   }}>{isSubmitting ? 'Salvando...' : 'Salvar'}</Button>
                 </DialogFooter>
               </DialogContent>
@@ -307,8 +276,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                   <Button variant="ghost" onClick={() => setOpenSaas(false)}>Cancelar</Button>
                   <Button onClick={async () => {
                     if (!formSaas.nome.trim()) { toast.error('Informe o nome'); return; }
-                    setIsSubmitting(true);
-                    const { error } = await supabase.from('filiais').insert([{ 
+                    await provisionFilial({
                       nome: formSaas.nome.trim(),
                       kind: 'saas',
                       owner_name: formSaas.owner_name || null,
@@ -316,13 +284,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                       billing_plan: formSaas.billing_plan || null,
                       billing_status: formSaas.billing_status || null,
                       domain: formSaas.domain || null,
-                    }]);
-                    setIsSubmitting(false);
-                    if (error) { toast.error(error.message); return; }
-                    toast.success('Cliente SaaS criado');
+                    }, 'Cliente SaaS criado');
                     setFormSaas({ nome: '', owner_name: '', owner_email: '', billing_plan: '', billing_status: '', domain: '' });
                     setOpenSaas(false);
-                    fetchFiliais();
                   }}>{isSubmitting ? 'Salvando...' : 'Salvar'}</Button>
                 </DialogFooter>
               </DialogContent>

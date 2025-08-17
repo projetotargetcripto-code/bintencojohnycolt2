@@ -29,6 +29,7 @@ create table if not exists public.filiais (
   billing_status text null,
   domain text null,
   is_active boolean not null default true,
+  status text not null default 'provisionando',
   created_at timestamptz not null default now()
 );
 alter table public.filiais add column if not exists kind text;
@@ -38,6 +39,7 @@ alter table public.filiais add column if not exists billing_plan text;
 alter table public.filiais add column if not exists billing_status text;
 alter table public.filiais add column if not exists domain text;
 alter table public.filiais add column if not exists is_active boolean not null default true;
+alter table public.filiais add column if not exists status text not null default 'provisionando';
 alter table public.filiais add column if not exists created_at timestamptz not null default now();
 create index if not exists idx_filiais_active on public.filiais(is_active);
 
