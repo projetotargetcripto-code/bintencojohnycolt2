@@ -34,7 +34,7 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
 
         // Primeiro tenta via RPC que ignora RLS
         try {
-          const res = await supabase.rpc('get_my_profile').single();
+          const res = await supabase.rpc('get_my_profile').maybeSingle();
           data = res.data;
           error = res.error;
           if (error) {
@@ -51,7 +51,7 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
             .from('user_profiles')
             .select('role, panels, filial_id')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
           data = fallback;
           if (fbErr) {
             console.error('Erro ao buscar user_profiles:', fbErr);
