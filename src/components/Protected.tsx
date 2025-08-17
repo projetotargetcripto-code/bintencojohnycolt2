@@ -73,3 +73,4 @@ export function Protected({ children, redirectTo = "/login", allowedRoles, panel
 
 	return <>{children}</>;
 }
+
