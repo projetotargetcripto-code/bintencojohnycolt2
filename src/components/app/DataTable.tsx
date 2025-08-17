@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export interface Column { key: string; header: string }
+export interface Column {
+  key: string;
+  header: string;
+  render?: (row: Record<string, any>) => React.ReactNode;
+}
 export interface DataTableProps { columns: Column[]; rows: Record<string, any>[]; pageSize?: number }
 
 export function DataTable({ columns, rows, pageSize = 5 }: DataTableProps) {
@@ -48,7 +52,9 @@ export function DataTable({ columns, rows, pageSize = 5 }: DataTableProps) {
             {slice.map((row, i) => (
               <tr key={i} className="hover:bg-background/40">
                 {columns.map((c) => (
-                  <td key={c.key} className="px-3 py-2 border-b border-border font-mono">{String(row[c.key] ?? "")}</td>
+                  <td key={c.key} className="px-3 py-2 border-b border-border font-mono">
+                    {c.render ? c.render(row) : String(row[c.key] ?? "")}
+                  </td>
                 ))}
               </tr>
             ))}
