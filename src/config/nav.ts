@@ -1,6 +1,6 @@
-export type NavEntry = { title?: string; label?: string; href: string; icon?: string; panelKey?: string };
+import type { NavItem } from "@/components/shell/Sidebar";
 
-export const NAV: Record<string, NavEntry[]> = {
+export const NAV: Record<string, NavItem[]> = {
   superadmin: [
     {
       title: 'Dashboard',

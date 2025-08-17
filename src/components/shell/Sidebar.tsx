@@ -14,7 +14,9 @@ import {
 import { cn } from "@/lib/utils";
 import { NAV, inferMenuKey } from "@/config/nav";
 import { useAuth } from "@/providers/AuthProvider";
+import type { LucideIcon } from "lucide-react";
 import {
+  Layout,
   LayoutDashboard,
   Users,
   Inbox,
@@ -32,30 +34,60 @@ import {
   Circle,
   CheckCircle,
   PlusCircle,
+  Key,
+  Wrench,
+  ScrollText,
+  Calculator,
+  Megaphone,
+  Briefcase,
+  Home,
+  Hammer,
+  LineChart,
+  Landmark,
 } from "lucide-react";
 
-function IconByName({ name }: { name?: string }) {
-  const map: Record<string, any> = {
-    layout: LayoutDashboard,
-    "layout-dashboard": LayoutDashboard,
-    users: Users,
-    inbox: Inbox,
-    file: FileText,
-    map: Map,
-    "map-pin": MapPin,
-    "dollar-sign": DollarSign,
-    chart: BarChart3,
-    "bar-chart-2": BarChart3,
-    settings: Settings,
-    building: Building2,
-    network: Network,
-    user: User,
-    shield: Shield,
-    calendar: Calendar,
-    "check-circle": CheckCircle,
-    "plus-circle": PlusCircle,
-  };
-  const Comp = (name && map[name]) || Circle;
+const ICONS = {
+  layout: Layout,
+  "layout-dashboard": LayoutDashboard,
+  users: Users,
+  inbox: Inbox,
+  file: FileText,
+  map: Map,
+  "map-pin": MapPin,
+  "dollar-sign": DollarSign,
+  chart: BarChart3,
+  "bar-chart-2": BarChart3,
+  settings: Settings,
+  building: Building2,
+  network: Network,
+  user: User,
+  shield: Shield,
+  calendar: Calendar,
+  "check-circle": CheckCircle,
+  "plus-circle": PlusCircle,
+  key: Key,
+  wrench: Wrench,
+  "scroll-text": ScrollText,
+  calculator: Calculator,
+  megaphone: Megaphone,
+  briefcase: Briefcase,
+  home: Home,
+  hammer: Hammer,
+  "line-chart": LineChart,
+  landmark: Landmark,
+} satisfies Record<string, LucideIcon>;
+
+export type IconName = keyof typeof ICONS;
+
+export interface NavItem {
+  title?: string;
+  label?: string;
+  href: string;
+  icon?: IconName;
+  panelKey?: string;
+}
+function IconByName({ name }: { name?: IconName }) {
+  const Comp = (name && ICONS[name]) || Circle;
   return <Comp className="mr-2 h-4 w-4" />;
 }
 
@@ -64,10 +96,10 @@ export function AppSidebar({ menuKey }: { menuKey?: string }) {
   const current = location.pathname;
   const key = menuKey || inferMenuKey(current);
   const { profile } = useAuth();
-  const rawItems = NAV[key] || [];
+  const rawItems: NavItem[] = NAV[key] || [];
   const isSuperAdmin = profile?.role === 'superadmin';
   const panels = Array.isArray(profile?.panels) ? (profile?.panels as string[]) : [];
-  const items = rawItems.filter((item: any) => {
+  const items = rawItems.filter((item) => {
     // Se não tiver panelKey, sempre mostra
     if (!item.panelKey) return true;
     // Super Admin sempre vê
@@ -92,9 +124,9 @@ export function AppSidebar({ menuKey }: { menuKey?: string }) {
               {items.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={current === item.href}>
-                    <NavLink to={item.href} className={({ isActive }) => cn(isActive && "text-primary font-medium") }>
+                    <NavLink to={item.href} className={({ isActive }) => cn(isActive && "text-primary font-medium")}>
                       <IconByName name={item.icon} />
-                      <span>{(item as any).label ?? (item as any).title}</span>
+                      <span>{item.label ?? item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
