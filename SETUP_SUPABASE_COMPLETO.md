@@ -10,7 +10,7 @@
 ### 2. **Configurar o Banco de Dados**
 1. No dashboard, clique em **"SQL Editor"** na barra lateral
 2. Clique em **"New Query"**
-3. Copie TODO o conteúdo do arquivo `supabase-setup.sql`
+3. Copie TODO o conteúdo do arquivo `NovoSetup/sql.final.referenciado.sql`
 4. Cole no editor SQL
 5. Clique em **"Run"** (ou Ctrl+Enter)
 6. ✅ Aguarde a execução (pode demorar 30-60 segundos)

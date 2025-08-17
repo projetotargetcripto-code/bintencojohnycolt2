@@ -2,7 +2,7 @@
 
 ### 1. Criar e preparar o projeto
 1. Crie um projeto no [Supabase](https://supabase.com/).
-2. No **SQL Editor**, importe o conteúdo completo de `app.final.sql`.  Esse script habilita extensões (`pgcrypto`, `postgis`), cria as tabelas principais (`filiais`, `empreendimentos`, `user_profiles`) e acrescenta funções, gatilhos e dados auxiliares. O script também garante uma filial padrão caso nenhuma exista e associa empreendimentos a ela. Funções de RPC como `lotes_geojson` já vêm incluídas.
+2. No **SQL Editor**, importe o conteúdo completo de `NovoSetup/sql.final.referenciado.sql`.  Esse script habilita extensões (`pgcrypto`, `postgis`), cria as tabelas principais (`filiais`, `empreendimentos`, `user_profiles`) e acrescenta funções, gatilhos e dados auxiliares. O script também garante uma filial padrão caso nenhuma exista e associa empreendimentos a ela. Funções de RPC como `lotes_geojson` já vêm incluídas.
 
 ### 2. Configurar o Storage
 1. No painel do Supabase, acesse **Storage → Create new bucket**.
