@@ -1,6 +1,6 @@
 export const scopeRoutes = {
   superadmin: "/super-admin",
-  admin: "/admin-filial",
+  adminfilial: "/admin-filial",
   imobiliaria: "/imobiliaria",
   corretor: "/corretor",
   juridico: "/juridico",
@@ -17,7 +17,7 @@ export type AuthScope = keyof typeof scopeRoutes;
 
 const scopeLabels: Record<AuthScope, string> = {
   superadmin: "Super Admin",
-  admin: "Admin Filial",
+  adminfilial: "Admin Filial",
   imobiliaria: "Imobiliária",
   corretor: "Corretores",
   juridico: "Jurídico",

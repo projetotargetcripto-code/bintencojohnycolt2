@@ -11,7 +11,7 @@ export interface QuickLoginCredential {
 
 export const quickLoginCredentials: QuickLoginCredential[] = [
   { email: 'superadmin@blockurb.com', password: 'BlockUrb2024!', label: 'Super Admin', role: 'superadmin', panel: '/super-admin', icon: Crown },
-  { email: 'admin@blockurb.com', password: 'Admin2024!', label: 'Admin Filial', role: 'admin', panel: '/admin', icon: User },
+  { email: 'admin@blockurb.com', password: 'Admin2024!', label: 'Admin Filial', role: 'adminfilial', panel: '/admin-filial', icon: User },
   { email: 'urbanista@blockurb.com', password: 'Urban2024!', label: 'Urbanista', role: 'urbanista', panel: '/urbanista', icon: User },
   { email: 'juridico@blockurb.com', password: 'Legal2024!', label: 'Jurídico', role: 'juridico', panel: '/juridico', icon: User },
   { email: 'contabilidade@blockurb.com', password: 'Conta2024!', label: 'Contabilidade', role: 'contabilidade', panel: '/contabilidade', icon: User },

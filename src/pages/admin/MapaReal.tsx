@@ -86,7 +86,7 @@ function SidebarEmpreendimentos({ onSelect, activeId }: { onSelect: (e: Empreend
               >
                 <div className="flex items-center justify-between">
                   <div className="font-medium text-sm">{e.nome}</div>
-                  <a href={`/admin?empreendimento=${e.id}`} onClick={(ev)=>ev.stopPropagation()} className="text-xs text-primary underline">Abrir no painel</a>
+                  <a href={`/admin-filial?empreendimento=${e.id}`} onClick={(ev)=>ev.stopPropagation()} className="text-xs text-primary underline">Abrir no painel</a>
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
                   Criado em: {new Date(e.created_at).toLocaleDateString('pt-BR')}

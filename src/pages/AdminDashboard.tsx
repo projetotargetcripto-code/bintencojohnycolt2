@@ -28,7 +28,7 @@ const rows = [
 export default function AdminDashboard() {
   return (
     <Protected debugBypass={true}>
-      <AppShell breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin', href: '/admin' }, { label: 'Dashboard' }]}> 
+      <AppShell breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin Filial', href: '/admin-filial' }, { label: 'Dashboard' }]}> 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPIStat label="Lotes disponíveis" value={128} icon={<Building2 className="text-primary" />} />
           <KPIStat label="Reservas pendentes" value={12} icon={<FileText className="text-accent" />} tone="warning" />

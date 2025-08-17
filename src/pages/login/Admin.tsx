@@ -3,7 +3,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { labelFromScope, pathFromScope } from "@/config/authConfig";
 
-const SCOPE = "admin" as const;
+const SCOPE = "adminfilial" as const;
 
 export default function LoginAdmin() {
   const TITLE = `Entrar — ${labelFromScope(SCOPE)}`;

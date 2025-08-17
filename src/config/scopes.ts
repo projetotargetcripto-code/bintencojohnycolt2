@@ -1,6 +1,6 @@
 export const scopeRoutes = {
   superadmin: "/super-admin",
-  admin: "/admin-filial",
+  adminfilial: "/admin-filial",
   imobiliaria: "/imobiliaria",
   corretor: "/corretor",
   juridico: "/juridico",
@@ -18,7 +18,7 @@ export type AuthScope = keyof typeof scopeRoutes;
 export function labelFromScope(scope?: string) {
   const map: Record<string, string> = {
     superadmin: "Super Admin",
-    admin: "Admin Filial",
+    adminfilial: "Admin Filial",
     imobiliaria: "Imobiliária",
     corretor: "Corretor",
     juridico: "Jurídico",
