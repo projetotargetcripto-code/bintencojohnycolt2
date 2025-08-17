@@ -142,7 +142,7 @@ begin
   return new;
 end $$; -- app.final.sql
 
--- Funções de geometria e processamento de lotes (de supabase-lotes-interativos.sql)
+-- Funções de geometria para lotes interativos (de supabase-lotes-interativos.sql)
 create or replace function public.calculate_polygon_area(coordinates jsonb)
 returns decimal as $$
 declare
@@ -154,14 +154,20 @@ declare
     lat2 decimal;
     lng2 decimal;
 begin
+    -- Pega o primeiro array de coordenadas (exterior ring)
     coords := coordinates->0;
+
+    -- Calcula área usando fórmula do shoelace (aproximada)
     for i in 0..(jsonb_array_length(coords) - 2) loop
         lat1 := (coords->i->1)::decimal;
         lng1 := (coords->i->0)::decimal;
         lat2 := (coords->(i+1)->1)::decimal;
         lng2 := (coords->(i+1)->0)::decimal;
+
         area := area + (lng1 * lat2 - lng2 * lat1);
     end loop;
+
+    -- Retorna área absoluta em metros quadrados aproximados
     return abs(area) * 111319.9 * 111319.9 / 2;
 end;
 $$ language plpgsql; -- supabase-lotes-interativos.sql
@@ -173,21 +179,30 @@ declare
     lat_sum decimal := 0;
     lng_sum decimal := 0;
     point_count integer;
+    i integer;
 begin
     coords := coordinates->0;
     point_count := jsonb_array_length(coords);
+
+    -- Calcula centroide simples (média das coordenadas)
     for i in 0..(point_count - 1) loop
         lat_sum := lat_sum + (coords->i->1)::decimal;
         lng_sum := lng_sum + (coords->i->0)::decimal;
     end loop;
-    return jsonb_build_object('lat', lat_sum / point_count, 'lng', lng_sum / point_count);
+
+    return jsonb_build_object(
+        'lat', lat_sum / point_count,
+        'lng', lng_sum / point_count
+    );
 end;
 $$ language plpgsql; -- supabase-lotes-interativos.sql
 
+-- Função para processar GeoJSON de lotes
 create or replace function public.process_geojson_lotes(
     p_empreendimento_id uuid,
     p_geojson jsonb,
-    p_empreendimento_nome text)
+    p_empreendimento_nome text
+)
 returns table(total_lotes integer, lotes_processados jsonb) as $$
 declare
     feature jsonb;
@@ -201,29 +216,46 @@ declare
     lotes_array jsonb := '[]'::jsonb;
     contador integer := 0;
 begin
-    delete from lotes where empreendimento_id = p_empreendimento_id;
-    for feature in select jsonb_array_elements(p_geojson->'features') loop
+    -- Limpa lotes existentes deste empreendimento para evitar duplicatas
+    delete from public.lotes where empreendimento_id = p_empreendimento_id;
+
+    -- Itera sobre cada feature do GeoJSON
+    for feature in select jsonb_array_elements(p_geojson->'features')
+    loop
         contador := contador + 1;
+
+        -- Nome original do lote
         lote_nome_original := coalesce(
             feature->'properties'->>'Name',
             feature->'properties'->>'name',
             'Lote ' || contador::text
         );
+
+        -- Nome final formatado
         lote_nome_final := p_empreendimento_nome || ' - ' || lote_nome_original;
+
+        -- Número do lote (extraído do nome, se possível)
         lote_numero := case
-            when lote_nome_original ~ '\\d+' then (regexp_match(lote_nome_original, '\\d+'))[1]::integer
+            when lote_nome_original ~ '\\d+' then
+                (regexp_match(lote_nome_original, '\\d+'))[1]::integer
             else contador
         end;
+
+        -- Dados geométricos
         geometria := feature->'geometry'->'coordinates';
-        coordenadas := calculate_polygon_center(geometria);
-        area_calculada := calculate_polygon_area(geometria);
-        insert into lotes (
+        coordenadas := public.calculate_polygon_center(geometria);
+        area_calculada := public.calculate_polygon_area(geometria);
+
+        -- Inserção do lote
+        insert into public.lotes (
             empreendimento_id, nome, numero, status, area_m2,
             coordenadas, geometria, properties
         ) values (
             p_empreendimento_id, lote_nome_final, lote_numero, 'disponivel', area_calculada,
             coordenadas, geometria, feature->'properties'
         ) returning id into lote_id;
+
+        -- Adiciona ao array de retorno
         lotes_array := lotes_array || jsonb_build_object(
             'id', lote_id,
             'nome', lote_nome_final,
@@ -231,11 +263,14 @@ begin
             'area_m2', area_calculada
         );
     end loop;
+
+    -- Retorna resultado
     return query select contador, lotes_array;
 end;
-$$ language plpgsql security definer; -- update_lotes_function.sql
+$$ language plpgsql security definer;
 
 grant execute on function public.process_geojson_lotes(uuid, jsonb, text) to authenticated;
+grant execute on function public.process_geojson_lotes(uuid, jsonb, text) to anon;
 
 create or replace function public.get_empreendimento_lotes(p_empreendimento_id uuid)
 returns table(
@@ -320,7 +355,6 @@ $$ language plpgsql security definer; -- supabase-lotes-interativos.sql
 grant execute on function public.get_empreendimento_lotes(uuid) to authenticated;
 grant execute on function public.update_lote_status(uuid, varchar, varchar, varchar, decimal) to authenticated;
 grant execute on function public.get_vendas_stats(uuid) to authenticated;
-
 -- Overlays de masterplan (base deduzida + app.final.sql)
 create table if not exists public.masterplan_overlays (
     id uuid primary key default gen_random_uuid(),
