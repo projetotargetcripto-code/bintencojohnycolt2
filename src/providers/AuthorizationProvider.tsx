@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/dataClient';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface AuthorizationProfile {
   role: string;
@@ -13,7 +13,7 @@ interface AuthorizationState {
   loading: boolean;
 }
 
-const AuthorizationContext = createContext<AuthorizationState>({ profile: null, loading: true });
+export const AuthorizationContext = createContext<AuthorizationState>({ profile: null, loading: true });
 
 export function AuthorizationProvider({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
@@ -88,8 +88,3 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
   const value = useMemo(() => ({ profile, loading }), [profile, loading]);
   return <AuthorizationContext.Provider value={value}>{children}</AuthorizationContext.Provider>;
 }
-
-export function useAuthorization() {
-  return useContext(AuthorizationContext);
-}
-

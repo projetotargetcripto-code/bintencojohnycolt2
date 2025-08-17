@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
-import { useAuthorization } from "@/providers/AuthorizationProvider";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthorization } from "@/hooks/useAuthorization";
 
 interface ProtectedProps {
   children: React.ReactNode;

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { NAV, inferMenuKey } from "@/config/nav";
-import { useAuthorization } from "@/providers/AuthorizationProvider";
+import { useAuthorization } from "@/hooks/useAuthorization";
 import type { LucideIcon } from "lucide-react";
 import {
   Layout,

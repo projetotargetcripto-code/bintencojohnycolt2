@@ -1,7 +1,7 @@
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useAuthorization } from "@/providers/AuthorizationProvider";
+import { useAuthorization } from "@/hooks/useAuthorization";
 import { supabase } from "@/lib/dataClient";
 import { useEffect } from "react";
 
