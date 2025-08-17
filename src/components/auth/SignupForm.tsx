@@ -8,10 +8,9 @@ import { useNavigate } from "react-router-dom";
 
 export interface SignupFormProps {
   title: string;
-  scope?: string | null;
 }
 
-export function SignupForm({ title, scope }: SignupFormProps) {
+export function SignupForm({ title }: SignupFormProps) {
   const { register, handleSubmit } = useForm<{ name: string; email: string; password: string; confirm: string; terms: boolean }>();
   const [agreeError, setAgreeError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,12 +25,9 @@ export function SignupForm({ title, scope }: SignupFormProps) {
     const { error } = await supabase.auth.signUp({ email: data.email, password: data.password, options: { data: { full_name: data.name } } });
     if (error) { setError(error.message || 'Falha ao criar conta'); return; }
     const qs = new URLSearchParams();
-    if (scope) qs.set('scope', scope);
     qs.set('msg', 'check-email');
     navigate(`/login?${qs.toString()}`);
   });
-
-  const preserve = scope ? `?scope=${encodeURIComponent(scope)}` : '';
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -70,7 +66,7 @@ export function SignupForm({ title, scope }: SignupFormProps) {
 
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Já tem conta?</span>
-        <a href={`/login${preserve}`} className="story-link">Entrar</a>
+        <a href="/login" className="story-link">Entrar</a>
       </div>
 
       <div role="status" aria-live="polite" className="sr-only" />

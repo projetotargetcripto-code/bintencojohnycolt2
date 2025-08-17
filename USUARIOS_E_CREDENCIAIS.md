@@ -77,10 +77,21 @@
 **Funcionalidades:** Carteira e suporte
 
 ### Terrenista
-**Email:** `terrenista@blockurb.com`  
-**Senha:** `Terra2024!`  
-**Painel:** `/terrenista`  
+**Email:** `terrenista@blockurb.com`
+**Senha:** `Terra2024!`
+**Painel:** `/terrenista`
 **Funcionalidades:** Status e pagamentos
+
+## 🔐 Criação de Contas Privilegiadas
+
+- O formulário de cadastro cria **sempre** usuários com o cargo `investidor`.
+- Para atribuir cargos elevados (ex.: `admin`, `superadmin`), um **superadmin** deve utilizar a função protegida `admin_update_user_role`.
+- Recomendação:
+  1. Solicitar que o novo usuário realize o cadastro comum.
+  2. Confirmar o e-mail do usuário.
+  3. Executar, autenticado como superadmin, a chamada RPC `admin_update_user_role` informando `p_user_id` e o cargo desejado.
+
+Assim evitamos que links de cadastro definam privilégios de forma insegura.
 
 ## 🗺️ Funcionalidades Especiais
 
