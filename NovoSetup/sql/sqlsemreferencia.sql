@@ -26,13 +26,14 @@ create table user_profiles (
 );
 
 -- Trigger para preencher user_profiles ao registrar um novo usuário
-create or replace function handle_new_user()
+create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
-  insert into user_profiles (user_id, email, full_name, role)
+  insert into public.user_profiles (user_id, email, full_name, role)
   values (new.id, new.email, coalesce(new.raw_user_meta_data->>'full_name', ''), 'investidor');
   return new;
 end;
@@ -40,7 +41,7 @@ $$;
 
 create trigger on_auth_user_created
 after insert on auth.users
-for each row execute function handle_new_user();
+for each row execute function public.handle_new_user();
 
 create table filial_allowed_panels (
     filial_id uuid references filiais(id) on delete cascade,
