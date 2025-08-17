@@ -25,6 +25,32 @@ interface Filial {
   is_active?: boolean;
 }
 
+interface AdminProfile {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  filial_id: string;
+  role: string;
+}
+
+interface AdminForm {
+  filial_id: string;
+  email: string;
+  full_name: string;
+  password: string;
+}
+
+interface AdminCreatePayload {
+  email: string;
+  full_name?: string;
+  filial_id: string;
+  password?: string;
+}
+
+interface AllowedPanel {
+  panel: string;
+}
+
 export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" }) {
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [novaFilialNome, setNovaFilialNome] = useState("");
@@ -38,10 +64,10 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
   const [novaDomain, setNovaDomain] = useState("");
   const [editing, setEditing] = useState<Record<string, Partial<Filial>>>({});
   // Admins de Filial (unificado)
-  const [admins, setAdmins] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<AdminProfile[]>([]);
   const [adminsLoading, setAdminsLoading] = useState(true);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
-  const [adminForm, setAdminForm] = useState({ filial_id: "", email: "", full_name: "", password: "" });
+  const [adminForm, setAdminForm] = useState<AdminForm>({ filial_id: "", email: "", full_name: "", password: "" });
   // Acessos por Filial (unificado)
   const [accessFilialId, setAccessFilialId] = useState<string>("");
   const [accessPanels, setAccessPanels] = useState<string[]>([]);
@@ -107,7 +133,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     setIsSubmitting(false);
   };
 
-  const setEdit = (id: string, field: keyof Filial, value: any) => {
+  const setEdit = (id: string, field: keyof Filial, value: Filial[keyof Filial]) => {
     setEditing((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), [field]: value } }));
   };
 
@@ -129,8 +155,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       toast.success('Filial atualizada');
       setEditing((prev) => ({ ...prev, [f.id]: {} }));
       fetchFiliais();
-    } catch (e: any) {
-      toast.error(e?.message || 'Falha ao atualizar filial');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Falha ao atualizar filial';
+      toast.error(message);
     }
   };
 
@@ -157,7 +184,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     }
     setCreatingAdmin(true);
     try {
-      const payload: any = {
+      const payload: AdminCreatePayload = {
         email: adminForm.email.trim(),
         full_name: adminForm.full_name?.trim(),
         filial_id: adminForm.filial_id,
@@ -168,8 +195,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       toast.success(`Admin de filial criado: ${result.email}`);
       setAdminForm({ filial_id: "", email: "", full_name: "", password: "" });
       loadAdmins();
-    } catch (e: any) {
-      toast.error(e?.message || 'Erro ao criar admin de filial');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro ao criar admin de filial';
+      toast.error(message);
     } finally {
       setCreatingAdmin(false);
     }
@@ -182,7 +210,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       .from('filial_allowed_panels')
       .select('panel')
       .eq('filial_id', id);
-    setAccessPanels((data || []).map((r: any) => r.panel));
+    setAccessPanels(((data as AllowedPanel[]) || []).map((r) => r.panel));
   };
 
   const togglePanel = (key: string) => {
@@ -196,8 +224,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       const { error } = await supabase.rpc('set_filial_allowed_panels', { p_filial_id: accessFilialId, p_panels: accessPanels });
       if (error) throw error;
       toast.success('Acessos atualizados.');
-    } catch (e: any) {
-      toast.error(e?.message || 'Falha ao salvar acessos');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Falha ao salvar acessos';
+      toast.error(message);
     } finally {
       setAccessSaving(false);
     }
