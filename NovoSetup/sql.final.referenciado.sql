@@ -77,6 +77,7 @@ create table if not exists public.empreendimentos (
     descricao text,
     status text not null default 'pendente',
     total_lotes integer default 0,
+    lotes_vendidos integer default 0,
     bounds jsonb,
     geojson_url text,
     masterplan_url text,
@@ -92,8 +93,48 @@ create index if not exists idx_emp_status on public.empreendimentos(status); -- 
 create index if not exists idx_emp_published on public.empreendimentos(published); -- app.final.sql
 create unique index if not exists idx_emp_slug on public.empreendimentos(slug); -- app.final.sql
 create index if not exists idx_emp_bbox on public.empreendimentos using gist (bbox); -- app.final.sql
+create index if not exists idx_emp_created_by on public.empreendimentos(created_by); -- update-empreendimentos-table.sql
 create trigger tg_emp_set_defaults before insert or update on public.empreendimentos
     for each row execute function public.empreendimentos_set_defaults(); -- app.final.sql
+
+-- Função para aprovar ou rejeitar empreendimentos
+create or replace function public.approve_empreendimento(
+  p_empreendimento_id uuid,
+  p_approved boolean default true,
+  p_rejection_reason text default null
+) returns boolean
+language plpgsql security definer as $$
+declare
+  v_user_role text;
+begin
+  select role into v_user_role
+  from public.user_profiles
+  where user_id = auth.uid();
+
+  if v_user_role not in ('admin', 'superadmin') then
+    raise exception 'Apenas administradores podem aprovar empreendimentos';
+  end if;
+
+  if p_approved then
+    update public.empreendimentos
+       set status = 'aprovado',
+           approved_by = auth.uid(),
+           approved_at = now(),
+           rejection_reason = null
+     where id = p_empreendimento_id;
+  else
+    update public.empreendimentos
+       set status = 'rejeitado',
+           approved_by = auth.uid(),
+           approved_at = now(),
+           rejection_reason = p_rejection_reason
+     where id = p_empreendimento_id;
+  end if;
+
+  return true;
+end; $$;
+
+grant execute on function public.approve_empreendimento(uuid, boolean, text) to authenticated;
 
 -- Lotes (base deduzida + app.final.sql)
 create table if not exists public.lotes (
@@ -139,6 +180,209 @@ begin
   end if;
   return new;
 end $$; -- app.final.sql
+
+-- Funções para processamento e gerenciamento de lotes
+create or replace function public.calculate_polygon_area(coordinates jsonb)
+returns numeric as $$
+declare
+    coords jsonb;
+    area numeric := 0;
+    i integer;
+    lat1 numeric;
+    lng1 numeric;
+    lat2 numeric;
+    lng2 numeric;
+begin
+    coords := coordinates->0;
+
+    for i in 0..(jsonb_array_length(coords) - 2) loop
+        lat1 := (coords->i->1)::numeric;
+        lng1 := (coords->i->0)::numeric;
+        lat2 := (coords->(i+1)->1)::numeric;
+        lng2 := (coords->(i+1)->0)::numeric;
+
+        area := area + (lng1 * lat2 - lng2 * lat1);
+    end loop;
+
+    return abs(area) * 111319.9 * 111319.9 / 2;
+end;
+$$ language plpgsql;
+
+create or replace function public.calculate_polygon_center(coordinates jsonb)
+returns jsonb as $$
+declare
+    coords jsonb;
+    lat_sum numeric := 0;
+    lng_sum numeric := 0;
+    point_count integer;
+    i integer;
+begin
+    coords := coordinates->0;
+    point_count := jsonb_array_length(coords);
+
+    for i in 0..(point_count - 1) loop
+        lat_sum := lat_sum + (coords->i->1)::numeric;
+        lng_sum := lng_sum + (coords->i->0)::numeric;
+    end loop;
+
+    return jsonb_build_object(
+        'lat', lat_sum / point_count,
+        'lng', lng_sum / point_count
+    );
+end;
+$$ language plpgsql;
+
+create or replace function public.process_geojson_lotes(
+    p_empreendimento_id uuid,
+    p_geojson jsonb,
+    p_empreendimento_nome text
+) returns table(total_lotes integer, lotes_processados jsonb)
+language plpgsql security definer as $$
+declare
+    feature jsonb;
+    lote_nome_original text;
+    lote_nome_final text;
+    lote_numero integer;
+    geometria jsonb;
+    coordenadas jsonb;
+    area_calculada numeric;
+    lote_id uuid;
+    lotes_array jsonb := '[]'::jsonb;
+    contador integer := 0;
+begin
+    delete from public.lotes where empreendimento_id = p_empreendimento_id;
+
+    for feature in select jsonb_array_elements(p_geojson->'features')
+    loop
+        contador := contador + 1;
+
+        lote_nome_original := coalesce(
+            feature->'properties'->>'Name',
+            feature->'properties'->>'name',
+            'Lote ' || contador::text
+        );
+
+        lote_nome_final := p_empreendimento_nome || ' - ' || lote_nome_original;
+
+        lote_numero := case
+            when lote_nome_original ~ '\\d+' then
+                (regexp_match(lote_nome_original, '\\d+'))[1]::integer
+            else contador
+        end;
+
+        geometria := feature->'geometry'->'coordinates';
+        coordenadas := public.calculate_polygon_center(geometria);
+        area_calculada := public.calculate_polygon_area(geometria);
+
+        insert into public.lotes(
+            empreendimento_id, nome, numero, status, area_m2,
+            coordenadas, geometria, properties
+        ) values (
+            p_empreendimento_id, lote_nome_final, lote_numero, 'disponivel', area_calculada,
+            coordenadas, geometria, feature->'properties'
+        ) returning id into lote_id;
+
+        lotes_array := lotes_array || jsonb_build_object(
+            'id', lote_id,
+            'nome', lote_nome_final,
+            'numero', lote_numero,
+            'area_m2', area_calculada
+        );
+    end loop;
+
+    return query select contador, lotes_array;
+end;
+$$;
+
+create or replace function public.get_empreendimento_lotes(p_empreendimento_id uuid)
+returns table(
+    id uuid,
+    nome text,
+    numero integer,
+    status text,
+    area_m2 numeric,
+    preco numeric,
+    coordenadas jsonb,
+    geometria jsonb,
+    comprador_nome text,
+    data_venda timestamptz
+) language plpgsql security definer as $$
+begin
+    return query
+    select
+        l.id,
+        l.nome,
+        l.numero,
+        l.status,
+        l.area_m2,
+        l.preco,
+        l.coordenadas,
+        l.geometria,
+        l.comprador_nome,
+        l.data_venda
+    from public.lotes l
+    where l.empreendimento_id = p_empreendimento_id
+    order by l.numero;
+end;
+$$;
+
+create or replace function public.update_lote_status(
+    p_lote_id uuid,
+    p_status text,
+    p_comprador_nome text default null,
+    p_comprador_email text default null,
+    p_preco numeric default null
+) returns boolean
+language plpgsql security definer as $$
+begin
+    update public.lotes
+       set status = p_status,
+           comprador_nome = case when p_status = 'vendido' then p_comprador_nome else null end,
+           comprador_email = case when p_status = 'vendido' then p_comprador_email else null end,
+           preco = coalesce(p_preco, preco),
+           data_venda = case when p_status = 'vendido' then now() else null end,
+           updated_at = now()
+     where id = p_lote_id;
+
+    return found;
+end;
+$$;
+
+create or replace function public.get_vendas_stats(p_empreendimento_id uuid)
+returns table(
+    total_lotes integer,
+    lotes_disponiveis integer,
+    lotes_reservados integer,
+    lotes_vendidos integer,
+    percentual_vendido numeric,
+    area_total numeric,
+    area_vendida numeric,
+    receita_total numeric
+) language plpgsql security definer as $$
+begin
+    return query
+    select
+        count(*)::integer as total_lotes,
+        count(case when status = 'disponivel' then 1 end)::integer as lotes_disponiveis,
+        count(case when status = 'reservado' then 1 end)::integer as lotes_reservados,
+        count(case when status = 'vendido' then 1 end)::integer as lotes_vendidos,
+        round((count(case when status = 'vendido' then 1 end)::numeric / nullif(count(*),0)::numeric) * 100, 2) as percentual_vendido,
+        coalesce(sum(area_m2), 0) as area_total,
+        coalesce(sum(case when status = 'vendido' then area_m2 end), 0) as area_vendida,
+        coalesce(sum(case when status = 'vendido' then preco end), 0) as receita_total
+    from public.lotes
+    where empreendimento_id = p_empreendimento_id;
+end;
+$$;
+
+grant execute on function public.process_geojson_lotes(uuid, jsonb, text) to authenticated;
+grant execute on function public.process_geojson_lotes(uuid, jsonb, text) to anon;
+grant execute on function public.get_empreendimento_lotes(uuid) to authenticated;
+grant execute on function public.get_empreendimento_lotes(uuid) to anon;
+grant execute on function public.update_lote_status(uuid, text, text, text, numeric) to authenticated;
+grant execute on function public.update_lote_status(uuid, text, text, text, numeric) to anon;
+grant execute on function public.get_vendas_stats(uuid) to authenticated;
+grant execute on function public.get_vendas_stats(uuid) to anon;
 
 -- Overlays de masterplan (base deduzida + app.final.sql)
 create table if not exists public.masterplan_overlays (
