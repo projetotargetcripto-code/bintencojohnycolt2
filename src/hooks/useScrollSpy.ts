@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface Options {
   rootMargin?: string;
@@ -7,10 +7,19 @@ interface Options {
 
 // Returns the id of the section that's currently in view
 export function useScrollSpy(
-  sectionIds: string[],
-  { rootMargin = "-50% 0px -40% 0px", threshold = [0, 0.25, 0.5, 0.75, 1] }: Options = {}
+  sectionIdsParam: string[],
+  {
+    rootMargin = "-50% 0px -40% 0px",
+    threshold: thresholdParam = [0, 0.25, 0.5, 0.75, 1],
+  }: Options = {},
 ) {
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sectionIds = useMemo(() => sectionIdsParam, [sectionIdsParam]);
+  const threshold = useMemo<number | number[]>(
+    () => thresholdParam,
+    [thresholdParam],
+  );
 
   useEffect(() => {
     const elements = sectionIds
@@ -37,12 +46,12 @@ export function useScrollSpy(
           if (id) setActiveId(id);
         }
       },
-      { rootMargin, threshold }
+      { rootMargin, threshold },
     );
 
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [rootMargin, sectionIds.join("|"), Array.isArray(threshold) ? threshold.join("|") : threshold]);
+  }, [sectionIds, rootMargin, threshold]);
 
   return activeId;
 }
