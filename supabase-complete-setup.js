@@ -256,7 +256,7 @@ async function completeSupabaseSetup() {
       console.log('==================');
       console.log('📋 Execute o SQL completo no Supabase Dashboard:');
       console.log('🌐 https://supabase.com/dashboard/project/epsuxumkgakpqykvteij/sql');
-      console.log('\n📄 Cole o conteúdo do arquivo: database-cleanup-complete.sql');
+      console.log('\n📄 Cole o conteúdo do arquivo: NovoSetup/sql.final.referenciado.sql');
       console.log('\n🎯 Isso criará:');
       console.log('   - Campos ausentes em empreendimentos');
       console.log('   - Funções RPC necessárias');
