@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 
 interface UserProfile {
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     document.body.classList.add("bg-background", "text-foreground");
@@ -120,6 +122,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    const segments = location.pathname.split("/").filter(Boolean);
+    const candidate = segments[0] || null;
+    const publicPrefixes = [
+      "login",
+      "signup",
+      "reset",
+      "acesso",
+      "whitepaper",
+      "logout",
+      "acesso-negado",
+      "debug",
+    ];
+    const filialFromPath = candidate && !publicPrefixes.includes(candidate) ? candidate : null;
+    setProfile(prev => (prev ? { ...prev, filial_id: filialFromPath } : prev));
+  }, [location.pathname]);
 
   const value = useMemo(() => ({ session, user, profile, loading }), [session, user, profile, loading]);
 

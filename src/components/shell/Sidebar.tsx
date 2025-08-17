@@ -64,6 +64,7 @@ export function AppSidebar({ menuKey }: { menuKey?: string }) {
   const current = location.pathname;
   const key = menuKey || inferMenuKey(current);
   const { profile } = useAuth();
+  const basePath = profile?.filial_id ? `/${profile.filial_id}` : '';
   const rawItems = NAV[key] || [];
   const isSuperAdmin = profile?.role === 'superadmin';
   const panels = Array.isArray(profile?.panels) ? (profile?.panels as string[]) : [];
@@ -89,16 +90,18 @@ export function AppSidebar({ menuKey }: { menuKey?: string }) {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {items.map((item) => {
+                const to = `${basePath}${item.href}`;
+                return (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={current === item.href}>
-                    <NavLink to={item.href} className={({ isActive }) => cn(isActive && "text-primary font-medium") }>
+                  <SidebarMenuButton asChild isActive={current === to}>
+                    <NavLink to={to} className={({ isActive }) => cn(isActive && "text-primary font-medium") }>
                       <IconByName name={item.icon} />
                       <span>{(item as any).label ?? (item as any).title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+              );})}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

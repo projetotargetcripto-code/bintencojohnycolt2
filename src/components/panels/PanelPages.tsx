@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, FileText, Target, Plus, Wrench } from "lucide-react";
 import { adminTeamColumns, adminTeamRows } from "@/mocks/tables";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/providers/AuthProvider";
 
 const DevelopmentPlaceholder = ({ panelName }: { panelName: string }) => (
   <div className="rounded-[14px] border border-dashed border-border bg-secondary/60 h-[calc(100vh-200px)] grid place-items-center text-center p-4">
@@ -23,14 +24,16 @@ const DevelopmentPlaceholder = ({ panelName }: { panelName: string }) => (
 );
 
 export function PanelHomePage({ menuKey, title }: { menuKey: string; title: string }) {
+  const { profile } = useAuth();
+  const basePath = profile?.filial_id ? `/${profile.filial_id}` : '';
   // Mantém o dashboard completo para os painéis funcionais
   if (menuKey === 'superadmin' || menuKey === 'adminfilial') {
     return (
       <Protected>
-        <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}>
+        <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: basePath || '/' }, { label: title }]}> 
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold">Ações rápidas</h2>
-            <Link to="/admin-filial/empreendimentos/novo">
+            <Link to={`${basePath}/admin-filial/empreendimentos/novo`}>
               <Button variant="cta" className="gap-2"><Plus className="size-4" /> Novo Empreendimento</Button>
             </Link>
           </div>
@@ -94,7 +97,7 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
   // Mostra o placeholder para todos os outros painéis
   return (
     <Protected>
-      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}>
+      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: basePath || '/' }, { label: title }]}> 
         <DevelopmentPlaceholder panelName={title} />
       </AppShell>
     </Protected>
@@ -102,9 +105,11 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
 }
 
 export function PanelSectionPage({ menuKey, title, section }: { menuKey: string; title: string; section: string }) {
+  const { profile } = useAuth();
+  const basePath = profile?.filial_id ? `/${profile.filial_id}` : '';
   return (
     <Protected>
-      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }, { label: section }]}>
+      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: basePath || '/' }, { label: title }, { label: section }]}>
         <DevelopmentPlaceholder panelName={`${title} - ${section}`} />
       </AppShell>
     </Protected>
