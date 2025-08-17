@@ -380,11 +380,16 @@ security definer
 as $$
 begin
   return query
-  select user_id, email, full_name, role,
-         to_jsonb(panels) as panels,
-         is_active, filial_id, updated_at
-  from public.user_profiles
-  where user_id = auth.uid();
+  select up.user_id,
+         up.email,
+         up.full_name,
+         up.role,
+         to_jsonb(up.panels) as panels,
+         up.is_active,
+         up.filial_id,
+         up.updated_at
+  from public.user_profiles up
+  where up.user_id = auth.uid();
 end;
 $$;
 
