@@ -77,6 +77,7 @@ create table if not exists public.empreendimentos (
     descricao text,
     status text not null default 'pendente',
     total_lotes integer default 0,
+    lotes_vendidos integer default 0,
     bounds jsonb,
     geojson_url text,
     masterplan_url text,
@@ -92,6 +93,7 @@ create index if not exists idx_emp_status on public.empreendimentos(status); -- 
 create index if not exists idx_emp_published on public.empreendimentos(published); -- app.final.sql
 create unique index if not exists idx_emp_slug on public.empreendimentos(slug); -- app.final.sql
 create index if not exists idx_emp_bbox on public.empreendimentos using gist (bbox); -- app.final.sql
+create index if not exists idx_empreendimentos_created_by on public.empreendimentos(created_by);
 create trigger tg_emp_set_defaults before insert or update on public.empreendimentos
     for each row execute function public.empreendimentos_set_defaults(); -- app.final.sql
 
@@ -270,6 +272,133 @@ $$ language plpgsql security definer;
 grant execute on function public.process_geojson_lotes(uuid, jsonb, text) to authenticated;
 grant execute on function public.process_geojson_lotes(uuid, jsonb, text) to anon;
 
+-- Função de aprovação de empreendimentos
+create or replace function public.approve_empreendimento(
+    p_empreendimento_id uuid,
+    p_approved boolean default true,
+    p_rejection_reason text default null
+)
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+    v_user_role text;
+begin
+    -- Verificar se o usuário é admin ou superadmin
+    select role into v_user_role
+    from public.user_profiles
+    where user_id = auth.uid();
+
+    if v_user_role not in ('admin', 'superadmin') then
+        raise exception 'Apenas administradores podem aprovar empreendimentos';
+    end if;
+
+    if p_approved then
+        update public.empreendimentos
+           set status = 'aprovado',
+               approved_by = auth.uid(),
+               approved_at = now(),
+               rejection_reason = null
+         where id = p_empreendimento_id;
+    else
+        update public.empreendimentos
+           set status = 'rejeitado',
+               approved_by = auth.uid(),
+               approved_at = now(),
+               rejection_reason = p_rejection_reason
+         where id = p_empreendimento_id;
+    end if;
+
+    return true;
+end;
+$$;
+
+grant execute on function public.approve_empreendimento(uuid, boolean, text) to authenticated;
+
+-- RPCs de lotes
+create or replace function public.lotes_geojson(p_empreendimento_id uuid)
+returns jsonb
+language sql
+stable
+as $$
+  with feats as (
+    select jsonb_build_object(
+      'type','Feature',
+      'geometry', coalesce(l.geometria, to_jsonb(st_asgeojson(l.geom)::json)),
+      'properties', jsonb_build_object(
+        'id', l.id,
+        'nome', l.nome,
+        'numero', l.numero,
+        'status', l.status,
+        'valor', l.valor,
+        'preco', l.valor,
+        'area_m2', l.area_m2
+      )
+    ) as f
+    from public.lotes l
+    where l.empreendimento_id = p_empreendimento_id
+  )
+  select jsonb_build_object('type','FeatureCollection','features', coalesce(jsonb_agg(f), '[]'::jsonb))
+  from feats;
+$$;
+
+create or replace function public.get_empreendimento_lotes(p_empreendimento_id uuid)
+returns table(
+  id uuid,
+  nome text,
+  numero integer,
+  status text,
+  area_m2 numeric,
+  preco numeric,
+  coordenadas jsonb,
+  geometria jsonb,
+  comprador_nome text,
+  comprador_email text,
+  data_venda timestamptz
+)
+language sql
+stable
+as $$
+  select l.id, l.nome, l.numero, l.status,
+         l.area_m2, coalesce(l.preco, l.valor) as preco, l.coordenadas, l.geometria,
+         l.comprador_nome, l.comprador_email, l.data_venda
+  from public.lotes l
+  where l.empreendimento_id = p_empreendimento_id;
+$$;
+
+create or replace function public.get_vendas_stats(p_empreendimento_id uuid)
+returns table(
+  total_lotes int,
+  lotes_disponiveis int,
+  lotes_reservados int,
+  lotes_vendidos int,
+  receita_total numeric,
+  percentual_vendido numeric
+)
+language sql
+stable
+as $$
+  with base as (
+    select
+      count(*)::int as total_lotes,
+      count(*) filter (where status = 'disponivel')::int as lotes_disponiveis,
+      count(*) filter (where status = 'reservado')::int as lotes_reservados,
+      count(*) filter (where status = 'vendido')::int as lotes_vendidos,
+      coalesce(sum(case when status = 'vendido' then coalesce(preco, valor) end),0)::numeric as receita_total
+    from public.lotes
+    where empreendimento_id = p_empreendimento_id
+  )
+  select
+    b.total_lotes,
+    b.lotes_disponiveis,
+    b.lotes_reservados,
+    b.lotes_vendidos,
+    b.receita_total,
+    case when b.total_lotes > 0 then round((b.lotes_vendidos::numeric / b.total_lotes::numeric) * 100, 2) else 0 end as percentual_vendido
+  from base b;
+$$;
+
 -- Overlays de masterplan (base deduzida + app.final.sql)
 create table if not exists public.masterplan_overlays (
     id uuid primary key default gen_random_uuid(),
@@ -296,7 +425,7 @@ create table if not exists public.testemunhos (
     role text
 );
 
--- Políticas de Storage (de storage-policies.sql)
+-- Políticas de Storage para o bucket empreendimentos
 create policy "Authenticated users can upload files"
   on storage.objects for insert
   with check (bucket_id = 'empreendimentos' and auth.role() = 'authenticated');
@@ -325,9 +454,36 @@ create policy filiais_rls on public.filiais for all
   using (id = current_setting('request.jwt.claims.filial_id', true)::uuid)
   with check (id = current_setting('request.jwt.claims.filial_id', true)::uuid); -- app.final.sql
 
-create policy empreendimentos_rls on public.empreendimentos for all
-  using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
-  with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid); -- app.final.sql
+drop policy if exists empreendimentos_rls on public.empreendimentos;
+
+create policy "Public read approved empreendimentos" on public.empreendimentos
+  for select using (status = 'aprovado');
+
+create policy "Authenticated users can create" on public.empreendimentos
+  for insert with check (
+    auth.role() = 'authenticated' and
+    created_by = auth.uid() and
+    status = 'pendente'
+  );
+
+create policy "Admin or owner can update" on public.empreendimentos
+  for update using (
+    auth.uid() = created_by or
+    exists (
+      select 1 from public.user_profiles
+      where user_profiles.user_id = auth.uid()
+        and user_profiles.role in ('admin', 'superadmin')
+    )
+  );
+
+create policy "Admin can delete" on public.empreendimentos
+  for delete using (
+    exists (
+      select 1 from public.user_profiles
+      where user_profiles.user_id = auth.uid()
+        and user_profiles.role in ('admin', 'superadmin')
+    )
+  );
 
 create policy user_profiles_rls on public.user_profiles for all
   using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)

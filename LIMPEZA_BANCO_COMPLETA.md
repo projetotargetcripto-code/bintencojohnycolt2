@@ -23,7 +23,7 @@
 - Buckets de storage: **✅ Funcionando**
 
 ### **📝 SQL Para Execução Manual:**
-Todo o SQL necessário foi gerado no arquivo `database-cleanup-complete.sql`
+Todo o SQL necessário agora está centralizado em `NovoSetup/sql.final.referenciado.sql`
 
 ## 🎯 **EXECUTE AGORA NO SUPABASE DASHBOARD**
 
@@ -31,7 +31,7 @@ Todo o SQL necessário foi gerado no arquivo `database-cleanup-complete.sql`
 🌐 **Link:** https://supabase.com/dashboard/project/epsuxumkgakpqykvteij/sql
 
 ### **2. Execute o arquivo completo:**
-📄 **Arquivo:** `database-cleanup-complete.sql`
+📄 **Arquivo:** `NovoSetup/sql.final.referenciado.sql`
 
 ### **3. Principais correções incluídas:**
 
@@ -117,7 +117,7 @@ check();
 
 ## 📋 **Checklist Final**
 
-- [ ] Executar `database-cleanup-complete.sql` no Supabase Dashboard
+- [ ] Executar `NovoSetup/sql.final.referenciado.sql` no Supabase Dashboard
 - [ ] Verificar campo `status` em empreendimentos  
 - [ ] Testar criação de empreendimento
 - [ ] Testar aprovação como admin

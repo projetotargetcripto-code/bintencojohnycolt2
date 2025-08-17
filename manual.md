@@ -2,12 +2,12 @@
 
 ### 1. Criar e preparar o projeto
 1. Crie um projeto no [Supabase](https://supabase.com/).
-2. No **SQL Editor**, importe o conteúdo completo de `app.final.sql`.  Esse script habilita extensões (`pgcrypto`, `postgis`), cria as tabelas principais (`filiais`, `empreendimentos`, `user_profiles`) e acrescenta funções, gatilhos e dados auxiliares. O script também garante uma filial padrão caso nenhuma exista e associa empreendimentos a ela. Funções de RPC como `lotes_geojson` já vêm incluídas.
+2. No **SQL Editor**, importe o conteúdo completo de `NovoSetup/sql.final.referenciado.sql`. Esse script habilita extensões (`pgcrypto`, `postgis`), cria as tabelas e funções necessárias e já aplica políticas de storage e RLS.
 
 ### 2. Configurar o Storage
 1. No painel do Supabase, acesse **Storage → Create new bucket**.
 2. Nomeie o bucket como `empreendimentos`, marque-o como **Public** e adicione os MIME types permitidos: `application/json`, `application/geo+json`, `image/jpeg`, `image/png`, `image/gif`, `image/webp`.
-3. No **SQL Editor**, execute `storage-policies.sql` para criar as políticas de acesso do bucket.
+3. As políticas de acesso do bucket já estão incluídas em `NovoSetup/sql.final.referenciado.sql`.
 
 ### 3. Variáveis de ambiente da aplicação
 Crie um arquivo `.env.local` no projeto com:
