@@ -20,6 +20,7 @@ export const NAV: Record<string, NavItem[]> = {
     { label: "Usuários", href: "/super-admin/usuarios", icon: "user" },
     { label: "Aprovação", href: "/super-admin/aprovacao", icon: "check-circle" },
     { label: "Tokenização", href: "/super-admin/tokenizacao", icon: "key" },
+    { label: "Auditoria", href: "/super-admin/auditoria", icon: "file-text" },
 
     { label: "Relatórios", href: "/super-admin/relatorios", icon: "bar-chart-2" },
     { label: "Configurações", href: "/super-admin/config", icon: "settings" },

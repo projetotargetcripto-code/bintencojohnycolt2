@@ -29,6 +29,8 @@ import AdminsFiliaisPage from "./pages/admin/AdminsFiliais";
 import AcessoNegado from "./pages/AcessoNegado";
 import { Protected } from "@/components/Protected";
 import MapaSuperAdmin from "./pages/admin/MapaSuperAdmin";
+import AuditLogsPage from "./pages/admin/AuditLogs";
+import ReportsDashboard from "./pages/admin/ReportsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -65,7 +67,8 @@ const App = () => (
 <Route path="/super-admin/clientes-saas" element={<Protected allowedRoles={['superadmin']}><ClientesSaasPage /></Protected>} />
             <Route path="/super-admin/filiais-acessos" element={<Protected allowedRoles={['superadmin']}><FiliaisAccessPage /></Protected>} />
             <Route path="/super-admin/mapa" element={<Protected allowedRoles={['superadmin']}><MapaSuperAdmin /></Protected>} />
-            <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Relatórios" /></Protected>} />
+            <Route path="/super-admin/auditoria" element={<Protected allowedRoles={['superadmin']}><AuditLogsPage /></Protected>} />
+            <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard /></Protected>} />
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Configurações" /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
             <Route path="/super-admin/usuarios" element={<Protected allowedRoles={['superadmin']}><UsuariosPage /></Protected>} />
