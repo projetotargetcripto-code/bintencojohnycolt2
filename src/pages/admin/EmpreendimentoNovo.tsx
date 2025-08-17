@@ -165,7 +165,7 @@ export default function EmpreendimentoNovo() {
 
       const { data, error } = await supabase
         .from('empreendimentos')
-        .insert([{
+        .insert([{ 
           nome: formData.nome,
           descricao: formData.descricao,
           total_lotes: processedLotes.length,
@@ -176,8 +176,16 @@ export default function EmpreendimentoNovo() {
         }])
         .select()
         .single();
-      
+
       if (error) throw error;
+
+      // registra pendência para aprovação
+      await supabase.from('pendencias').insert({
+        tipo: 'empreendimento',
+        tabela: 'empreendimentos',
+        entidade_id: data.id,
+        dados: data,
+      });
       
       if (data && geojsonFile) {
         try {
