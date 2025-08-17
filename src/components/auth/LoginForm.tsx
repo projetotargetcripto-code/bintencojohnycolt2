@@ -14,9 +14,10 @@ export interface LoginFormProps {
   subtitle?: string;
   scope?: string | null;
   redirectPath?: string;
+  allowedPanels?: string[];
 }
 
-export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormProps) {
+export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels }: LoginFormProps) {
   const { register, handleSubmit, setValue } = useForm<{ email: string; password: string }>();
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,8 +76,10 @@ export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormPro
 
   const preserve = scope ? `?scope=${encodeURIComponent(scope)}` : '';
 
-  // Credenciais de teste para desenvolvimento
-  const quickCredentials = quickLoginCredentials;
+    // Credenciais de teste para desenvolvimento
+    const quickCredentials = allowedPanels
+      ? quickLoginCredentials.filter((c) => allowedPanels.includes(c.role))
+      : quickLoginCredentials;
 
   return (
     <div className="space-y-6">
