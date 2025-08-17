@@ -14,7 +14,7 @@ import L, { LatLngBoundsExpression, Layer } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
 import { LoteInfoModal, LoteDetalhado } from "@/components/LoteInfoModal";
-import { useAuthorization } from "@/providers/AuthorizationProvider";
+import { useAuthorization } from "@/hooks/useAuthorization";
 
 // --- INÍCIO DA VERSÃO ESTÁVEL E CORRIGIDA ---
 

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/dataClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useAuthorization } from "@/providers/AuthorizationProvider";
+import { useAuthorization } from "@/hooks/useAuthorization";
 import { processGeoJSON, LoteData } from "@/lib/geojsonUtils";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
