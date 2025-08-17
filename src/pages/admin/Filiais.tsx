@@ -74,6 +74,12 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
   const [openSaas, setOpenSaas] = useState(false);
   const [formInternal, setFormInternal] = useState({ nome: "" });
   const [formSaas, setFormSaas] = useState({ nome: "", owner_name: "", owner_email: "", billing_plan: "", billing_status: "", domain: "" });
+  // Plano e Cobrança
+  const [billingFilialId, setBillingFilialId] = useState<string>("");
+  const [billingPlan, setBillingPlan] = useState<string>("");
+  const [billingStatus, setBillingStatus] = useState<string>("");
+  const [billingHistory, setBillingHistory] = useState<any[]>([]);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   useEffect(() => {
     document.title = "Gestão de Filiais | BlockURB";
@@ -107,6 +113,8 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     } else if (data) {
       setFiliais(data);
       setTotal(count || 0);
+      const expiring = (data as Filial[]).filter(f => f.billing_status === 'trial' && f.created_at && (Date.now() - new Date(f.created_at).getTime()) > 25 * 24 * 60 * 60 * 1000);
+      expiring.forEach(f => toast.warning(`Plano trial da filial ${f.nome} está expirando.`));
     }
     setLoading(false);
   }, [filter, page]);
@@ -224,6 +232,56 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     }
   };
 
+  // ===== Plano e Cobrança =====
+  const loadBillingInfo = async (id: string) => {
+    setBillingLoading(true);
+    setBillingFilialId(id);
+    const filial = filiais.find(f => f.id === id);
+    setBillingPlan(filial?.billing_plan || "");
+    setBillingStatus(filial?.billing_status || "");
+    const { data } = await supabase
+      .from('billing_invoices')
+      .select('id, amount, status, period_start, period_end')
+      .eq('filial_id', id)
+      .order('period_start', { ascending: false });
+    setBillingHistory(data || []);
+    setBillingLoading(false);
+  };
+
+  const changePlan = async () => {
+    if (!billingFilialId || !billingPlan) { toast.error('Selecione filial e plano'); return; }
+    setBillingLoading(true);
+    const { error } = await supabase.functions.invoke('admin-update-filial-billing', { body: { filial_id: billingFilialId, action: 'change_plan', plan: billingPlan } });
+    setBillingLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Plano atualizado');
+    fetchFiliais();
+  };
+
+  const suspendPlan = async () => {
+    if (!billingFilialId) { toast.error('Selecione a filial'); return; }
+    setBillingLoading(true);
+    const { error } = await supabase.functions.invoke('admin-update-filial-billing', { body: { filial_id: billingFilialId, action: 'suspend' } });
+    setBillingLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Plano suspenso');
+    fetchFiliais();
+  };
+
+  const exportInvoices = () => {
+    if (!billingHistory.length) return;
+    const header = 'id,valor,status,inicio,fim';
+    const rows = billingHistory.map((h: any) => `${h.id},${h.amount},${h.status},${h.period_start},${h.period_end}`);
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `faturas-${billingFilialId}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Protected allowedRoles={["superadmin"]}>
       <AppShell menuKey="superadmin" breadcrumbs={[{ label: 'Super Admin', href: '/super-admin' }, { label: 'Gestão de Filiais' }]}> 
@@ -256,6 +314,78 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     </CardContent>
   </Card>
 )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Plano e Cobrança</CardTitle>
+                <CardDescription>Visualize e altere o plano da filial.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground">Filial</label>
+                  <Select value={billingFilialId} onValueChange={(v) => loadBillingInfo(v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {filiais.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {billingFilialId && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-sm text-muted-foreground">Plano</label>
+                        <Input value={billingPlan} onChange={(e) => setBillingPlan(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">Status</label>
+                        <Input value={billingStatus} readOnly />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={changePlan} disabled={billingLoading}>Alterar</Button>
+                      <Button variant="destructive" onClick={suspendPlan} disabled={billingLoading}>Suspender</Button>
+                    </div>
+                    <div className="mt-4">
+                      {billingLoading ? (
+                        <p className="text-center text-muted-foreground">Carregando...</p>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-sm font-medium">Faturas</p>
+                            <Button variant="outline" size="sm" onClick={exportInvoices} disabled={!billingHistory.length}>Exportar</Button>
+                          </div>
+                          {billingHistory.length ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>ID</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Valor</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {billingHistory.map((h: any) => (
+                                  <TableRow key={h.id}>
+                                    <TableCell>{h.id}</TableCell>
+                                    <TableCell>{h.status}</TableCell>
+                                    <TableCell>{h.amount}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center">Nenhuma fatura.</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Modal Filial Interna */}
             <Dialog open={openInternal} onOpenChange={setOpenInternal}>
