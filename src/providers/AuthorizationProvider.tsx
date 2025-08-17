@@ -16,7 +16,7 @@ interface AuthorizationState {
 const AuthorizationContext = createContext<AuthorizationState>({ profile: null, loading: true });
 
 export function AuthorizationProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<AuthorizationProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,11 +34,13 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
 
         // Primeiro tenta via RPC que ignora RLS
         try {
-          const res = await supabase.rpc('get_my_profile').single();
-          data = res.data;
-          error = res.error;
-          if (error) {
-            console.error('Erro ao chamar get_my_profile:', error);
+          const { data: rpcData, error: rpcError } = await supabase
+            .rpc('get_my_profile', {})
+            .maybeSingle();
+          data = rpcData;
+          error = rpcError;
+          if (rpcError) {
+            console.error('Erro ao chamar get_my_profile:', rpcError);
           }
         } catch (rpcErr) {
           error = rpcErr;
@@ -51,7 +53,7 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
             .from('user_profiles')
             .select('role, panels, filial_id')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
           data = fallback;
           if (fbErr) {
             console.error('Erro ao buscar user_profiles:', fbErr);
@@ -82,8 +84,10 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
         setLoading(false);
       }
     };
-    load();
-  }, [user?.id]);
+    if (!authLoading) {
+      load();
+    }
+  }, [authLoading, user?.id]);
 
   const value = useMemo(() => ({ profile, loading }), [profile, loading]);
   return <AuthorizationContext.Provider value={value}>{children}</AuthorizationContext.Provider>;
