@@ -4,4 +4,3 @@ export const salesByWeek = [
   { week: 'W3', value: 15 },
   { week: 'W4', value: 22 },
 ];
-// TODO: ligar em lib de gráfico futuramente

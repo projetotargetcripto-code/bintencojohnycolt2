@@ -3,10 +3,10 @@ import { Protected } from "@/components/Protected";
 import { KPIStat } from "@/components/app/KPIStat";
 import { FiltersBar } from "@/components/app/FiltersBar";
 import { DataTable } from "@/components/app/DataTable";
-import { ChartPlaceholder } from "@/components/app/ChartPlaceholder";
+import { WeeklySalesChart } from "@/components/app/WeeklySalesChart";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Users, FileText, Target } from "lucide-react";
+import { Building2, FileText, Target } from "lucide-react";
 
 const columns = [
   { key: 'nome', header: 'Nome' },
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
             <DataTable columns={columns} rows={rows} pageSize={5} />
           </div>
           <div>
-            <ChartPlaceholder title="Vendas por semana" />
+            <WeeklySalesChart />
           </div>
         </div>
 
