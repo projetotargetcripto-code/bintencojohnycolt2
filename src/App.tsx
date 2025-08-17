@@ -178,10 +178,7 @@ const App = () => (
             <Route path="/terrenista/status" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
             <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
             
-            {/* Debug routes */}
-            <Route path="/debug/connection" element={<div style={{all:'initial'}}><div id="debug-connection-root"></div></div>} />
-            
-            {/* Load debug component dynamically */}
+            {/* Debug routes - loaded dinamicamente */}
             <Route path="/debug/connection" lazy={async () => {
               const Component = (await import("./app/debug/connection/page")).default;
               return { Component };
