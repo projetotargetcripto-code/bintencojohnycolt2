@@ -1,13 +1,13 @@
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuthorization } from "@/providers/AuthorizationProvider";
 import { supabase } from "@/lib/dataClient";
 import { useEffect } from "react";
 
 export default function AcessoNegado() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile } = useAuthorization();
 
   useEffect(() => {
     document.title = "Acesso Negado | BlockURB";

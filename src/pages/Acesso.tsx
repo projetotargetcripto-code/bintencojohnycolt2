@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const cards = [
-  { title: "Painel Super Admin", desc: "Controle total da plataforma e permissões.", href: "/login/super-admin", Icon: Shield },
+  { title: "Painel Super Admin", desc: "Controle total da plataforma e permissões.", href: "/login/superadmin", Icon: Shield },
   { title: "Painel Admin Filial", desc: "Gestão completa da filial e operações.", href: "/login/admin", Icon: Building2 },
   { title: "Painel Urbanismo", desc: "Projetos, mapas e integrações GIS.", href: "/login/urbanismo", Icon: Map },
   { title: "Painel Jurídico", desc: "Contratos e regularização fundiária.", href: "/login/juridico", Icon: ScrollText },

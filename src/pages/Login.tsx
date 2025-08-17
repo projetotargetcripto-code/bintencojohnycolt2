@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams } from "react-router-dom";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { labelFromScope, pathFromScope } from "@/config/authConfig";
@@ -7,7 +7,8 @@ import { QuickLoginWidget } from "@/components/QuickLoginWidget";
 
 export default function LoginPage() {
   const [params] = useSearchParams();
-  const scopeParam = params.get("scope");
+  const routeParams = useParams();
+  const scopeParam = params.get("scope") || routeParams.scope || undefined;
   const msg = params.get("msg");
   const [defaultScope, setDefaultScope] = useState<string | null>(null);
   const [allowedPanels, setAllowedPanels] = useState<string[] | undefined>();
