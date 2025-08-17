@@ -3,7 +3,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { KPIStat } from "@/components/app/KPIStat";
 import { FiltersBar } from "@/components/app/FiltersBar";
 import { DataTable } from "@/components/app/DataTable";
-import { ChartPlaceholder } from "@/components/app/ChartPlaceholder";
+import { PanelReportsChart } from "@/components/app/PanelReportsChart";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, FileText, Target, Plus, Wrench } from "lucide-react";
@@ -83,7 +83,7 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
               <DataTable columns={adminTeamColumns} rows={adminTeamRows} pageSize={5} />
             </div>
             <div>
-              <ChartPlaceholder title="Gráfico (placeholder)" />
+              <PanelReportsChart />
             </div>
           </div>
 
