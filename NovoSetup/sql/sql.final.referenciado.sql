@@ -1,6 +1,10 @@
 -- Estrutura consolidada com referências aos scripts existentes
 -- Base deduzida do código-fonte + ajustes de app.final.sql e outros
 
+-- Extensões necessárias
+create extension if not exists unaccent;
+create extension if not exists postgis;
+
 -- Funções utilitárias (de app.final.sql)
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
