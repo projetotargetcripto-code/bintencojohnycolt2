@@ -214,11 +214,11 @@ async function completeSupabaseSetup() {
       console.log('✅ Login admin funcionando');
 
       // Verificar painéis permitidos
-      const { data: panels, error: panelsError } = await supabase.rpc('get_my_allowed_panels');
-      if (panelsError) {
-        console.log(`⚠️ get_my_allowed_panels: ${panelsError.message}`);
+      const { data: profile, error: profileError } = await supabase.rpc('get_my_profile').single();
+      if (profileError) {
+        console.log(`⚠️ get_my_profile: ${profileError.message}`);
       } else {
-        const list = panels || [];
+        const list = profile?.panels || [];
         console.log(`${list.includes('adminfilial') ? '✅' : '❌'} Admin possui painel adminfilial`);
         console.log(`${list.includes('superadmin') ? '⚠️' : '✅'} Admin não possui painel superadmin`);
       }

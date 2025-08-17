@@ -407,6 +407,35 @@ returns text[] language sql stable as $$
   from panels;
 $$;
 
+create or replace function public.get_my_profile()
+returns table(role text, filial_id uuid, is_active boolean, panels text[]) language sql stable as $$
+  with up as (
+    select role, filial_id, is_active, panels
+    from public.user_profiles
+    where user_id = auth.uid()
+    limit 1
+  ),
+  allowed as (
+    select array_agg(panel) as panels
+    from public.filial_allowed_panels
+    where filial_id = (select filial_id from up)
+  ),
+  merged as (
+    select array_agg(distinct panel) as panels from (
+      select unnest(coalesce((select panels from up), array[]::text[])) as panel
+      union
+      select unnest(coalesce((select panels from allowed), array[]::text[])) as panel
+      union
+      select 'adminfilial' as panel where (select role from up) = 'adminfilial'
+    ) s
+  )
+  select
+    coalesce(auth.jwt()->>'role', (select role from up), 'user') as role,
+    (select filial_id from up) as filial_id,
+    coalesce((select is_active from up), true) as is_active,
+    coalesce((select panels from merged), array[]::text[]) as panels;
+$$;
+
 create or replace function public.set_filial_allowed_panels(p_filial_id uuid, p_panels text[])
 returns void language plpgsql as $$
 begin
