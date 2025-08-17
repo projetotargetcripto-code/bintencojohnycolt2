@@ -3,10 +3,10 @@ import { supabase } from "@/lib/dataClient";
 import type { Session, User } from "@supabase/supabase-js";
 
 interface UserProfile {
-  user_id: string; // Mantido para referência, mas o role virá do app_metadata
+  user_id: string; // Mantido para referência
   full_name: string | null;
-  role: string; // Este virá do app_metadata e será adicionado ao perfil
-  panels: string[] | null; // permitido pela filial (via RPC get_my_allowed_panels)
+  role: string; // obtido via app_metadata/RPC
+  panels: string[] | null; // retornado por get_my_profile
   is_active: boolean;
   filial_id: string | null;
 }
@@ -46,30 +46,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           is_active: true,
           filial_id: null,
         });
-        // Busca dados secundários e atualiza (sem alterar o role)
-        const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('user_id, full_name, panels, is_active, filial_id')
-          .eq('user_id', currentUser.id)
-          .single();
-        // Busca os painéis permitidos pela filial (via RPC segura)
-        const { data: allowedPanelsData } = await supabase.rpc('get_my_allowed_panels');
+        const { data: profileData } = await supabase.rpc('get_my_profile').single();
 
         if (profileData?.filial_id && currentSession?.user?.user_metadata?.filial_id !== profileData.filial_id) {
           await supabase.auth.updateUser({ data: { filial_id: profileData.filial_id } });
         }
 
-        if (profileData || allowedPanelsData) {
-          const branchPanels = Array.isArray(allowedPanelsData) ? allowedPanelsData : [];
-          const userPanels = Array.isArray(profileData?.panels) ? profileData.panels : [];
-          const mergedPanels = Array.from(new Set([...branchPanels, ...userPanels]));
+        if (profileData) {
           setProfile(prev => ({
-            role: userRole,
-            user_id: profileData?.user_id || currentUser.id,
-            full_name: profileData?.full_name || prev?.full_name || currentUser.email,
-            panels: mergedPanels,
-            is_active: (profileData?.is_active ?? prev?.is_active ?? true) as boolean,
-            filial_id: (profileData?.filial_id ?? prev?.filial_id ?? null) as string | null,
+            role: profileData.role || userRole,
+            user_id: currentUser.id,
+            full_name: prev?.full_name || currentUser.email,
+            panels: (profileData.panels ?? []) as string[],
+            is_active: (profileData.is_active ?? prev?.is_active ?? true) as boolean,
+            filial_id: (profileData.filial_id ?? prev?.filial_id ?? null) as string | null,
           }));
         }
 
@@ -100,29 +90,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setLoading(true);
         try {
-          const { data: profileData } = await supabase
-            .from('user_profiles')
-            .select('user_id, full_name, panels, is_active, filial_id')
-            .eq('user_id', newUser.id)
-            .single();
-
-          const { data: allowedPanelsData } = await supabase.rpc('get_my_allowed_panels');
+          const { data: profileData } = await supabase.rpc('get_my_profile').single();
 
           if (profileData?.filial_id && newUser.user_metadata?.filial_id !== profileData.filial_id) {
             await supabase.auth.updateUser({ data: { filial_id: profileData.filial_id } });
           }
 
-          if (profileData || allowedPanelsData) {
-            const branchPanels = Array.isArray(allowedPanelsData) ? allowedPanelsData : [];
-            const userPanels = Array.isArray(profileData?.panels) ? profileData.panels : [];
-            const mergedPanels = Array.from(new Set([...branchPanels, ...userPanels]));
+          if (profileData) {
             setProfile(prev => ({
-              role: userRole,
-              user_id: profileData?.user_id || newUser.id,
-              full_name: profileData?.full_name || prev?.full_name || newUser.email,
-              panels: mergedPanels,
-              is_active: (profileData?.is_active ?? prev?.is_active ?? true) as boolean,
-              filial_id: (profileData?.filial_id ?? prev?.filial_id ?? null) as string | null,
+              role: profileData.role || userRole,
+              user_id: newUser.id,
+              full_name: prev?.full_name || newUser.email,
+              panels: (profileData.panels ?? []) as string[],
+              is_active: (profileData.is_active ?? prev?.is_active ?? true) as boolean,
+              filial_id: (profileData.filial_id ?? prev?.filial_id ?? null) as string | null,
             }));
           }
         } catch (error) {
