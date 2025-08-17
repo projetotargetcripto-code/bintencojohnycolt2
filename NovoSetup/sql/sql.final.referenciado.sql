@@ -345,6 +345,33 @@ $$;
 
 grant execute on function public.approve_empreendimento(uuid, boolean, text) to authenticated;
 
+-- Função para obter o perfil do usuário autenticado
+create or replace function public.get_my_profile()
+returns table(
+    user_id uuid,
+    email text,
+    full_name text,
+    role text,
+    panels jsonb,
+    is_active boolean,
+    filial_id uuid,
+    updated_at timestamptz
+)
+language plpgsql
+security definer
+as $$
+begin
+  return query
+  select user_id, email, full_name, role,
+         to_jsonb(panels) as panels,
+         is_active, filial_id, updated_at
+  from public.user_profiles
+  where user_id = auth.uid();
+end;
+$$;
+
+grant execute on function public.get_my_profile() to authenticated;
+
 -- RPCs de lotes
 create or replace function public.lotes_geojson(p_empreendimento_id uuid)
 returns jsonb
