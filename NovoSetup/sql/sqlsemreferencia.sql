@@ -82,3 +82,30 @@ create table testemunhos (
     role text
 );
 
+-- Função para obter o perfil do usuário autenticado
+create or replace function get_my_profile()
+returns table(
+    user_id uuid,
+    email text,
+    full_name text,
+    role text,
+    panels jsonb,
+    is_active boolean,
+    filial_id uuid,
+    created_at timestamptz
+)
+language plpgsql
+security definer
+as $$
+begin
+  return query
+  select user_id, email, full_name, role,
+         to_jsonb(panels) as panels,
+         is_active, filial_id, created_at
+  from user_profiles
+  where user_id = auth.uid();
+end;
+$$;
+
+grant execute on function get_my_profile() to authenticated;
+
