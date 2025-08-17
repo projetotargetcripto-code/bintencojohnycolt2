@@ -100,10 +100,10 @@ const App = () => (
             <Route path="/admin-filial/empreendimentos" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Empreendimentos" /></Protected>} />
             <Route path="/admin-filial/empreendimentos/novo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentoNovo /></Protected>} />
             <Route path="/admin-filial/empreendimentos/editar/:id" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentoNovo /></Protected>} />
-            <Route path="/admin-filial/mapa" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="urbanista"><AdminMapa /></Protected>} />
-            <Route path="/admin-filial/mapa-interativo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="urbanista"><MapaInterativo /></Protected>} />
+            <Route path="/admin-filial/mapa" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AdminMapa /></Protected>} />
+            <Route path="/admin-filial/mapa-interativo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><MapaInterativo /></Protected>} />
             <Route path="/admin-filial/lotes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesPage /></Protected>} />
-            <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="comercial"><LotesVendas /></Protected>} />
+            <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesVendas /></Protected>} />
 
             {/* Super Admin - Aprovação */}
             <Route path="/super-admin/aprovacao" element={<Protected allowedRoles={['superadmin']}><AprovacaoEmpreendimentos /></Protected>} />
