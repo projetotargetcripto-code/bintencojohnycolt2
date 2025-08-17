@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Crown, User, Settings, Zap } from "lucide-react";
+import { Crown, User, Settings, Zap, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -12,7 +12,7 @@ interface QuickLoginCredential {
   label: string;
   role: string;
   panel: string;
-  icon: any;
+  icon: LucideIcon;
 }
 
 const allCredentials: QuickLoginCredential[] = [
@@ -84,7 +84,7 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
             <CardContent className="p-3">
               <div className="grid gap-1 max-h-60 overflow-y-auto">
                 {allCredentials.map((cred, index) => {
-                  const IconComponent = cred.icon;
+                  const IconComponent: LucideIcon = cred.icon;
                   const isLoading = loading === cred.email;
                   
                   return (
@@ -123,7 +123,7 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
       <CardContent className="pt-0">
         <div className="grid gap-2 max-h-64 overflow-y-auto">
           {allCredentials.map((cred, index) => {
-            const IconComponent = cred.icon;
+            const IconComponent: LucideIcon = cred.icon;
             const isLoading = loading === cred.email;
             
             return (

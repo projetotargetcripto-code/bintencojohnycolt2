@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Crown, User } from "lucide-react";
+import { Eye, EyeOff, Crown, User, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,7 +108,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormPro
           <CardContent className="pt-0">
             <div className="grid gap-2">
               {quickCredentials.map((cred, index) => {
-                const IconComponent = cred.icon;
+                const IconComponent: LucideIcon = cred.icon;
                 return (
                   <Button
                     key={index}
