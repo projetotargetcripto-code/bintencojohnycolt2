@@ -1,5 +1,7 @@
 import { Heading } from "@/components/ui/Heading";
 import { Section } from "@/components/ui/Section";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/dataClient";
 
 interface TestimonialProps {
   quote: string;
@@ -20,20 +22,24 @@ function TestimonialCard({ quote, name, role }: TestimonialProps) {
 }
 
 export function TestimonialsSection() {
-  const testimonials: TestimonialProps[] = [
-    { quote: "Operação leve, processos claros e suporte 360°. Resultado em tempo recorde.", name: "Mariana S.", role: "Franqueada • MG" },
-    { quote: "Tokenização parcial abriu um novo público e acelerou a captação.", name: "Rafael T.", role: "Investidor • SP" },
-    { quote: "Transformamos a gleba em um projeto vendável com previsibilidade.", name: "João P.", role: "Terrenista • PR" },
-    { quote: "Painéis claros. Consegui gerir equipe e funil sem planilhas.", name: "Carlos M.", role: "Admin Filial • RS" },
-    { quote: "Relatórios confiáveis e auditoria facilitada reduziram retrabalho.", name: "Lívia A.", role: "Contabilidade • SP" },
-  ];
+  const [testimonials, setTestimonials] = useState<TestimonialProps[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('testemunhos')
+      .select('quote, name, role')
+      .then(({ data }) => {
+        if (data) setTestimonials(data);
+      });
+  }, []);
 
   const loop = [...testimonials, ...testimonials];
+
+  if (testimonials.length === 0) return null;
 
   return (
     <Section id="testemunhos">
       <Heading as="h3" className="text-xl sm:text-2xl">O que dizem os parceiros</Heading>
-      {/* TODO: Substituir por depoimentos reais vindos da base quando integrar Supabase */}
       <div className="mt-6 marquee" aria-label="Depoimentos de parceiros em rolagem contínua">
         <div className="marquee-track" style={{ ['--marquee-duration' as any]: '65s' }}>
           {loop.map((t, i) => (

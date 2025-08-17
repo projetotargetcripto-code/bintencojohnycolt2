@@ -7,6 +7,9 @@ import { WeeklySalesChart } from "@/components/app/WeeklySalesChart";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, FileText, Target } from "lucide-react";
+import { useState } from "react";
+import { useFilterOptions } from "@/hooks/useFilterOptions";
+import { LotesMapPreview } from "@/components/app/LotesMapPreview";
 
 const columns = [
   { key: 'nome', header: 'Nome' },
@@ -26,6 +29,10 @@ const rows = [
 ];
 
 export default function AdminDashboard() {
+  const { empreendimentos, statuses } = useFilterOptions();
+  const [selectedEmpreendimento, setSelectedEmpreendimento] = useState<string>('');
+  const [status, setStatus] = useState<string>('todos');
+
   return (
     <Protected debugBypass={true}>
       <AppShell breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin', href: '/admin' }, { label: 'Dashboard' }]}> 
@@ -38,22 +45,26 @@ export default function AdminDashboard() {
 
         <div className="mt-6">
           <FiltersBar>
-            {/* TODO: ligar selects a dados reais */}
-            <Select defaultValue="alfa">
-              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Empreendimento" /></SelectTrigger>
+            <Select value={selectedEmpreendimento} onValueChange={setSelectedEmpreendimento}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Empreendimento" />
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="alfa">Alfa</SelectItem>
-                <SelectItem value="beta">Beta</SelectItem>
+                {empreendimentos.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select defaultValue="todos">
-              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="disponivel">Disponível</SelectItem>
-                <SelectItem value="reservado">Reservado</SelectItem>
-                <SelectItem value="vendido">Vendido</SelectItem>
+                {statuses.map((s) => (
+                  <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -72,13 +83,12 @@ export default function AdminDashboard() {
         </div>
 
         <div className="mt-8">
-          <h3 className="mb-2 font-semibold">Mapa (placeholder)</h3>
-          <div className="rounded-[14px] border border-border bg-secondary/60 h-[380px] grid place-items-center text-sm text-muted-foreground">
-            {/* TODO: integrar Leaflet + RPC lotes_geojson */}
-            Integração futura com Leaflet / RPC lotes_geojson
-            <div className="mt-4">
-              <Button variant="outline">Abrir mapa completo</Button>
-            </div>
+          <h3 className="mb-2 font-semibold">Mapa</h3>
+          <div className="rounded-[14px] border border-border bg-secondary/60 h-[380px] overflow-hidden">
+            <LotesMapPreview empreendimentoId={selectedEmpreendimento} height="100%" />
+          </div>
+          <div className="mt-4">
+            <Button variant="outline">Abrir mapa completo</Button>
           </div>
         </div>
       </AppShell>

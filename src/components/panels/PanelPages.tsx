@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, FileText, Target, Plus, Wrench } from "lucide-react";
 import { adminTeamColumns, adminTeamRows } from "@/mocks/tables";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useFilterOptions } from "@/hooks/useFilterOptions";
+import { LotesMapPreview } from "@/components/app/LotesMapPreview";
 
 const DevelopmentPlaceholder = ({ panelName }: { panelName: string }) => (
   <div className="rounded-[14px] border border-dashed border-border bg-secondary/60 h-[calc(100vh-200px)] grid place-items-center text-center p-4">
@@ -23,11 +26,15 @@ const DevelopmentPlaceholder = ({ panelName }: { panelName: string }) => (
 );
 
 export function PanelHomePage({ menuKey, title }: { menuKey: string; title: string }) {
+  const { empreendimentos, statuses } = useFilterOptions();
+  const [selectedEmpreendimento, setSelectedEmpreendimento] = useState<string>('');
+  const [status, setStatus] = useState<string>('todos');
+
   // Mantém o dashboard completo para os painéis funcionais
   if (menuKey === 'superadmin' || menuKey === 'adminfilial') {
     return (
       <Protected>
-        <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}>
+        <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}> 
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold">Ações rápidas</h2>
             <Link to={menuKey === 'superadmin' ? '/super-admin/empreendimentos/novo' : '/admin-filial/empreendimentos/novo'}>
@@ -43,22 +50,26 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
 
           <div className="mt-6">
             <FiltersBar>
-              {/* TODO: ligar selects a dados reais */}
-              <Select defaultValue="alfa">
-                <SelectTrigger className="w-[200px]"><SelectValue placeholder="Empreendimento" /></SelectTrigger>
+              <Select value={selectedEmpreendimento} onValueChange={setSelectedEmpreendimento}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Empreendimento" />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="alfa">Alfa</SelectItem>
-                  <SelectItem value="beta">Beta</SelectItem>
+                  {empreendimentos.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
-              <Select defaultValue="todos">
-                <SelectTrigger className="w-[200px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="disponivel">Disponível</SelectItem>
-                  <SelectItem value="reservado">Reservado</SelectItem>
-                  <SelectItem value="vendido">Vendido</SelectItem>
+                  {statuses.map((s) => (
+                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -77,13 +88,12 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
           </div>
 
           <div className="mt-8">
-            <h3 className="mb-2 font-semibold">Mapa (placeholder)</h3>
-            <div className="rounded-[14px] border border-border bg-secondary/60 h-[380px] grid place-items-center text-sm text-muted-foreground">
-              {/* TODO: integrar Leaflet + RPC lotes_geojson */}
-              Integração futura com Leaflet / RPC lotes_geojson
-              <div className="mt-4">
-                <Button variant="outline">Abrir mapa completo</Button>
-              </div>
+            <h3 className="mb-2 font-semibold">Mapa</h3>
+            <div className="rounded-[14px] border border-border bg-secondary/60 h-[380px] overflow-hidden">
+              <LotesMapPreview empreendimentoId={selectedEmpreendimento} height="100%" />
+            </div>
+            <div className="mt-4">
+              <Button variant="outline">Abrir mapa completo</Button>
             </div>
           </div>
         </AppShell>
