@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/dataClient";
+import type { Session, User } from "@supabase/supabase-js";
 
 interface UserProfile {
   user_id: string; // Mantido para referência, mas o role virá do app_metadata
@@ -11,8 +12,8 @@ interface UserProfile {
 }
 
 interface AuthState {
-  session: any | null;
-  user: any | null;
+  session: Session | null;
+  user: User | null;
   profile: UserProfile | null;
   loading: boolean;
 }
@@ -20,8 +21,8 @@ interface AuthState {
 const AuthContext = createContext<AuthState>({ session: null, user: null, profile: null, loading: true });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<any | null>(null);
-  const [user, setUser] = useState<any | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
