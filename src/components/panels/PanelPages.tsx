@@ -2,35 +2,59 @@ import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
 import { KPIStat } from "@/components/app/KPIStat";
 import { FiltersBar } from "@/components/app/FiltersBar";
-import { DataTable } from "@/components/app/DataTable";
+import { DataTable, type Column } from "@/components/app/DataTable";
 import { ChartPlaceholder } from "@/components/app/ChartPlaceholder";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, FileText, Target, Plus, Wrench } from "lucide-react";
+import { Building2, FileText, Target, Plus } from "lucide-react";
 import { adminTeamColumns, adminTeamRows } from "@/mocks/tables";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFilterOptions } from "@/hooks/useFilterOptions";
 import { LotesMapPreview } from "@/components/app/LotesMapPreview";
+import { SelectedEmpreendimentoProvider, useSelectedEmpreendimento } from "@/hooks/useSelectedEmpreendimento";
+import { supabase } from "@/lib/dataClient";
 
-const DevelopmentPlaceholder = ({ panelName }: { panelName: string }) => (
-  <div className="rounded-[14px] border border-dashed border-border bg-secondary/60 h-[calc(100vh-200px)] grid place-items-center text-center p-4">
-    <div>
-      <Wrench className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-      <h2 className="text-2xl font-semibold">Painel em Desenvolvimento</h2>
-      <p className="mt-2 text-muted-foreground">
-        A área de <span className="font-medium text-foreground">{panelName}</span> está sendo preparada e será lançada em breve.
-      </p>
-    </div>
-  </div>
-);
+const panelTableMap: Record<string, string> = {
+  comercial: 'leads',
+  marketing: 'leads',
+  juridico: 'contratos',
+  obras: 'cronograma',
+  contabilidade: 'contratos',
+  imobiliaria: 'corretores',
+  corretor: 'leads'
+};
 
-export function PanelHomePage({ menuKey, title }: { menuKey: string; title: string }) {
+const sectionTableMap: Record<string, string> = {
+  Leads: 'leads',
+  Contratos: 'contratos',
+  Cronograma: 'cronograma',
+  Corretores: 'corretores'
+};
+
+function PanelHomePageInner({ menuKey, title }: { menuKey: string; title: string }) {
   const { empreendimentos, statuses } = useFilterOptions();
-  const [selectedEmpreendimento, setSelectedEmpreendimento] = useState<string>('');
+  const { selectedEmpreendimento, setSelectedEmpreendimento } = useSelectedEmpreendimento();
   const [status, setStatus] = useState<string>('todos');
+  const [rows, setRows] = useState<Record<string, any>[]>([]);
+  const [columns, setColumns] = useState<Column[]>([]);
 
-  // Mantém o dashboard completo para os painéis funcionais
+  const table = panelTableMap[menuKey];
+
+  useEffect(() => {
+    if (!table || !selectedEmpreendimento) return;
+    supabase
+      .from(table)
+      .select('*')
+      .eq('empreendimento_id', selectedEmpreendimento)
+      .then(({ data }) => {
+        setRows(data ?? []);
+        if (data && data.length > 0) {
+          setColumns(Object.keys(data[0]).map(key => ({ key, header: key })));
+        }
+      });
+  }, [table, selectedEmpreendimento]);
+
   if (menuKey === 'superadmin' || menuKey === 'adminfilial') {
     return (
       <Protected>
@@ -50,7 +74,7 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
 
           <div className="mt-6">
             <FiltersBar>
-              <Select value={selectedEmpreendimento} onValueChange={setSelectedEmpreendimento}>
+              <Select value={selectedEmpreendimento ?? ''} onValueChange={setSelectedEmpreendimento}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Empreendimento" />
                 </SelectTrigger>
@@ -90,7 +114,7 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
           <div className="mt-8">
             <h3 className="mb-2 font-semibold">Mapa</h3>
             <div className="rounded-[14px] border border-border bg-secondary/60 h-[380px] overflow-hidden">
-              <LotesMapPreview empreendimentoId={selectedEmpreendimento} height="100%" />
+              <LotesMapPreview empreendimentoId={selectedEmpreendimento ?? ''} height="100%" />
             </div>
             <div className="mt-4">
               <Button variant="outline">Abrir mapa completo</Button>
@@ -101,22 +125,93 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
     );
   }
 
-  // Mostra o placeholder para todos os outros painéis
   return (
     <Protected>
-      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}>
-        <DevelopmentPlaceholder panelName={title} />
+      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}> 
+        <FiltersBar>
+          <Select value={selectedEmpreendimento ?? ''} onValueChange={setSelectedEmpreendimento}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Empreendimento" />
+            </SelectTrigger>
+            <SelectContent>
+              {empreendimentos.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FiltersBar>
+        <div className="mt-6">
+          {selectedEmpreendimento ? (
+            <DataTable columns={columns} rows={rows} pageSize={5} />
+          ) : (
+            <p className="text-muted-foreground">Selecione um empreendimento para visualizar os dados.</p>
+          )}
+        </div>
       </AppShell>
     </Protected>
   );
 }
 
-export function PanelSectionPage({ menuKey, title, section }: { menuKey: string; title: string; section: string }) {
+function PanelSectionPageInner({ menuKey, title, section }: { menuKey: string; title: string; section: string }) {
+  const { empreendimentos } = useFilterOptions();
+  const { selectedEmpreendimento, setSelectedEmpreendimento } = useSelectedEmpreendimento();
+  const [rows, setRows] = useState<Record<string, any>[]>([]);
+  const [columns, setColumns] = useState<Column[]>([]);
+  const table = sectionTableMap[section as keyof typeof sectionTableMap];
+
+  useEffect(() => {
+    if (!table || !selectedEmpreendimento) return;
+    supabase
+      .from(table)
+      .select('*')
+      .eq('empreendimento_id', selectedEmpreendimento)
+      .then(({ data }) => {
+        setRows(data ?? []);
+        if (data && data.length > 0) {
+          setColumns(Object.keys(data[0]).map(key => ({ key, header: key })));
+        }
+      });
+  }, [table, selectedEmpreendimento]);
+
   return (
     <Protected>
-      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }, { label: section }]}>
-        <DevelopmentPlaceholder panelName={`${title} - ${section}`} />
+      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }, { label: section }]}> 
+        <FiltersBar>
+          <Select value={selectedEmpreendimento ?? ''} onValueChange={setSelectedEmpreendimento}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Empreendimento" />
+            </SelectTrigger>
+            <SelectContent>
+              {empreendimentos.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FiltersBar>
+        <div className="mt-6">
+          {selectedEmpreendimento ? (
+            <DataTable columns={columns} rows={rows} pageSize={5} />
+          ) : (
+            <p className="text-muted-foreground">Selecione um empreendimento para visualizar os dados.</p>
+          )}
+        </div>
       </AppShell>
     </Protected>
+  );
+}
+
+export function PanelHomePage({ menuKey, title }: { menuKey: string; title: string }) {
+  return (
+    <SelectedEmpreendimentoProvider>
+      <PanelHomePageInner menuKey={menuKey} title={title} />
+    </SelectedEmpreendimentoProvider>
+  );
+}
+
+export function PanelSectionPage({ menuKey, title, section }: { menuKey: string; title: string; section: string }) {
+  return (
+    <SelectedEmpreendimentoProvider>
+      <PanelSectionPageInner menuKey={menuKey} title={title} section={section} />
+    </SelectedEmpreendimentoProvider>
   );
 }
