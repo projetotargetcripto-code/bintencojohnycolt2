@@ -2,6 +2,7 @@ import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/dataClient";
+import { useAuth } from "@/providers/AuthProvider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,30 +112,38 @@ export default function LotesPage() {
   const [selectedEmpreendimentoId, setSelectedEmpreendimentoId] = useState<string | null>(null);
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [loadingLotes, setLoadingLotes] = useState(false);
+  const { profile } = useAuth();
 
   useEffect(() => {
     document.title = "Gestão de Lotes | BlockURB";
-    supabase.from('empreendimentos').select('id, nome').order('nome').then(({ data }) => {
-      if (data) setEmpreendimentos(data);
-    });
-  }, []);
+    if (!profile?.filial_id) return;
+    supabase
+      .from('empreendimentos')
+      .select('id, nome')
+      .eq('filial_id', profile.filial_id)
+      .order('nome')
+      .then(({ data }) => {
+        if (data) setEmpreendimentos(data);
+      });
+  }, [profile?.filial_id]);
 
   useEffect(() => {
-    if (!selectedEmpreendimentoId) {
+    if (!selectedEmpreendimentoId || !profile?.filial_id) {
       setLotes([]);
       return;
     }
     setLoadingLotes(true);
     supabase
       .from('lotes')
-      .select('id, nome, numero, status, area_m2, perimetro_m, valor') // Adiciona 'valor'
+      .select('id, nome, numero, status, area_m2, perimetro_m, valor')
       .eq('empreendimento_id', selectedEmpreendimentoId)
+      .eq('filial_id', profile.filial_id)
       .order('numero')
       .then(({ data }) => {
         if (data) setLotes(data);
         setLoadingLotes(false);
       });
-  }, [selectedEmpreendimentoId]);
+  }, [selectedEmpreendimentoId, profile?.filial_id]);
   
   // Função para chamar a RPC e atualizar o status
   const handleStatusChange = async (loteId: string, newStatus: string): Promise<boolean> => {

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/dataClient";
+import { useAuth } from "@/providers/AuthProvider";
 import { LoteData, formatArea } from "@/lib/geojsonUtils";
 import { toast } from "sonner";
 import { Edit3, DollarSign, Users, TrendingUp } from "lucide-react";
@@ -39,14 +40,18 @@ export default function LotesVendas() {
     observacoes: ''
   });
 
+  const { profile } = useAuth();
+
   // Carregar empreendimentos
   useEffect(() => {
     const loadEmpreendimentos = async () => {
       try {
+        if (!profile?.filial_id) return;
         const { data, error } = await supabase
           .from('empreendimentos')
           .select('id, nome, total_lotes')
           .eq('status', 'aprovado')
+          .eq('filial_id', profile.filial_id)
           .order('nome');
 
         if (error) {
@@ -64,20 +69,20 @@ export default function LotesVendas() {
     };
 
     loadEmpreendimentos();
-  }, []);
+  }, [profile?.filial_id]);
 
   // Carregar lotes do empreendimento selecionado
   useEffect(() => {
-    if (!selectedEmp) return;
+    if (!selectedEmp || !profile?.filial_id) return;
 
     const loadLotes = async () => {
       try {
         setLoading(true);
-        // Busca direta na tabela, trazendo todos os lotes do empreendimento
         const { data, error } = await supabase
           .from('lotes')
           .select('id, nome, numero, status, area_m2, valor')
           .eq('empreendimento_id', selectedEmp)
+          .eq('filial_id', profile.filial_id)
           .order('numero', { ascending: true });
 
         if (error) {
@@ -102,7 +107,7 @@ export default function LotesVendas() {
     };
 
     loadLotes();
-  }, [selectedEmp]);
+  }, [selectedEmp, profile?.filial_id]);
 
   // Abrir dialog de edição
   const handleEditLote = (lote: LoteData) => {
@@ -144,6 +149,7 @@ export default function LotesVendas() {
         .from('lotes')
         .select('id, nome, numero, status, area_m2, valor')
         .eq('empreendimento_id', selectedEmp)
+        .eq('filial_id', profile?.filial_id || '')
         .order('numero', { ascending: true });
       if (data) {
         const mapped = data.map((l: any) => ({ id: l.id, nome: l.nome, numero: l.numero, status: l.status, area_m2: l.area_m2, preco: l.valor ?? null }));

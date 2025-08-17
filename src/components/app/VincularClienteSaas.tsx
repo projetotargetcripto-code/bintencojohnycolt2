@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/dataClient";
+import { useAuth } from "@/providers/AuthProvider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -29,14 +30,19 @@ export default function VincularClienteSaas({ filiais, onVincular }: Props) {
   const [userId, setUserId] = useState("");
   const [filialId, setFilialId] = useState("");
   const [saving, setSaving] = useState(false);
+  const { profile } = useAuth();
 
   useEffect(() => {
     async function fetchUsers() {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from("user_profiles")
         .select("user_id, full_name, email, filial_id, role")
         .order("full_name", { ascending: true });
+      if (profile?.filial_id && profile.role !== "superadmin") {
+        query = query.eq("filial_id", profile.filial_id);
+      }
+      const { data, error } = await query;
       if (error) {
         toast.error("Erro ao buscar usuários: " + error.message);
       } else {
@@ -45,7 +51,7 @@ export default function VincularClienteSaas({ filiais, onVincular }: Props) {
       setLoading(false);
     }
     fetchUsers();
-  }, []);
+  }, [profile?.filial_id]);
 
   const handleVincular = async () => {
     if (!userId || !filialId) {

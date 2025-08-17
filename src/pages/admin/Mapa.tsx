@@ -49,7 +49,8 @@ const fetchEmpreendimentos = async (filialId?: string | null): Promise<Emp[]> =>
     const { data: empRows, error: empError } = await supabase
       .from('empreendimentos')
       .select('id, nome, bounds, geojson_url, masterplan_url')
-      .in('id', ids);
+      .in('id', ids)
+      .eq('filial_id', filialId);
     if (empError) {
       console.error("Erro ao buscar empreendimentos:", empError);
       return [];
@@ -243,6 +244,7 @@ function MapView({ selected }: { selected?: Emp }) {
                                     .from('lotes')
                                     .select('id, nome, numero, status, area_m2, perimetro_m, area_hectares, valor') // Adiciona 'valor'
                                     .eq('id', p.id)
+                                    .eq('filial_id', profile?.filial_id || '')
                                     .single();
                                 
                                 if (error) throw error;

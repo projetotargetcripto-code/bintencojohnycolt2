@@ -108,6 +108,7 @@ end$$;
 create table if not exists public.lotes (
   id uuid primary key default gen_random_uuid(),
   empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
+  filial_id uuid not null references public.filiais(id),
   nome text not null,
   numero integer null,
   status text not null default 'disponivel',
@@ -128,6 +129,7 @@ create table if not exists public.lotes (
   updated_at timestamptz null default now()
 );
 create index if not exists idx_lotes_emp on public.lotes(empreendimento_id);
+create index if not exists idx_lotes_filial on public.lotes(filial_id);
 create index if not exists idx_lotes_status on public.lotes(status);
 create index if not exists idx_lotes_geom on public.lotes using gist (geom);
 
@@ -139,6 +141,15 @@ begin
     new.valor := new.preco;
   elsif new.valor is not null and (new.preco is null or TG_OP = 'INSERT') then
     new.preco := new.valor;
+  end if;
+  return new;
+end $$;
+
+create or replace function public.set_lote_filial()
+returns trigger language plpgsql as $$
+begin
+  if new.filial_id is null then
+    select filial_id into new.filial_id from public.empreendimentos where id = new.empreendimento_id;
   end if;
   return new;
 end $$;
@@ -155,12 +166,18 @@ begin
     before update on public.lotes
     for each row execute function public.set_updated_at();
   end if;
+  if not exists (select 1 from pg_trigger where tgname = 'tg_lotes_set_filial') then
+    create trigger tg_lotes_set_filial
+    before insert on public.lotes
+    for each row execute function public.set_lote_filial();
+  end if;
 end$$;
 
 -- MASTERPLAN OVERLAYS
 create table if not exists public.masterplan_overlays (
   id uuid primary key default gen_random_uuid(),
   empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
+  filial_id uuid not null references public.filiais(id),
   image_path text not null,
   bounds jsonb not null,       -- GeoJSON Polygon
   opacity numeric(4,2) not null default 0.5,
@@ -169,7 +186,17 @@ create table if not exists public.masterplan_overlays (
   updated_at timestamptz null default now()
 );
 create index if not exists idx_mpo_emp on public.masterplan_overlays(empreendimento_id);
+create index if not exists idx_mpo_filial on public.masterplan_overlays(filial_id);
 create index if not exists idx_mpo_is_active on public.masterplan_overlays(is_active);
+
+create or replace function public.set_mpo_filial()
+returns trigger language plpgsql as $$
+begin
+  if new.filial_id is null then
+    select filial_id into new.filial_id from public.empreendimentos where id = new.empreendimento_id;
+  end if;
+  return new;
+end $$;
 
 do $$
 begin
@@ -177,6 +204,11 @@ begin
     create trigger tg_mpo_updated_at
     before update on public.masterplan_overlays
     for each row execute function public.set_updated_at();
+  end if;
+  if not exists (select 1 from pg_trigger where tgname = 'tg_mpo_set_filial') then
+    create trigger tg_mpo_set_filial
+    before insert on public.masterplan_overlays
+    for each row execute function public.set_mpo_filial();
   end if;
 end$$;
 
@@ -235,31 +267,27 @@ for insert to authenticated with check (public.is_admin() or user_id = auth.uid(
 create policy if not exists up_self_update on public.user_profiles
 for update to authenticated using (public.is_admin() or user_id = auth.uid()) with check (public.is_admin() or user_id = auth.uid());
 
--- LOTES (por filial via join)
+-- LOTES (por filial)
 create policy if not exists lotes_select on public.lotes
 for select to authenticated
 using (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.lotes.filial_id
 ));
 create policy if not exists lotes_write on public.lotes
 for insert to authenticated with check (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.lotes.filial_id
 ));
 create policy if not exists lotes_update on public.lotes
 for update to authenticated
 using (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.lotes.filial_id
 ))
 with check (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.lotes.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.lotes.filial_id
 ));
 
 -- MASTERPLAN_OVERLAYS (mesma regra por filial)
@@ -267,24 +295,20 @@ create policy if not exists mpo_select on public.masterplan_overlays
 for select to authenticated
 using (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.masterplan_overlays.filial_id
 ));
 create policy if not exists mpo_write on public.masterplan_overlays
 for insert to authenticated with check (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.masterplan_overlays.filial_id
 ));
 create policy if not exists mpo_update on public.masterplan_overlays
 for update to authenticated using (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.masterplan_overlays.filial_id
 )) with check (public.is_admin() or exists (
   select 1 from public.user_profiles up
-  join public.empreendimentos e on e.id = public.masterplan_overlays.empreendimento_id
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = e.filial_id
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = public.masterplan_overlays.filial_id
 ));
 
 -- FILIAL_ALLOWED_PANELS

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapView } from "@/components/MapView";
 import { supabase } from "@/lib/dataClient";
+import { useAuth } from "@/providers/AuthProvider";
 import { LoteData } from "@/lib/geojsonUtils";
 import { RefreshCw, Search, TrendingUp } from "lucide-react";
 
@@ -40,15 +41,18 @@ export default function MapaInterativo() {
   const [selectedLote, setSelectedLote] = useState<LoteData | null>(null);
   const [stats, setStats] = useState<VendasStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { profile } = useAuth();
 
   // Carregar empreendimentos
   const loadEmpreendimentos = async () => {
     try {
+      if (!profile?.filial_id) return;
       setLoading(true);
       const { data, error } = await supabase
         .from('empreendimentos')
         .select('*')
         .eq('status', 'aprovado')
+        .eq('filial_id', profile.filial_id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -57,7 +61,7 @@ export default function MapaInterativo() {
       }
 
       setEmpreendimentos(data || []);
-      
+
       // Selecionar primeiro empreendimento automaticamente
       if (data && data.length > 0 && !selectedEmp) {
         setSelectedEmp(data[0].id);
@@ -91,7 +95,7 @@ export default function MapaInterativo() {
 
   useEffect(() => {
     loadEmpreendimentos();
-  }, []);
+  }, [profile?.filial_id]);
 
   useEffect(() => {
     if (selectedEmp) {

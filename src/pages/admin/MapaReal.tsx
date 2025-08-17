@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import L, { LatLngBoundsExpression, Layer } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { supabase } from "@/lib/dataClient";
+import { useAuth } from "@/providers/AuthProvider";
 
 // Interface para empreendimentos do Supabase
 interface Empreendimento {
@@ -25,20 +26,23 @@ function SidebarEmpreendimentos({ onSelect, activeId }: { onSelect: (e: Empreend
   const [periodo, setPeriodo] = useState("7");
   const [empreendimentos, setEmpreendimentos] = useState<Empreendimento[]>([]);
   const [loading, setLoading] = useState(true);
+  const { profile } = useAuth();
 
   useEffect(() => {
     (async () => {
+      if (!profile?.filial_id) { setLoading(false); return; }
       const { data, error } = await supabase
         .from('empreendimentos')
         .select('id, nome, created_at')
+        .eq('filial_id', profile.filial_id)
         .order('created_at', { ascending: false });
-      
+
       if (!error && data) {
         setEmpreendimentos(data);
       }
       setLoading(false);
     })();
-  }, []);
+  }, [profile?.filial_id]);
 
   const filtered = useMemo(() => {
     return empreendimentos.filter(e => e.nome.toLowerCase().includes(q.toLowerCase()));
