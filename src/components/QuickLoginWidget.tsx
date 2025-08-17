@@ -18,6 +18,10 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
+  if (quickLoginCredentials.length === 0) {
+    return null;
+  }
+
   const quickLogin = async (cred: QuickLoginCredential) => {
     setError(null);
     setLoading(cred.email);
