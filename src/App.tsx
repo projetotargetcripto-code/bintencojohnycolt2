@@ -14,6 +14,7 @@ import Reset from "./pages/Reset";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { AuthorizationProvider } from "@/providers/AuthorizationProvider";
 import { PanelHomePage, PanelSectionPage } from "@/components/panels/PanelPages";
+import ConfigPage from "./pages/admin/Config";
 import EmpreendimentoNovo from "./pages/admin/EmpreendimentoNovo";
 import AdminMapa from "./pages/admin/Mapa";
 import MapaInterativo from "./pages/admin/MapaInterativo";
@@ -75,7 +76,7 @@ const App = () => (
             <Route path="/super-admin/mapa" element={<Protected allowedRoles={['superadmin']}><MapaSuperAdmin /></Protected>} />
             <Route path="/super-admin/auditoria" element={<Protected allowedRoles={['superadmin']}><AuditLogsPage /></Protected>} />
             <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard /></Protected>} />
-            <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Configurações" /></Protected>} />
+            <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><ConfigPage /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
             <Route path="/super-admin/usuarios" element={<Protected allowedRoles={['superadmin']}><UsuariosPage /></Protected>} />
             <Route path="/super-admin/tokenizacao" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Tokenização" /></Protected>} />
