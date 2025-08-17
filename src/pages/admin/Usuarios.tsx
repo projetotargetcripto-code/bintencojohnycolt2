@@ -18,6 +18,8 @@ type UserProfile = {
   filial_id: string | null;
 };
 
+type AuthUser = { id: string; email: string | null };
+
 const ALL_ROLES = [
   "superadmin",
   "adminfilial",
@@ -64,13 +66,39 @@ export default function UsuariosPage() {
 
   const init = async () => {
     setLoading(true);
-    const [{ data: f }, { data: u }, { data: userData }] = await Promise.all([
+    const [
+      { data: f },
+      { data: profiles },
+      { data: authUsers },
+      { data: userData },
+    ] = await Promise.all([
       supabase.from("filiais").select("id, nome").order("nome"),
-      supabase.from("user_profiles").select("user_id, email, full_name, role, filial_id").order("full_name", { ascending: true }),
+      supabase
+        .from("user_profiles")
+        .select("user_id, full_name, role, filial_id"),
+      supabase.rpc('admin_list_users'),
       supabase.auth.getUser(),
     ]);
     setFiliais(f || []);
-    setUsers((u as any) || []);
+
+    const profileMap = Object.fromEntries(
+      (profiles as UserProfile[] | null)?.map((p) => [p.user_id, p]) || [],
+    );
+
+    const merged: UserProfile[] = (authUsers as AuthUser[] | null)?.map((u) => {
+      const p = profileMap[u.id] as UserProfile | undefined;
+      return {
+        user_id: u.id,
+        email: u.email,
+        full_name: p?.full_name ?? null,
+        role: p?.role ?? null,
+        filial_id: p?.filial_id ?? null,
+      };
+    }) || [];
+
+    merged.sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
+
+    setUsers(merged);
     setLoading(false);
     setCurrentUserId(userData.user?.id ?? null);
   };
