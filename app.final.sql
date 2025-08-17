@@ -178,6 +178,7 @@ end$$;
 create table if not exists public.lotes (
   id uuid primary key default gen_random_uuid(),
   empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
+  filial_id uuid references public.filiais(id) on delete cascade,
   nome text not null,
   numero integer,
   status text not null default 'disponivel',
@@ -214,9 +215,29 @@ alter table public.lotes add column if not exists properties jsonb;
 alter table public.lotes add column if not exists comprador_nome text;
 alter table public.lotes add column if not exists comprador_email text;
 alter table public.lotes add column if not exists data_venda timestamptz;
+alter table public.lotes add column if not exists filial_id uuid;
 alter table public.lotes add column if not exists geom geometry;
 alter table public.lotes add column if not exists created_at timestamptz default now();
 alter table public.lotes add column if not exists updated_at timestamptz default now();
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'lotes_filial_id_fkey'
+      and conrelid = 'public.lotes'::regclass
+  ) then
+    alter table public.lotes
+      add constraint lotes_filial_id_fkey
+      foreign key (filial_id) references public.filiais(id) on delete cascade;
+  end if;
+end $$;
+
+create index if not exists idx_lotes_filial on public.lotes(filial_id);
+update public.lotes l
+  set filial_id = e.filial_id
+  from public.empreendimentos e
+  where l.empreendimento_id = e.id and l.filial_id is null;
 
 create index if not exists idx_lotes_emp on public.lotes(empreendimento_id);
 create index if not exists idx_lotes_status on public.lotes(status);
@@ -251,6 +272,7 @@ end$$;
 create table if not exists public.masterplan_overlays (
   id uuid primary key default gen_random_uuid(),
   empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
+  filial_id uuid references public.filiais(id) on delete cascade,
   image_path text not null,
   bounds jsonb not null,
   opacity numeric(4,2) not null default 0.5,
@@ -260,6 +282,24 @@ create table if not exists public.masterplan_overlays (
 );
 create index if not exists idx_mpo_emp on public.masterplan_overlays(empreendimento_id);
 create index if not exists idx_mpo_is_active on public.masterplan_overlays(is_active);
+alter table public.masterplan_overlays add column if not exists filial_id uuid;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'masterplan_overlays_filial_id_fkey'
+      and conrelid = 'public.masterplan_overlays'::regclass
+  ) then
+    alter table public.masterplan_overlays
+      add constraint masterplan_overlays_filial_id_fkey
+      foreign key (filial_id) references public.filiais(id) on delete cascade;
+  end if;
+end $$;
+create index if not exists idx_mpo_filial on public.masterplan_overlays(filial_id);
+update public.masterplan_overlays mpo
+  set filial_id = e.filial_id
+  from public.empreendimentos e
+  where mpo.empreendimento_id = e.id and mpo.filial_id is null;
 do $$
 begin
   if not exists (select 1 from pg_trigger where tgname = 'tg_mpo_updated_at') then
@@ -312,180 +352,40 @@ alter table public.masterplan_overlays enable row level security;
 alter table public.filial_allowed_panels enable row level security;
 
 -- FILIAIS
-drop policy if exists filiais_select on public.filiais;
-create policy filiais_select on public.filiais
-for select to authenticated
-using (public.is_admin() or exists (
-  select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = filiais.id
-));
-drop policy if exists filiais_admin_write on public.filiais;
-create policy filiais_admin_write on public.filiais
-for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists filiais_rls on public.filiais;
+create policy filiais_rls on public.filiais
+for all using (id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+with check (id = current_setting('request.jwt.claims.filial_id', true)::uuid);
 
 -- EMPREENDIMENTOS (libera público se published=true)
-drop policy if exists emp_select_public on public.empreendimentos;
-create policy emp_select_public on public.empreendimentos
-for select to anon using (published is true);
-
-drop policy if exists emp_select on public.empreendimentos;
-create policy emp_select on public.empreendimentos
-for select to authenticated
-using (
-  public.is_admin()
-  or published is true
-  or exists (
-    select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
-  )
-);
-drop policy if exists emp_write on public.empreendimentos;
-create policy emp_write on public.empreendimentos
-for insert to authenticated with check (
-  public.is_admin() or exists (
-    select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
-  )
-);
-drop policy if exists emp_update on public.empreendimentos;
-create policy emp_update on public.empreendimentos
-for update to authenticated
-using (public.is_admin() or exists (
-  select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
-))
-with check (public.is_admin() or exists (
-  select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
-));
+drop policy if exists empreendimentos_rls on public.empreendimentos;
+create policy empreendimentos_rls on public.empreendimentos
+for all using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid);
 
 -- USER_PROFILES
-drop policy if exists up_self_read on public.user_profiles;
-create policy up_self_read on public.user_profiles
-for select to authenticated using (user_id = auth.uid() or public.is_admin());
-drop policy if exists up_self_insert on public.user_profiles;
-create policy up_self_insert on public.user_profiles
-for insert to authenticated with check (public.is_admin() or user_id = auth.uid());
-drop policy if exists up_self_update on public.user_profiles;
-create policy up_self_update on public.user_profiles
-for update to authenticated using (public.is_admin() or user_id = auth.uid()) with check (public.is_admin() or user_id = auth.uid());
+drop policy if exists user_profiles_rls on public.user_profiles;
+create policy user_profiles_rls on public.user_profiles
+for all using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid);
 
 -- LOTES (libera público via published do empreendimento)
-drop policy if exists lotes_select_public on public.lotes;
-create policy lotes_select_public on public.lotes
-for select to anon
-using (
-  exists (
-    select 1 from public.empreendimentos e
-    where e.id = public.lotes.empreendimento_id and e.published is true
-  )
-);
-
-drop policy if exists lotes_select on public.lotes;
-create policy lotes_select on public.lotes
-for select to authenticated
-using (
-  public.is_admin() or exists (
-    select 1
-    from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.lotes.empreendimento_id
-  )
-  or exists (
-    select 1 from public.empreendimentos e
-    where e.id = public.lotes.empreendimento_id and e.published is true
-  )
-);
-
-drop policy if exists lotes_write on public.lotes;
-create policy lotes_write on public.lotes
-for insert to authenticated with check (
-  public.is_admin() or exists (
-    select 1 from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.lotes.empreendimento_id
-  )
-);
-drop policy if exists lotes_update on public.lotes;
-create policy lotes_update on public.lotes
-for update to authenticated
-using (
-  public.is_admin() or exists (
-    select 1 from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.lotes.empreendimento_id
-  )
-)
-with check (
-  public.is_admin() or exists (
-    select 1 from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.lotes.empreendimento_id
-  )
-);
+drop policy if exists lotes_rls on public.lotes;
+create policy lotes_rls on public.lotes
+for all using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid);
 
 -- MASTERPLAN_OVERLAYS (segue a mesma lógica)
-drop policy if exists mpo_select_public on public.masterplan_overlays;
-create policy mpo_select_public on public.masterplan_overlays
-for select to anon
-using (
-  exists (
-    select 1 from public.empreendimentos e
-    where e.id = public.masterplan_overlays.empreendimento_id and e.published is true
-  )
-);
-
-drop policy if exists mpo_select on public.masterplan_overlays;
-create policy mpo_select on public.masterplan_overlays
-for select to authenticated
-using (
-  public.is_admin() or exists (
-    select 1
-    from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.masterplan_overlays.empreendimento_id
-  )
-  or exists (
-    select 1 from public.empreendimentos e
-    where e.id = public.masterplan_overlays.empreendimento_id and e.published is true
-  )
-);
-
-drop policy if exists mpo_write on public.masterplan_overlays;
-create policy mpo_write on public.masterplan_overlays
-for insert to authenticated with check (
-  public.is_admin() or exists (
-    select 1
-    from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.masterplan_overlays.empreendimento_id
-  )
-);
-drop policy if exists mpo_update on public.masterplan_overlays;
-create policy mpo_update on public.masterplan_overlays
-for update to authenticated
-using (
-  public.is_admin() or exists (
-    select 1
-    from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.masterplan_overlays.empreendimento_id
-  )
-)
-with check (
-  public.is_admin() or exists (
-    select 1
-    from public.empreendimentos e
-    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
-    where e.id = public.masterplan_overlays.empreendimento_id
-  )
-);
+drop policy if exists masterplan_overlays_rls on public.masterplan_overlays;
+create policy masterplan_overlays_rls on public.masterplan_overlays
+for all using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid);
 
 -- FILIAL_ALLOWED_PANELS
-drop policy if exists fap_select on public.filial_allowed_panels;
-create policy fap_select on public.filial_allowed_panels
-for select to authenticated using (public.is_admin() or exists (
-  select 1 from public.user_profiles up
-  where up.user_id = auth.uid() and up.is_active and up.filial_id = filial_allowed_panels.filial_id
-));
-drop policy if exists fap_write on public.filial_allowed_panels;
-create policy fap_write on public.filial_allowed_panels
-for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists filial_allowed_panels_rls on public.filial_allowed_panels;
+create policy filial_allowed_panels_rls on public.filial_allowed_panels
+for all using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid);
 
 -- ============== RPCs ==========================
 create or replace function public.get_my_allowed_panels()
