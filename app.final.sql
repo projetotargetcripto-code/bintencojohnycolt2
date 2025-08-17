@@ -450,11 +450,18 @@ for all to authenticated using (public.is_admin()) with check (public.is_admin()
 create or replace function public.get_my_allowed_panels()
 returns text[] language sql stable as $$
   with me as (
-    select filial_id from public.user_profiles where user_id = auth.uid() and is_active limit 1
+    select role, filial_id
+    from public.user_profiles
+    where user_id = auth.uid() and is_active
+    limit 1
+  ), panels as (
+    select panel from public.filial_allowed_panels fap
+    join me on me.filial_id = fap.filial_id
+    union
+    select 'adminfilial' as panel from me where me.role = 'adminfilial'
   )
   select coalesce(array_agg(panel order by panel), array[]::text[])
-  from public.filial_allowed_panels fap
-  join me on me.filial_id = fap.filial_id;
+  from panels;
 $$;
 
 create or replace function public.set_filial_allowed_panels(p_filial_id uuid, p_panels text[])
