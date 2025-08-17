@@ -148,79 +148,93 @@ function MapView({ selected }: { selected?: Empreendimento }) {
     setLoading(true);
     
     (async () => {
-      try {        
+      try {
         // Load lotes via RPC
-        const { data: fc, error: lotesError } = await supabase.rpc('lotes_geojson', { p_empreendimento_id: selected.id });
-        
+        const { data: fc, error: lotesError } = await supabase.rpc("lotes_geojson", { p_empreendimento_id: selected.id });
+
         if (!lotesError && fc) {
-          // Remove previous lots layer
-          if (lotsLayer) map.removeLayer(lotsLayer);
-          
-          // Create new lots layer
           const layer = L.geoJSON(fc as any, {
             style: (feat: any) => {
-              const status = feat?.properties?.status || 'disponivel';
+              const status = feat?.properties?.status || "disponivel";
               switch (status) {
-                case 'disponivel': return { color: '#00C26E', fillColor: '#00C26E', fillOpacity: 0.25, weight: 2 };
-                case 'reservado': return { color: '#EAB308', fillColor: '#EAB308', fillOpacity: 0.25, weight: 2 };
-                case 'vendido': return { color: '#EF4444', fillColor: '#EF4444', fillOpacity: 0.25, weight: 2 };
-                default: return { color: '#22D3EE', fillColor: '#22D3EE', fillOpacity: 0.20, weight: 2 };
+                case "disponivel":
+                  return { color: "#00C26E", fillColor: "#00C26E", fillOpacity: 0.25, weight: 2 };
+                case "reservado":
+                  return { color: "#EAB308", fillColor: "#EAB308", fillOpacity: 0.25, weight: 2 };
+                case "vendido":
+                  return { color: "#EF4444", fillColor: "#EF4444", fillOpacity: 0.25, weight: 2 };
+                default:
+                  return { color: "#22D3EE", fillColor: "#22D3EE", fillOpacity: 0.2, weight: 2 };
               }
             },
             onEachFeature: (feat, lyr) => {
               const p: any = feat.properties || {};
               const html = `
                 <div class="text-xs">
-                  <div><strong>${p.codigo ?? 'Lote'}</strong></div>
-                  <div>Status: ${p.status ?? '—'}</div>
-                  ${p.area_m2 ? `<div>Área: ${p.area_m2} m²</div>` : ''}
-                  ${p.preco ? `<div>Preço: R$ ${p.preco.toLocaleString('pt-BR')}</div>` : ''}
+                  <div><strong>${p.codigo ?? "Lote"}</strong></div>
+                  <div>Status: ${p.status ?? "—"}</div>
+                  ${p.area_m2 ? `<div>Área: ${p.area_m2} m²</div>` : ""}
+                  ${p.preco ? `<div>Preço: R$ ${p.preco.toLocaleString("pt-BR")}</div>` : ""}
                 </div>
               `;
               (lyr as any).bindPopup(html);
-            },
+            }
           });
-          
-          setLotsLayer(layer);
-          if (showLots) layer.addTo(map);
+
+          setLotsLayer(prev => {
+            if (prev && map) map.removeLayer(prev);
+            return layer;
+          });
 
           // Fit bounds to the feature collection
           if (fc.features && fc.features.length > 0) {
             const group = L.geoJSON(fc as any);
             map.fitBounds(group.getBounds(), { padding: [20, 20] });
           }
+        } else {
+          setLotsLayer(prev => {
+            if (prev && map) map.removeLayer(prev);
+            return null;
+          });
         }
 
         // Load overlay
-        if (overlayLayer) { map.removeLayer(overlayLayer); setOverlayLayer(null); }
-        
         const { data: overlay, error: overlayError } = await supabase
-          .from('masterplan_overlays')
-          .select('image_path, bounds, opacity')
-          .eq('empreendimento_id', selected.id)
-          .eq('is_active', true)
+          .from("masterplan_overlays")
+          .select("image_path, bounds, opacity")
+          .eq("empreendimento_id", selected.id)
+          .eq("is_active", true)
           .maybeSingle();
 
-        if (!overlayError && overlay && showOverlay) {
-          // Get signed URL for the image
+        setOverlayLayer(prev => {
+          if (prev && map) map.removeLayer(prev);
+          return null;
+        });
+
+        if (!overlayError && overlay) {
           const { data: signed } = await supabase.storage
-            .from('masterplans')
+            .from("masterplans")
             .createSignedUrl(overlay.image_path, 60);
-          
+
           if (signed?.signedUrl) {
-            // Convert bounds from GeoJSON Polygon to SW/NE
             const coords = overlay.bounds.coordinates[0];
             const sw: [number, number] = [coords[0][1], coords[0][0]]; // [lat, lng]
             const ne: [number, number] = [coords[2][1], coords[2][0]]; // [lat, lng]
-            
-            const img = L.imageOverlay(signed.signedUrl, [sw, ne], { opacity: overlay.opacity ?? opacity });
-            img.addTo(map);
-            setOverlayLayer(img);
+
+            const img = L.imageOverlay(signed.signedUrl, [sw, ne], { opacity: overlay.opacity ?? 0.7 });
+
+            setOverlayLayer(prev => {
+              if (prev && map) map.removeLayer(prev);
+              return img;
+            });
+
+            if (overlay.opacity !== undefined && overlay.opacity !== null) {
+              setOpacity(overlay.opacity);
+            }
           }
         }
-
       } catch (error) {
-        console.error('Erro ao carregar dados do empreendimento:', error);
+        console.error("Erro ao carregar dados do empreendimento:", error);
       } finally {
         setLoading(false);
       }
@@ -243,7 +257,7 @@ function MapView({ selected }: { selected?: Empreendimento }) {
     } else {
       if (map.hasLayer(overlayLayer)) map.removeLayer(overlayLayer);
     }
-  }, [map, showOverlay, opacity, overlayLayer]);
+  }, [map, overlayLayer, showOverlay, opacity]);
 
   const clearSelection = () => {
     setLoading(false);
