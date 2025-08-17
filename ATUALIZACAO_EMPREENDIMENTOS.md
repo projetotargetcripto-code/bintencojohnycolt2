@@ -31,7 +31,7 @@
 ### ⚠️ **IMPORTANTE: Execute o SQL abaixo no Supabase Dashboard**
 
 1. Acesse: https://supabase.com/dashboard/project/epsuxumkgakpqykvteij/sql
-2. Cole e execute o conteúdo do arquivo `NovoSetup/sql.final.referenciado.sql`
+2. Cole e execute o conteúdo do arquivo `NovoSetup/sql/sql.final.referenciado.sql`
 
 ### Novos Campos na Tabela `empreendimentos`:
 - `status` (pendente/aprovado/rejeitado)

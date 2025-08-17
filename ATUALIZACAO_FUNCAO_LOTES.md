@@ -6,7 +6,7 @@ Alguns bancos ainda utilizam a versão antiga da função `process_geojson_lotes
 A nova versão inclui também `p_empreendimento_nome` para que cada lote receba o nome do empreendimento como prefixo.
 
 ## 🛠️ O que foi feito
-- Função final incluída em `NovoSetup/sql.final.referenciado.sql` com o parâmetro adicional.
+- Função final incluída em `NovoSetup/sql/sql.final.referenciado.sql` com o parâmetro adicional.
 - Front-end ajustado para realizar *fallback* caso o banco ainda esteja com a função antiga.
 
 ## 🚀 Como sincronizar o backend
@@ -14,7 +14,7 @@ Execute o script abaixo no Supabase para atualizar a função para a versão mai
 
 ```sql
 -- Atualiza a função process_geojson_lotes para incluir p_empreendimento_nome
--- Execute o arquivo completo NovoSetup/sql.final.referenciado.sql
+-- Execute o arquivo completo NovoSetup/sql/sql.final.referenciado.sql
 ```
 
 Após a execução, a função aceitará o parâmetro extra e os lotes serão salvos com o nome do empreendimento como prefixo.
