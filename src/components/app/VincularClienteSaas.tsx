@@ -60,9 +60,19 @@ export default function VincularClienteSaas({ filiais, onVincular }: Props) {
       setSaving(false);
       return;
     }
+    let ip: string | undefined;
+    try {
+      const resp = await fetch('https://api.ipify.org?format=json');
+      const data = await resp.json();
+      ip = data.ip as string;
+    } catch {
+      // ignore
+    }
     const { error } = await supabase.rpc('link_user_to_filial', {
       p_user_id: userId,
       p_filial_id: filialId,
+      p_ip_address: ip,
+      p_user_agent: navigator.userAgent,
     });
     if (error) {
       toast.error("Erro ao vincular: " + error.message);

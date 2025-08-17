@@ -13,6 +13,8 @@ type AuditLog = {
   action: string;
   target: string | null;
   metadata: any;
+  ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
 };
 
@@ -26,6 +28,8 @@ export default function AuditLogsPage() {
   const [userFilter, setUserFilter] = useState("");
   const [filialFilter, setFilialFilter] = useState("");
   const [actionFilter, setActionFilter] = useState("");
+  const [ipFilter, setIpFilter] = useState("");
+  const [userAgentFilter, setUserAgentFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -37,7 +41,7 @@ export default function AuditLogsPage() {
     setLoading(true);
     let query = supabase
       .from("audit_logs")
-      .select("*", { count: "exact" })
+      .select("id, actor, action, target, metadata, created_at, ip_address, user_agent", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
     if (userFilter.trim()) {
@@ -49,6 +53,12 @@ export default function AuditLogsPage() {
     if (actionFilter.trim()) {
       query = query.eq("action", actionFilter.trim());
     }
+    if (ipFilter.trim()) {
+      query = query.eq("ip_address", ipFilter.trim());
+    }
+    if (userAgentFilter.trim()) {
+      query = query.ilike("user_agent", `%${userAgentFilter.trim()}%`);
+    }
     if (startDate) {
       query = query.gte("created_at", startDate);
     }
@@ -59,7 +69,7 @@ export default function AuditLogsPage() {
     setLogs((data as any) || []);
     setTotal(count || 0);
     setLoading(false);
-  }, [page, userFilter, filialFilter, actionFilter, startDate, endDate]);
+  }, [page, userFilter, filialFilter, actionFilter, startDate, endDate, ipFilter, userAgentFilter]);
 
   useEffect(() => {
     void loadLogs();
@@ -67,11 +77,20 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [userFilter, filialFilter, actionFilter, startDate, endDate]);
+  }, [userFilter, filialFilter, actionFilter, startDate, endDate, ipFilter, userAgentFilter]);
 
   const exportCsv = () => {
-    const header = ["id", "actor", "action", "target", "filial_id", "created_at"];
-    const rows = logs.map((l) => [l.id, l.actor, l.action, l.target ?? "", l.metadata?.filial_id ?? "", l.created_at]);
+    const header = ["id", "actor", "action", "target", "filial_id", "ip_address", "user_agent", "created_at"];
+    const rows = logs.map((l) => [
+      l.id,
+      l.actor,
+      l.action,
+      l.target ?? "",
+      l.metadata?.filial_id ?? "",
+      l.ip_address ?? "",
+      l.user_agent ?? "",
+      l.created_at
+    ]);
     const csv = [header.join(","), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -93,7 +112,7 @@ export default function AuditLogsPage() {
             <CardDescription>Histórico de operações realizadas na plataforma.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
               <div>
                 <label className="text-sm text-muted-foreground">Usuário (ID)</label>
                 <Input value={userFilter} onChange={e => setUserFilter(e.target.value)} placeholder="ID do usuário" />
@@ -107,6 +126,14 @@ export default function AuditLogsPage() {
                 <Input value={actionFilter} onChange={e => setActionFilter(e.target.value)} placeholder="Tipo de ação" />
               </div>
               <div>
+                <label className="text-sm text-muted-foreground">IP</label>
+                <Input value={ipFilter} onChange={e => setIpFilter(e.target.value)} placeholder="IP" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">User Agent</label>
+                <Input value={userAgentFilter} onChange={e => setUserAgentFilter(e.target.value)} placeholder="User Agent" />
+              </div>
+              <div>
                 <label className="text-sm text-muted-foreground">De</label>
                 <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
               </div>
@@ -116,7 +143,7 @@ export default function AuditLogsPage() {
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <Button variant="secondary" onClick={() => { setUserFilter(""); setFilialFilter(""); setActionFilter(""); setStartDate(""); setEndDate(""); }}>Limpar filtros</Button>
+              <Button variant="secondary" onClick={() => { setUserFilter(""); setFilialFilter(""); setActionFilter(""); setIpFilter(""); setUserAgentFilter(""); setStartDate(""); setEndDate(""); }}>Limpar filtros</Button>
               <Button onClick={exportCsv}>Exportar CSV</Button>
             </div>
             {loading ? (
@@ -131,6 +158,8 @@ export default function AuditLogsPage() {
                       <TableHead>Ação</TableHead>
                       <TableHead>Alvo</TableHead>
                       <TableHead>Filial</TableHead>
+                      <TableHead>IP</TableHead>
+                      <TableHead>User Agent</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -141,6 +170,8 @@ export default function AuditLogsPage() {
                         <TableCell>{log.action}</TableCell>
                         <TableCell className="font-mono">{log.target ?? "—"}</TableCell>
                         <TableCell className="font-mono">{log.metadata?.filial_id ?? "—"}</TableCell>
+                        <TableCell className="font-mono">{log.ip_address ?? "—"}</TableCell>
+                        <TableCell className="max-w-xs truncate">{log.user_agent ?? "—"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
