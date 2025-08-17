@@ -6,7 +6,7 @@ import { labelFromScope } from "@/config/authConfig";
 
 export default function SignupPage() {
   const [params] = useSearchParams();
-  const scope = params.get('scope');
+  const scope = params.get('scope') ?? 'investidor';
   const label = labelFromScope(scope);
   const title = label ? `Criar conta — ${label}` : 'Criar conta';
 
