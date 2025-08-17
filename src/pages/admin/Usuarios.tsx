@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 type Filial = { id: string; nome: string };
@@ -16,6 +18,7 @@ type UserProfile = {
   full_name: string | null;
   role: string | null;
   filial_id: string | null;
+  panels: string[] | null;
 };
 
 const ALL_ROLES = [
@@ -31,6 +34,20 @@ const ALL_ROLES = [
   "obras",
   "investidor",
   "terrenista",
+];
+
+const ALL_PANELS = [
+  { key: 'adminfilial', label: 'Admin Filial (Geral)' },
+  { key: 'urbanista', label: 'Urbanismo (Mapa, Projetos)' },
+  { key: 'juridico', label: 'Jurídico' },
+  { key: 'contabilidade', label: 'Contabilidade' },
+  { key: 'marketing', label: 'Marketing' },
+  { key: 'comercial', label: 'Comercial (Vendas)' },
+  { key: 'imobiliaria', label: 'Imobiliária' },
+  { key: 'corretor', label: 'Corretor' },
+  { key: 'obras', label: 'Obras' },
+  { key: 'investidor', label: 'Investidor' },
+  { key: 'terrenista', label: 'Terrenista' },
 ];
 
 export default function UsuariosPage() {
@@ -66,7 +83,7 @@ export default function UsuariosPage() {
     setLoading(true);
     const [{ data: f }, { data: u }, { data: userData }] = await Promise.all([
       supabase.from("filiais").select("id, nome").order("nome"),
-      supabase.from("user_profiles").select("user_id, email, full_name, role, filial_id").order("full_name", { ascending: true }),
+      supabase.from("user_profiles").select("user_id, email, full_name, role, filial_id, panels").order("full_name", { ascending: true }),
       supabase.auth.getUser(),
     ]);
     setFiliais(f || []);
@@ -116,6 +133,32 @@ export default function UsuariosPage() {
     }
   };
 
+  const updatePanels = async (userId: string, panels: string[]) => {
+    setUpdating(userId);
+    try {
+      const { error } = await supabase.rpc('admin_set_user_panels', {
+        p_user_id: userId,
+        p_panels: panels,
+      });
+      if (error) throw error;
+      toast.success('Painéis atualizados.');
+      setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, panels } : u));
+    } catch (e: any) {
+      toast.error(e?.message || 'Falha ao atualizar painéis');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const togglePanel = (userId: string, panelKey: string) => {
+    const user = users.find((u) => u.user_id === userId);
+    if (!user) return;
+    const list = Array.isArray(user.panels) ? user.panels : [];
+    const updated = list.includes(panelKey) ? list.filter((p) => p !== panelKey) : [...list, panelKey];
+    setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, panels: updated } : u));
+    void updatePanels(userId, updated);
+  };
+
   return (
     <Protected allowedRoles={["superadmin"]}>
       <AppShell menuKey="superadmin" breadcrumbs={[{ label: "Super Admin" }, { label: "Usuários" }]}>        
@@ -160,6 +203,7 @@ export default function UsuariosPage() {
                       <TableHead>E-mail</TableHead>
                       <TableHead>Filial</TableHead>
                       <TableHead>Papel</TableHead>
+                      <TableHead>Painéis</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -199,6 +243,25 @@ export default function UsuariosPage() {
                               ))}
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" size="sm" disabled={updating === u.user_id}>
+                                {Array.isArray(u.panels) && u.panels.length > 0 ? `${u.panels.length} selecionado(s)` : 'Selecionar'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-2">
+                              <div className="grid gap-2">
+                                {ALL_PANELS.map((p) => (
+                                  <label key={p.key} className="flex items-center gap-2">
+                                    <Checkbox checked={Array.isArray(u.panels) && u.panels.includes(p.key)} onCheckedChange={() => togglePanel(u.user_id, p.key)} disabled={updating === u.user_id} />
+                                    <span className="text-sm">{p.label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </TableCell>
                       </TableRow>
                     ))}

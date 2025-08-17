@@ -587,6 +587,13 @@ begin
   update public.user_profiles set filial_id = p_filial_id, updated_at = now() where user_id = p_user_id;
 end $$;
 
+create or replace function public.admin_set_user_panels(p_user_id uuid, p_panels text[])
+returns void language plpgsql as $$
+begin
+  if not public.is_admin(auth.uid()) then raise exception 'admin required'; end if;
+  update public.user_profiles set panels = p_panels, updated_at = now() where user_id = p_user_id;
+end $$;
+
 create or replace function public.admin_update_filial_info(
   p_filial_id uuid,
   p_kind text,
