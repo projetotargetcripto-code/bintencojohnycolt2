@@ -1,6 +1,6 @@
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,7 +42,7 @@ export default function MapaInterativo() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Carregar empreendimentos
-  const loadEmpreendimentos = async () => {
+  const loadEmpreendimentos = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -67,7 +67,7 @@ export default function MapaInterativo() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Carregar estatísticas de vendas
   const loadStats = async (empId: string) => {
@@ -91,7 +91,7 @@ export default function MapaInterativo() {
 
   useEffect(() => {
     loadEmpreendimentos();
-  }, []);
+  }, [loadEmpreendimentos]);
 
   useEffect(() => {
     if (selectedEmp) {
