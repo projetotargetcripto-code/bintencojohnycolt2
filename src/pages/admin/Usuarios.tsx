@@ -45,10 +45,6 @@ export default function UsuariosPage() {
   }, []);
 
   useEffect(() => {
-    void loadUsers();
-  }, [loadUsers]);
-
-  useEffect(() => {
     setPage(0);
   }, [search, roleFilter]);
 
@@ -80,6 +76,10 @@ export default function UsuariosPage() {
     setTotal(count || 0);
     setLoading(false);
   }, [page, roleFilter, search]);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
 
   const updateRole = async (userId: string, newRole: string) => {
     const normalized: string | null = newRole === "no-role" ? null : newRole;
