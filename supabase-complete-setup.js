@@ -212,19 +212,29 @@ async function completeSupabaseSetup() {
       console.log(`❌ Login admin falhou: ${loginError.message}`);
     } else {
       console.log('✅ Login admin funcionando');
-      
+
+      // Verificar painéis permitidos
+      const { data: panels, error: panelsError } = await supabase.rpc('get_my_allowed_panels');
+      if (panelsError) {
+        console.log(`⚠️ get_my_allowed_panels: ${panelsError.message}`);
+      } else {
+        const list = panels || [];
+        console.log(`${list.includes('adminfilial') ? '✅' : '❌'} Admin possui painel adminfilial`);
+        console.log(`${list.includes('superadmin') ? '⚠️' : '✅'} Admin não possui painel superadmin`);
+      }
+
       // Testar acesso a dados com usuário autenticado
       const { data: userEmps, error: userEmpsError } = await supabase
         .from('empreendimentos')
         .select('*')
         .limit(5);
-      
+
       if (userEmpsError) {
         console.log(`⚠️ Acesso a empreendimentos como admin: ${userEmpsError.message}`);
       } else {
         console.log(`✅ Admin pode acessar ${userEmps.length} empreendimentos`);
       }
-      
+
       // Logout
       await supabase.auth.signOut();
       console.log('✅ Logout realizado');

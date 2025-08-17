@@ -97,6 +97,7 @@ serve(async (req) => {
       full_name: full_name || email,
       role: "adminfilial",
       filial_id: filialIdToUse,
+      panels: ['adminfilial'],
       is_active: true,
     });
     if (upErr) return new Response(JSON.stringify({ error: upErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
