@@ -156,10 +156,6 @@ create index if not exists idx_lotes_emp on public.lotes(empreendimento_id); -- 
 create index if not exists idx_lotes_status on public.lotes(status); -- app.final.sql
 create index if not exists idx_lotes_filial on public.lotes(filial_id); -- app.final.sql
 create index if not exists idx_lotes_geom on public.lotes using gist (geom); -- app.final.sql
-create trigger tg_lotes_sync_valor_preco before insert or update on public.lotes
-    for each row execute function public.sync_valor_preco(); -- app.final.sql
-create trigger tg_lotes_updated_at before update on public.lotes
-    for each row execute function public.set_updated_at(); -- app.final.sql
 
 create or replace function public.sync_valor_preco()
 returns trigger language plpgsql as $$
@@ -171,6 +167,11 @@ begin
   end if;
   return new;
 end $$; -- app.final.sql
+
+create trigger tg_lotes_sync_valor_preco before insert or update on public.lotes
+    for each row execute function public.sync_valor_preco(); -- app.final.sql
+create trigger tg_lotes_updated_at before update on public.lotes
+    for each row execute function public.set_updated_at(); -- app.final.sql
 
 -- Funções de geometria para lotes interativos
 create or replace function public.calculate_polygon_area(coordinates jsonb)
