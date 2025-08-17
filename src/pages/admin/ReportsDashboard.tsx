@@ -13,7 +13,21 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { format, subDays } from "date-fns";
@@ -27,7 +41,21 @@ type ReportRow = {
   ocupacao: number;
 };
 
-export default function ReportsDashboard() {
+interface ReportsDashboardProps {
+  menuKey?: string;
+  title?: string;
+  allowedRoles?: string[];
+  panelKey?: string;
+  rpcFn?: string;
+}
+
+export default function ReportsDashboard({
+  menuKey = "superadmin",
+  title = "Super Admin",
+  allowedRoles = ["superadmin"],
+  panelKey,
+  rpcFn = "superadmin_reports",
+}: ReportsDashboardProps) {
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [filiais, setFiliais] = useState("");
@@ -37,8 +65,8 @@ export default function ReportsDashboard() {
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = "Relatórios Operacionais | BlockURB";
-  }, []);
+    document.title = `Relatórios Operacionais | ${title} | BlockURB`;
+  }, [title]);
 
   const filiaisArr = useMemo(() => filiais.split(",").map(f => f.trim()).filter(Boolean), [filiais]);
   const now = new Date();
@@ -47,14 +75,14 @@ export default function ReportsDashboard() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.rpc("superadmin_reports", {
+    const { data } = await supabase.rpc(rpcFn, {
       filial_ids: filiaisArr.length ? filiaisArr : null,
       from_date: computedFrom,
       to_date: computedTo,
     });
     setRows((data as any) || []);
     setLoading(false);
-  }, [filiaisArr, computedFrom, computedTo]);
+  }, [filiaisArr, computedFrom, computedTo, rpcFn]);
 
   useEffect(() => {
     void load();
@@ -107,12 +135,26 @@ export default function ReportsDashboard() {
   }, [rows]);
 
   const filiaisList = useMemo(() => Array.from(new Set(rows.map(r => r.filial_id))), [rows]);
+  const totalsByFilial = useMemo(() => {
+    const map = new Map<string, { filial: string; empreendimentos: number; usuarios: number; lotes_vendidos: number }>();
+    rows.forEach(r => {
+      if (!map.has(r.filial_id)) {
+        map.set(r.filial_id, { filial: r.filial_id, empreendimentos: 0, usuarios: 0, lotes_vendidos: 0 });
+      }
+      const item = map.get(r.filial_id)!;
+      item.empreendimentos += r.empreendimentos;
+      item.usuarios += r.usuarios;
+      item.lotes_vendidos += r.lotes_vendidos;
+    });
+    return Array.from(map.values());
+  }, [rows]);
+
 
   const COLORS = ["#8884d8", "#82ca9d", "#ff7300", "#ff0000", "#00c49f", "#0088fe"];
 
   return (
-    <Protected allowedRoles={["superadmin"]}>
-      <AppShell menuKey="superadmin" breadcrumbs={[{ label: "Super Admin" }, { label: "Relatórios" }]}>
+    <Protected allowedRoles={allowedRoles} panelKey={panelKey}>
+      <AppShell menuKey={menuKey} breadcrumbs={[{ label: title }, { label: "Relatórios" }]}>
         <Card>
           <CardHeader>
             <CardTitle>Relatórios Operacionais</CardTitle>
@@ -161,20 +203,45 @@ export default function ReportsDashboard() {
                 </Button>
               </div>
             </div>
-            <div ref={chartRef} className="w-full h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  {filiaisList.map((id, idx) => (
-                    <Line key={id} type="monotone" dataKey={id} name={id} stroke={COLORS[idx % COLORS.length]} />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+              <div ref={chartRef} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      {filiaisList.map((id, idx) => (
+                        <Line key={id} type="monotone" dataKey={id} name={id} stroke={COLORS[idx % COLORS.length]} />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={totalsByFilial}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="filial" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="empreendimentos" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={totalsByFilial} dataKey="lotes_vendidos" nameKey="filial" label outerRadius={80}>
+                        {totalsByFilial.map((entry, idx) => (
+                          <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             {loading ? (
               <p className="text-center text-muted-foreground">Carregando...</p>
             ) : (

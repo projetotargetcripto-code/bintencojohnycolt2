@@ -75,7 +75,7 @@ const App = () => (
             <Route path="/super-admin/filiais-acessos" element={<Protected allowedRoles={['superadmin']}><FiliaisAccessPage /></Protected>} />
             <Route path="/super-admin/mapa" element={<Protected allowedRoles={['superadmin']}><MapaSuperAdmin /></Protected>} />
             <Route path="/super-admin/auditoria" element={<Protected allowedRoles={['superadmin']}><AuditLogsPage /></Protected>} />
-            <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard /></Protected>} />
+            <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard menuKey="superadmin" title="Super Admin" rpcFn="superadmin_reports" allowedRoles={['superadmin']} /></Protected>} />
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><ConfigPage /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
             <Route path="/super-admin/usuarios" element={<Protected allowedRoles={['superadmin']}><UsuariosPage /></Protected>} />
@@ -83,7 +83,7 @@ const App = () => (
 
             {/* Admin Filial - Rotas padronizadas em /admin-filial */}
             <Route path="/admin-filial" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelHomePage menuKey="adminfilial" title="Admin Filial" /></Protected>} />
-            <Route path="/admin-filial/relatorios" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Relatórios" /></Protected>} />
+            <Route path="/admin-filial/relatorios" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><ReportsDashboard menuKey="adminfilial" title="Admin Filial" rpcFn="adminfilial_reports" allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial" /></Protected>} />
             <Route path="/admin-filial/config" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Configurações" /></Protected>} />
             <Route path="/admin-filial/equipe" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Equipe" /></Protected>} />
             <Route path="/admin-filial/empreendimentos" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Empreendimentos" /></Protected>} />
