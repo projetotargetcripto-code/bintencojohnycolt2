@@ -1,329 +1,662 @@
--- ============================================
--- SETUP COMPLETO DO SUPABASE PARA BLOCKURB
--- Execute este arquivo no SQL Editor do Supabase
--- ============================================
+-- ===============================================================
+-- BlockURB · app.final.sql (CORRIGIDO v4 - compat com schema atual)
+-- Compatibilidade com seu estado atual de 'empreendimentos' (slug/published/bbox).
+-- Garante colunas que faltam (ex.: filial_id) e políticas que funcionam
+-- mesmo se ainda não houver user_profiles/filiais.
+-- ===============================================================
 
--- 1. CRIAR TABELAS
--- ===============
+-- ============== EXTENSIONS ====================
+create extension if not exists "pgcrypto";
+create extension if not exists "postgis";
 
--- Tabela principal de empreendimentos
-CREATE TABLE IF NOT EXISTS empreendimentos (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  nome TEXT NOT NULL,
-  descricao TEXT,
-  total_lotes INTEGER DEFAULT 0,
-  lotes_vendidos INTEGER DEFAULT 0,
-  bounds TEXT, -- JSON string: {"sw": {"lat": -23, "lng": -46}, "ne": {...}}
-  geojson_url TEXT,
-  masterplan_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- ============== HELPERS =======================
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+-- ============== TABLES ========================
+-- FILIAIS
+create table if not exists public.filiais (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  kind text null,
+  owner_name text null,
+  owner_email text null,
+  billing_plan text null,
+  billing_status text null,
+  domain text null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table public.filiais add column if not exists kind text;
+alter table public.filiais add column if not exists owner_name text;
+alter table public.filiais add column if not exists owner_email text;
+alter table public.filiais add column if not exists billing_plan text;
+alter table public.filiais add column if not exists billing_status text;
+alter table public.filiais add column if not exists domain text;
+alter table public.filiais add column if not exists is_active boolean not null default true;
+alter table public.filiais add column if not exists created_at timestamptz not null default now();
+create index if not exists idx_filiais_active on public.filiais(is_active);
+
+-- EMPREENDIMENTOS (compat: mantemos suas colunas e adicionamos as novas)
+create table if not exists public.empreendimentos (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  slug text not null,
+  published boolean not null default false,
+  bbox geometry(Polygon,4326),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+-- adiciona colunas usadas pelo app, sem quebrar seu schema atual
+alter table public.empreendimentos add column if not exists descricao text;
+alter table public.empreendimentos add column if not exists status text not null default 'pendente';
+alter table public.empreendimentos add column if not exists total_lotes integer default 0;
+alter table public.empreendimentos add column if not exists bounds jsonb;
+alter table public.empreendimentos add column if not exists geojson_url text;
+alter table public.empreendimentos add column if not exists masterplan_url text;
+alter table public.empreendimentos add column if not exists filial_id uuid;
+alter table public.empreendimentos add column if not exists created_by uuid;
+alter table public.empreendimentos add column if not exists created_by_email text;
+alter table public.empreendimentos add column if not exists approved_by uuid;
+alter table public.empreendimentos add column if not exists approved_at timestamptz;
+alter table public.empreendimentos add column if not exists rejection_reason text;
+-- FK condicional
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'empreendimentos_filial_id_fkey'
+      and conrelid = 'public.empreendimentos'::regclass
+  ) then
+    alter table public.empreendimentos
+      add constraint empreendimentos_filial_id_fkey
+      foreign key (filial_id) references public.filiais(id) on delete cascade;
+  end if;
+end $$;
+create index if not exists idx_emp_filial on public.empreendimentos(filial_id);
+create index if not exists idx_emp_status on public.empreendimentos(status);
+create index if not exists idx_emp_published on public.empreendimentos(published);
+
+-- USER_PROFILES
+create table if not exists public.user_profiles (
+  user_id uuid primary key,
+  email text,
+  full_name text,
+  role text not null,
+  panels text[],
+  is_active boolean not null default true,
+  filial_id uuid,
+  updated_at timestamptz default now()
+);
+alter table public.user_profiles add column if not exists email text;
+alter table public.user_profiles add column if not exists full_name text;
+alter table public.user_profiles add column if not exists role text;
+alter table public.user_profiles alter column role set not null;
+alter table public.user_profiles add column if not exists panels text[];
+alter table public.user_profiles add column if not exists is_active boolean not null default true;
+alter table public.user_profiles add column if not exists filial_id uuid;
+alter table public.user_profiles add column if not exists updated_at timestamptz default now();
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'user_profiles_user_id_fkey'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint user_profiles_user_id_fkey
+      foreign key (user_id) references auth.users(id) on delete cascade;
+  end if;
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'user_profiles_filial_id_fkey'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint user_profiles_filial_id_fkey
+      foreign key (filial_id) references public.filiais(id);
+  end if;
+end $$;
+create unique index if not exists user_profiles_email_key on public.user_profiles(email);
+create index if not exists idx_up_filial on public.user_profiles(filial_id);
+
+-- TRIGGER updated_at em user_profiles
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'tg_up_updated_at') then
+    create trigger tg_up_updated_at before update on public.user_profiles
+    for each row execute function public.set_updated_at();
+  end if;
+end$$;
+
+-- LOTES
+create table if not exists public.lotes (
+  id uuid primary key default gen_random_uuid(),
+  empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
+  nome text not null,
+  numero integer,
+  status text not null default 'disponivel',
+  area_m2 numeric(10,2),
+  perimetro_m numeric(10,2),
+  area_hectares numeric(12,4),
+  valor numeric(12,2) default 0.00,
+  preco numeric(12,2),
+  coordenadas jsonb,
+  geometria jsonb,
+  properties jsonb,
+  comprador_nome text,
+  comprador_email text,
+  data_venda timestamptz,
+  observacoes text,
+  geom geometry,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz default now()
+);
+-- ==== Compat: garante colunas requeridas em LOTES (caso a tabela preexista sem elas)
+alter table public.lotes add column if not exists nome text;
+alter table public.lotes add column if not exists numero integer;
+alter table public.lotes add column if not exists status text;
+alter table public.lotes alter column status drop not null;
+alter table public.lotes alter column status set default 'disponivel';
+alter table public.lotes add column if not exists area_m2 numeric(10,2);
+alter table public.lotes add column if not exists perimetro_m numeric(10,2);
+alter table public.lotes add column if not exists area_hectares numeric(12,4);
+alter table public.lotes add column if not exists valor numeric(12,2) default 0.00;
+alter table public.lotes add column if not exists preco numeric(12,2);
+alter table public.lotes add column if not exists coordenadas jsonb;
+alter table public.lotes add column if not exists geometria jsonb;
+alter table public.lotes add column if not exists properties jsonb;
+alter table public.lotes add column if not exists comprador_nome text;
+alter table public.lotes add column if not exists comprador_email text;
+alter table public.lotes add column if not exists data_venda timestamptz;
+alter table public.lotes add column if not exists geom geometry;
+alter table public.lotes add column if not exists created_at timestamptz default now();
+alter table public.lotes add column if not exists updated_at timestamptz default now();
+
+create index if not exists idx_lotes_emp on public.lotes(empreendimento_id);
+create index if not exists idx_lotes_status on public.lotes(status);
+create index if not exists idx_lotes_geom on public.lotes using gist (geom);
+
+-- triggers dos lotes
+create or replace function public.sync_valor_preco()
+returns trigger language plpgsql as $$
+begin
+  if new.preco is not null and (new.valor is null or TG_OP = 'INSERT') then
+    new.valor := new.preco;
+  elsif new.valor is not null and (new.preco is null or TG_OP = 'INSERT') then
+    new.preco := new.valor;
+  end if;
+  return new;
+end $$;
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'tg_lotes_sync_valor_preco') then
+    create trigger tg_lotes_sync_valor_preco
+    before insert or update on public.lotes
+    for each row execute function public.sync_valor_preco();
+  end if;
+  if not exists (select 1 from pg_trigger where tgname = 'tg_lotes_updated_at') then
+    create trigger tg_lotes_updated_at
+    before update on public.lotes
+    for each row execute function public.set_updated_at();
+  end if;
+end$$;
+
+-- MASTERPLAN OVERLAYS
+create table if not exists public.masterplan_overlays (
+  id uuid primary key default gen_random_uuid(),
+  empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
+  image_path text not null,
+  bounds jsonb not null,
+  opacity numeric(4,2) not null default 0.5,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz default now()
+);
+create index if not exists idx_mpo_emp on public.masterplan_overlays(empreendimento_id);
+create index if not exists idx_mpo_is_active on public.masterplan_overlays(is_active);
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'tg_mpo_updated_at') then
+    create trigger tg_mpo_updated_at
+    before update on public.masterplan_overlays
+    for each row execute function public.set_updated_at();
+  end if;
+end$$;
+
+-- Filial Allowed Panels
+create table if not exists public.filial_allowed_panels (
+  filial_id uuid not null references public.filiais(id) on delete cascade,
+  panel text not null,
+  created_at timestamptz not null default now(),
+  constraint filial_allowed_panels_pk primary key (filial_id, panel)
 );
 
--- Tabela de lotes individuais
-CREATE TABLE IF NOT EXISTS lotes (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  empreendimento_id UUID REFERENCES empreendimentos(id) ON DELETE CASCADE,
-  codigo TEXT NOT NULL,
-  status TEXT DEFAULT 'disponivel' CHECK (status IN ('disponivel', 'reservado', 'vendido')),
-  preco DECIMAL(12,2),
-  area_m2 DECIMAL(10,2),
-  geometry JSONB, -- GeoJSON geometry
-  properties JSONB, -- Propriedades extras
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- ============== SEED / COMPAT ================
+-- Cria uma filial "Default" e associa empreendimentos sem filial_id a ela
+do $$
+declare fid uuid;
+begin
+  if not exists (select 1 from public.filiais) then
+    insert into public.filiais (nome, is_active) values ('Default', true) returning id into fid;
+  else
+    select id into fid from public.filiais order by created_at asc limit 1;
+  end if;
+  update public.empreendimentos set filial_id = coalesce(filial_id, fid);
+end $$;
+
+-- ============== FUNÇÕES ADMIN ================
+create or replace function public.is_admin(uid uuid)
+returns boolean language sql stable as $$
+  select exists (
+    select 1 from public.user_profiles up
+    where up.user_id = uid and up.is_active and lower(up.role) in ('admin','superadmin')
+  );
+$$;
+create or replace function public.is_admin()
+returns boolean language sql stable as $$
+  select public.is_admin(auth.uid());
+$$;
+
+-- ============== RLS ===========================
+alter table public.filiais enable row level security;
+alter table public.empreendimentos enable row level security;
+alter table public.user_profiles enable row level security;
+alter table public.lotes enable row level security;
+alter table public.masterplan_overlays enable row level security;
+alter table public.filial_allowed_panels enable row level security;
+
+-- FILIAIS
+drop policy if exists filiais_select on public.filiais;
+create policy filiais_select on public.filiais
+for select to authenticated
+using (public.is_admin() or exists (
+  select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = filiais.id
+));
+drop policy if exists filiais_admin_write on public.filiais;
+create policy filiais_admin_write on public.filiais
+for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- EMPREENDIMENTOS (libera público se published=true)
+drop policy if exists emp_select_public on public.empreendimentos;
+create policy emp_select_public on public.empreendimentos
+for select to anon using (published is true);
+
+drop policy if exists emp_select on public.empreendimentos;
+create policy emp_select on public.empreendimentos
+for select to authenticated
+using (
+  public.is_admin()
+  or published is true
+  or exists (
+    select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
+  )
+);
+drop policy if exists emp_write on public.empreendimentos;
+create policy emp_write on public.empreendimentos
+for insert to authenticated with check (
+  public.is_admin() or exists (
+    select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
+  )
+);
+drop policy if exists emp_update on public.empreendimentos;
+create policy emp_update on public.empreendimentos
+for update to authenticated
+using (public.is_admin() or exists (
+  select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
+))
+with check (public.is_admin() or exists (
+  select 1 from public.user_profiles up where up.user_id = auth.uid() and up.is_active and up.filial_id = empreendimentos.filial_id
+));
+
+-- USER_PROFILES
+drop policy if exists up_self_read on public.user_profiles;
+create policy up_self_read on public.user_profiles
+for select to authenticated using (user_id = auth.uid() or public.is_admin());
+drop policy if exists up_self_insert on public.user_profiles;
+create policy up_self_insert on public.user_profiles
+for insert to authenticated with check (public.is_admin() or user_id = auth.uid());
+drop policy if exists up_self_update on public.user_profiles;
+create policy up_self_update on public.user_profiles
+for update to authenticated using (public.is_admin() or user_id = auth.uid()) with check (public.is_admin() or user_id = auth.uid());
+
+-- LOTES (libera público via published do empreendimento)
+drop policy if exists lotes_select_public on public.lotes;
+create policy lotes_select_public on public.lotes
+for select to anon
+using (
+  exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.lotes.empreendimento_id and e.published is true
+  )
 );
 
--- Tabela de overlays do masterplan
-CREATE TABLE IF NOT EXISTS masterplan_overlays (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  empreendimento_id UUID REFERENCES empreendimentos(id) ON DELETE CASCADE,
-  image_path TEXT NOT NULL,
-  bounds JSONB NOT NULL, -- GeoJSON Polygon
-  opacity DECIMAL(3,2) DEFAULT 0.7,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+drop policy if exists lotes_select on public.lotes;
+create policy lotes_select on public.lotes
+for select to authenticated
+using (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+  or exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.lotes.empreendimento_id and e.published is true
+  )
 );
 
--- 2. CRIAR ÍNDICES PARA PERFORMANCE
--- =================================
+drop policy if exists lotes_write on public.lotes;
+create policy lotes_write on public.lotes
+for insert to authenticated with check (
+  public.is_admin() or exists (
+    select 1 from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+);
+drop policy if exists lotes_update on public.lotes;
+create policy lotes_update on public.lotes
+for update to authenticated
+using (
+  public.is_admin() or exists (
+    select 1 from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+)
+with check (
+  public.is_admin() or exists (
+    select 1 from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.lotes.empreendimento_id
+  )
+);
 
-CREATE INDEX IF NOT EXISTS idx_lotes_empreendimento ON lotes(empreendimento_id);
-CREATE INDEX IF NOT EXISTS idx_lotes_status ON lotes(status);
-CREATE INDEX IF NOT EXISTS idx_overlays_empreendimento ON masterplan_overlays(empreendimento_id);
-CREATE INDEX IF NOT EXISTS idx_overlays_active ON masterplan_overlays(is_active);
+-- MASTERPLAN_OVERLAYS (segue a mesma lógica)
+drop policy if exists mpo_select_public on public.masterplan_overlays;
+create policy mpo_select_public on public.masterplan_overlays
+for select to anon
+using (
+  exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.masterplan_overlays.empreendimento_id and e.published is true
+  )
+);
 
--- 3. FUNÇÕES RPC
--- =============
+drop policy if exists mpo_select on public.masterplan_overlays;
+create policy mpo_select on public.masterplan_overlays
+for select to authenticated
+using (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+  or exists (
+    select 1 from public.empreendimentos e
+    where e.id = public.masterplan_overlays.empreendimento_id and e.published is true
+  )
+);
 
--- Função para retornar GeoJSON dos lotes de um empreendimento
-CREATE OR REPLACE FUNCTION lotes_geojson(p_empreendimento UUID)
-RETURNS JSON AS $$
-DECLARE
-  result JSON;
-BEGIN
-  SELECT json_build_object(
-    'type', 'FeatureCollection',
-    'features', COALESCE(json_agg(
-      json_build_object(
-        'type', 'Feature',
-        'properties', json_build_object(
-          'codigo', codigo,
-          'status', status,
-          'preco', preco,
-          'area_m2', area_m2
-        ) || COALESCE(properties, '{}'::jsonb),
-        'geometry', geometry
+drop policy if exists mpo_write on public.masterplan_overlays;
+create policy mpo_write on public.masterplan_overlays
+for insert to authenticated with check (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+);
+drop policy if exists mpo_update on public.masterplan_overlays;
+create policy mpo_update on public.masterplan_overlays
+for update to authenticated
+using (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+)
+with check (
+  public.is_admin() or exists (
+    select 1
+    from public.empreendimentos e
+    join public.user_profiles up on up.filial_id = e.filial_id and up.user_id = auth.uid() and up.is_active
+    where e.id = public.masterplan_overlays.empreendimento_id
+  )
+);
+
+-- FILIAL_ALLOWED_PANELS
+drop policy if exists fap_select on public.filial_allowed_panels;
+create policy fap_select on public.filial_allowed_panels
+for select to authenticated using (public.is_admin() or exists (
+  select 1 from public.user_profiles up
+  where up.user_id = auth.uid() and up.is_active and up.filial_id = filial_allowed_panels.filial_id
+));
+drop policy if exists fap_write on public.filial_allowed_panels;
+create policy fap_write on public.filial_allowed_panels
+for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- ============== RPCs ==========================
+create or replace function public.get_my_allowed_panels()
+returns text[] language sql stable as $$
+  with me as (
+    select filial_id from public.user_profiles where user_id = auth.uid() and is_active limit 1
+  )
+  select coalesce(array_agg(panel order by panel), array[]::text[])
+  from public.filial_allowed_panels fap
+  join me on me.filial_id = fap.filial_id;
+$$;
+
+create or replace function public.set_filial_allowed_panels(p_filial_id uuid, p_panels text[])
+returns void language plpgsql as $$
+begin
+  delete from public.filial_allowed_panels where filial_id = p_filial_id;
+  insert into public.filial_allowed_panels (filial_id, panel)
+  select p_filial_id, unnest(p_panels);
+end $$;
+
+create or replace function public.update_lote_status(p_lote_id uuid, p_novo_status text)
+returns boolean language plpgsql as $$
+begin
+  update public.lotes
+     set status = p_novo_status,
+         data_venda = case when lower(p_novo_status) = 'vendido' then now() else null end
+   where id = p_lote_id;
+  return found;
+end $$;
+
+create or replace function public.update_lote_valor(p_lote_id uuid, p_novo_valor numeric)
+returns boolean language plpgsql as $$
+begin
+  update public.lotes set valor = p_novo_valor, preco = p_novo_valor where id = p_lote_id;
+  return found;
+end $$;
+
+create or replace function public.lotes_geojson(p_empreendimento_id uuid)
+returns jsonb language sql stable as $$
+  with feats as (
+    select jsonb_build_object(
+      'type','Feature',
+      'geometry', coalesce(l.geometria, to_jsonb(st_asgeojson(l.geom)::json)),
+      'properties', jsonb_build_object(
+        'id', l.id,
+        'nome', l.nome,
+        'numero', l.numero,
+        'status', l.status,
+        'valor', l.valor,
+        'preco', l.valor,
+        'area_m2', l.area_m2
       )
-    ), '[]'::json)
-  ) INTO result
-  FROM lotes 
-  WHERE empreendimento_id = p_empreendimento;
-  
-  RETURN result;
-END;
-$$ LANGUAGE plpgsql;
+    ) as f
+    from public.lotes l
+    where l.empreendimento_id = p_empreendimento_id
+  )
+  select jsonb_build_object('type','FeatureCollection','features', coalesce(jsonb_agg(f), '[]'::jsonb))
+  from feats;
+$$;
 
--- Função para criar empreendimento a partir de GeoJSON
-CREATE OR REPLACE FUNCTION create_empreendimento_from_geojson(
-  p_nome TEXT,
-  p_descricao TEXT DEFAULT NULL,
-  p_sw_lat DECIMAL DEFAULT NULL,
-  p_sw_lng DECIMAL DEFAULT NULL,
-  p_ne_lat DECIMAL DEFAULT NULL,
-  p_ne_lng DECIMAL DEFAULT NULL,
-  p_geojson JSONB DEFAULT NULL,
-  p_overlay_path TEXT DEFAULT NULL
+create or replace function public.get_filial_empreendimentos(p_filial_id uuid)
+returns table(empreendimento_id uuid) language sql stable as $$
+  select e.id as empreendimento_id
+  from public.empreendimentos e
+  where e.filial_id = p_filial_id;
+$$;
+
+create or replace function public.get_empreendimento_lotes(p_empreendimento_id uuid)
+returns table(
+  id uuid, nome text, numero integer, status text,
+  area_m2 numeric, preco numeric, coordenadas jsonb, geometria jsonb,
+  comprador_nome text, comprador_email text, data_venda timestamptz
+) language sql stable as $$
+  select l.id, l.nome, l.numero, l.status,
+         l.area_m2, coalesce(l.preco, l.valor) as preco, l.coordenadas, l.geometria,
+         l.comprador_nome, l.comprador_email, l.data_venda
+  from public.lotes l
+  where l.empreendimento_id = p_empreendimento_id;
+$$;
+
+create or replace function public.get_all_empreendimentos_overview()
+returns table(empreendimento_id uuid) language sql stable as $$
+  select id as empreendimento_id from public.empreendimentos;
+$$;
+
+create or replace function public.approve_empreendimento(p_empreendimento_id uuid, p_approved boolean, p_reason text default null)
+returns void language plpgsql as $$
+begin
+  if p_approved then
+    update public.empreendimentos
+       set status = 'aprovado', approved_by = auth.uid(), approved_at = now(), rejection_reason = null
+     where id = p_empreendimento_id;
+  else
+    update public.empreendimentos
+       set status = 'rejeitado', approved_by = auth.uid(), approved_at = now(), rejection_reason = coalesce(p_reason, 'rejeitado')
+     where id = p_empreendimento_id;
+  end if;
+end $$;
+
+create or replace function public.get_vendas_stats(p_empreendimento_id uuid)
+returns table(
+  total_lotes int,
+  lotes_disponiveis int,
+  lotes_reservados int,
+  lotes_vendidos int,
+  receita_total numeric,
+  percentual_vendido numeric
+) language sql stable as $$
+  with base as (
+    select
+      count(*)::int as total_lotes,
+      count(*) filter (where status = 'disponivel')::int as lotes_disponiveis,
+      count(*) filter (where status = 'reservado')::int as lotes_reservados,
+      count(*) filter (where status = 'vendido')::int as lotes_vendidos,
+      coalesce(sum(case when status = 'vendido' then coalesce(preco, valor) end),0)::numeric as receita_total
+    from public.lotes
+    where empreendimento_id = p_empreendimento_id
+  )
+  select
+    b.total_lotes,
+    b.lotes_disponiveis,
+    b.lotes_reservados,
+    b.lotes_vendidos,
+    b.receita_total,
+    case when b.total_lotes > 0 then round((b.lotes_vendidos::numeric / b.total_lotes::numeric) * 100, 2) else 0 end as percentual_vendido
+  from base b;
+$$;
+
+create or replace function public.admin_update_user_role(p_user_id uuid, p_role text)
+returns void language plpgsql as $$
+begin
+  if not public.is_admin(auth.uid()) then raise exception 'admin required'; end if;
+  update public.user_profiles set role = p_role, updated_at = now() where user_id = p_user_id;
+end $$;
+
+create or replace function public.admin_set_user_filial(p_user_id uuid, p_filial_id uuid)
+returns void language plpgsql as $$
+begin
+  if not public.is_admin(auth.uid()) then raise exception 'admin required'; end if;
+  update public.user_profiles set filial_id = p_filial_id, updated_at = now() where user_id = p_user_id;
+end $$;
+
+create or replace function public.admin_update_filial_info(
+  p_filial_id uuid,
+  p_kind text,
+  p_owner_name text default null,
+  p_owner_email text default null,
+  p_billing_plan text default null,
+  p_billing_status text default null,
+  p_domain text default null
 )
-RETURNS UUID AS $$
-DECLARE
-  novo_id UUID;
-  feature JSONB;
-  total_lotes INTEGER := 0;
-  bounds_json TEXT;
-BEGIN
-  -- Criar bounds JSON se coordenadas fornecidas
-  IF p_sw_lat IS NOT NULL AND p_sw_lng IS NOT NULL AND p_ne_lat IS NOT NULL AND p_ne_lng IS NOT NULL THEN
-    bounds_json := json_build_object(
-      'sw', json_build_object('lat', p_sw_lat, 'lng', p_sw_lng),
-      'ne', json_build_object('lat', p_ne_lat, 'lng', p_ne_lng)
-    )::text;
-  END IF;
-  
-  -- Inserir empreendimento
-  INSERT INTO empreendimentos (nome, descricao, bounds)
-  VALUES (p_nome, p_descricao, bounds_json)
-  RETURNING id INTO novo_id;
-  
-  -- Processar GeoJSON se fornecido
-  IF p_geojson IS NOT NULL AND p_geojson ? 'features' THEN
-    FOR feature IN SELECT jsonb_array_elements(p_geojson->'features')
-    LOOP
-      INSERT INTO lotes (
-        empreendimento_id,
-        codigo,
-        status,
-        preco,
-        area_m2,
-        geometry,
-        properties
-      ) VALUES (
-        novo_id,
-        COALESCE(feature->'properties'->>'codigo', 'LOTE-' || (total_lotes + 1)),
-        COALESCE(feature->'properties'->>'status', 'disponivel'),
-        COALESCE((feature->'properties'->>'preco')::DECIMAL, NULL),
-        COALESCE((feature->'properties'->>'area_m2')::DECIMAL, NULL),
-        feature->'geometry',
-        feature->'properties'
-      );
-      total_lotes := total_lotes + 1;
-    END LOOP;
-    
-    -- Atualizar total de lotes
-    UPDATE empreendimentos SET total_lotes = total_lotes WHERE id = novo_id;
-  END IF;
-  
-  -- Adicionar overlay se fornecido
-  IF p_overlay_path IS NOT NULL AND bounds_json IS NOT NULL THEN
-    INSERT INTO masterplan_overlays (empreendimento_id, image_path, bounds)
-    VALUES (
-      novo_id, 
-      p_overlay_path,
-      json_build_object(
-        'type', 'Polygon',
-        'coordinates', json_build_array(json_build_array(
-          json_build_array(p_sw_lng, p_sw_lat),
-          json_build_array(p_ne_lng, p_sw_lat),
-          json_build_array(p_ne_lng, p_ne_lat),
-          json_build_array(p_sw_lng, p_ne_lat),
-          json_build_array(p_sw_lng, p_sw_lat)
-        ))
-      )::jsonb
+returns void language plpgsql as $$
+begin
+  if not public.is_admin(auth.uid()) then raise exception 'admin required'; end if;
+  update public.filiais
+     set kind = p_kind,
+         owner_name = p_owner_name,
+         owner_email = p_owner_email,
+         billing_plan = p_billing_plan,
+         billing_status = p_billing_status,
+         domain = p_domain
+   where id = p_filial_id;
+end $$;
+
+create or replace function public.process_geojson_lotes(
+  p_empreendimento_id uuid,
+  p_geojson jsonb,
+  p_empreendimento_nome text
+) returns void language plpgsql security definer as $$
+declare
+  feature jsonb;
+  lote_nome_original text;
+  lote_nome_final text;
+  lote_numero int;
+  geom_json jsonb;
+  coords jsonb;
+begin
+  delete from public.lotes where empreendimento_id = p_empreendimento_id;
+
+  for feature in select jsonb_array_elements(p_geojson->'features')
+  loop
+    lote_nome_original := coalesce(
+      feature->'properties'->>'Name',
+      feature->'properties'->>'name',
+      'Lote'
     );
-  END IF;
-  
-  RETURN novo_id;
-END;
-$$ LANGUAGE plpgsql;
+    lote_nome_final := p_empreendimento_nome || ' - ' || lote_nome_original;
 
--- Função para adicionar overlay de masterplan
-CREATE OR REPLACE FUNCTION add_masterplan_overlay(
-  p_empreendimento UUID,
-  p_image_path TEXT,
-  p_opacity DECIMAL DEFAULT 0.7
-)
-RETURNS BOOLEAN AS $$
-DECLARE
-  emp_bounds TEXT;
-  bounds_geom JSONB;
-BEGIN
-  -- Buscar bounds do empreendimento
-  SELECT bounds INTO emp_bounds FROM empreendimentos WHERE id = p_empreendimento;
-  
-  IF emp_bounds IS NOT NULL THEN
-    -- Converter bounds para geometria
-    bounds_geom := json_build_object(
-      'type', 'Polygon',
-      'coordinates', json_build_array(json_build_array(
-        json_build_array((emp_bounds::json->'sw'->>'lng')::decimal, (emp_bounds::json->'sw'->>'lat')::decimal),
-        json_build_array((emp_bounds::json->'ne'->>'lng')::decimal, (emp_bounds::json->'sw'->>'lat')::decimal),
-        json_build_array((emp_bounds::json->'ne'->>'lng')::decimal, (emp_bounds::json->'ne'->>'lat')::decimal),
-        json_build_array((emp_bounds::json->'sw'->>'lng')::decimal, (emp_bounds::json->'ne'->>'lat')::decimal),
-        json_build_array((emp_bounds::json->'sw'->>'lng')::decimal, (emp_bounds::json->'sw'->>'lat')::decimal)
-      ))
+    begin
+      lote_numero := (regexp_match(lote_nome_original, '\d+'))[1]::int;
+    exception when others then
+      lote_numero := null;
+    end;
+
+    geom_json := feature->'geometry';
+    coords := case
+      when geom_json ? 'coordinates' then
+        to_jsonb(jsonb_build_object('lat', (geom_json->'coordinates'->0->0->1), 'lng', (geom_json->'coordinates'->0->0->0)))
+      else null end;
+
+    insert into public.lotes(empreendimento_id, nome, numero, status, area_m2, preco, valor, coordenadas, geometria, geom)
+    values (
+      p_empreendimento_id,
+      lote_nome_final,
+      lote_numero,
+      'disponivel',
+      null,
+      null,
+      null,
+      coords,
+      geom_json,
+      case when geom_json is not null then st_geomfromgeojson(geom_json::text) else null end
     );
-    
-    -- Desativar overlays anteriores
-    UPDATE masterplan_overlays SET is_active = FALSE WHERE empreendimento_id = p_empreendimento;
-    
-    -- Inserir novo overlay
-    INSERT INTO masterplan_overlays (empreendimento_id, image_path, bounds, opacity)
-    VALUES (p_empreendimento, p_image_path, bounds_geom, p_opacity);
-    
-    RETURN TRUE;
-  END IF;
-  
-  RETURN FALSE;
-END;
-$$ LANGUAGE plpgsql;
-
--- 4. DADOS DE EXEMPLO
--- ===================
-
--- Inserir empreendimento de exemplo com lotes
-SELECT create_empreendimento_from_geojson(
-  'Residencial BlockURB Demo',
-  'Empreendimento de demonstração criado automaticamente',
-  -23.5500,  -- sw_lat
-  -46.6400,  -- sw_lng  
-  -23.5480,  -- ne_lat
-  -46.6380,  -- ne_lng
-  '{
-    "type": "FeatureCollection",
-    "features": [
-      {
-        "type": "Feature",
-        "properties": {"codigo": "A01", "status": "disponivel", "preco": 250000, "area_m2": 300},
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [[
-            [-46.6400, -23.5500], [-46.6395, -23.5500], 
-            [-46.6395, -23.5495], [-46.6400, -23.5495], 
-            [-46.6400, -23.5500]
-          ]]
-        }
-      },
-      {
-        "type": "Feature", 
-        "properties": {"codigo": "A02", "status": "reservado", "preco": 280000, "area_m2": 320},
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [[
-            [-46.6395, -23.5500], [-46.6390, -23.5500],
-            [-46.6390, -23.5495], [-46.6395, -23.5495],
-            [-46.6395, -23.5500]
-          ]]
-        }
-      },
-      {
-        "type": "Feature",
-        "properties": {"codigo": "A03", "status": "vendido", "preco": 270000, "area_m2": 310},
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [[
-            [-46.6390, -23.5500], [-46.6385, -23.5500],
-            [-46.6385, -23.5495], [-46.6390, -23.5495],
-            [-46.6390, -23.5500]
-          ]]
-        }
-      },
-      {
-        "type": "Feature",
-        "properties": {"codigo": "B01", "status": "disponivel", "preco": 245000, "area_m2": 290},
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [[
-            [-46.6400, -23.5495], [-46.6395, -23.5495],
-            [-46.6395, -23.5490], [-46.6400, -23.5490],
-            [-46.6400, -23.5495]
-          ]]
-        }
-      },
-      {
-        "type": "Feature",
-        "properties": {"codigo": "B02", "status": "disponivel", "preco": 265000, "area_m2": 315},
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [[
-            [-46.6395, -23.5495], [-46.6390, -23.5495],
-            [-46.6390, -23.5490], [-46.6395, -23.5490],
-            [-46.6395, -23.5495]
-          ]]
-        }
-      }
-    ]
-  }'::jsonb
-);
-
--- 5. POLÍTICAS DE SEGURANÇA (Row Level Security)
--- ==============================================
-
--- Habilitar RLS nas tabelas
-ALTER TABLE empreendimentos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lotes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE masterplan_overlays ENABLE ROW LEVEL SECURITY;
-
--- Políticas para permitir leitura pública (todos podem ver)
-CREATE POLICY "Public read access" ON empreendimentos FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON lotes FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON masterplan_overlays FOR SELECT USING (true);
-
--- Políticas para permitir escrita apenas para usuários autenticados
-CREATE POLICY "Authenticated users can insert" ON empreendimentos FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can update" ON empreendimentos FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can delete" ON empreendimentos FOR DELETE USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Authenticated users can insert" ON lotes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can update" ON lotes FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can delete" ON lotes FOR DELETE USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Authenticated users can insert" ON masterplan_overlays FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can update" ON masterplan_overlays FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated users can delete" ON masterplan_overlays FOR DELETE USING (auth.role() = 'authenticated');
-
--- ============================================
--- SETUP CONCLUÍDO!
--- ============================================
-
--- Verificar se tudo foi criado corretamente
-SELECT 'TABELAS CRIADAS:' as status;
-SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('empreendimentos', 'lotes', 'masterplan_overlays');
-
-SELECT 'FUNÇÕES CRIADAS:' as status;
-SELECT routine_name FROM information_schema.routines WHERE routine_schema = 'public' AND routine_name IN ('lotes_geojson', 'create_empreendimento_from_geojson', 'add_masterplan_overlay');
-
-SELECT 'DADOS DE EXEMPLO:' as status;
-SELECT id, nome, total_lotes FROM empreendimentos;
-
-SELECT 'SETUP CONCLUÍDO COM SUCESSO!' as status;
-
+  end loop;
+end $$;
