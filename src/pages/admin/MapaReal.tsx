@@ -312,11 +312,11 @@ function MapView({ selected }: { selected?: Empreendimento }) {
 
 export default function AdminMapaReal() {
   const [active, setActive] = useState<Empreendimento | undefined>(undefined);
-  useEffect(() => { document.title = "Mapa Interativo (Real) | BlockURB"; }, []);
+  useEffect(() => { document.title = "Mapa Real | BlockURB"; }, []);
 
   return (
-    <Protected>
-      <AppShell menuKey="adminfilial" breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin' }, { label: 'Mapa Interativo (Real)' }]}> 
+    <Protected allowedRoles={["superadmin"]}>
+      <AppShell menuKey="superadmin" breadcrumbs={[{ label: 'Super Admin', href: '/super-admin' }, { label: 'Mapa Real' }]}> 
         <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
           <div className="h-full">
             <SidebarEmpreendimentos onSelect={setActive} activeId={active?.id} />

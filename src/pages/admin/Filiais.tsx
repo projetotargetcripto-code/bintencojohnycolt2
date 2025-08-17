@@ -226,7 +226,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
 
   return (
     <Protected allowedRoles={["superadmin"]}>
-      <AppShell menuKey="superadmin" breadcrumbs={[{ label: 'Admin' }, { label: 'Gestão de Filiais' }]}>
+      <AppShell menuKey="superadmin" breadcrumbs={[{ label: 'Super Admin', href: '/super-admin' }, { label: 'Gestão de Filiais' }]}> 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Coluna da Esquerda: Adicionar Nova Filial */}
           <div className="space-y-6">
