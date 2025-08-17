@@ -29,13 +29,38 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
       }
       setLoading(true);
       try {
-        const { data, error } = await supabase.rpc('get_my_profile').single();
-        if (error) {
-          console.error('Erro ao chamar get_my_profile:', error);
+        let data: any = null;
+        let error: any = null;
+
+        // Primeiro tenta via RPC que ignora RLS
+        try {
+          const res = await supabase.rpc('get_my_profile').single();
+          data = res.data;
+          error = res.error;
+          if (error) {
+            console.error('Erro ao chamar get_my_profile:', error);
+          }
+        } catch (rpcErr) {
+          error = rpcErr;
+          console.error('Erro ao chamar get_my_profile:', rpcErr);
         }
+
+        // Se a RPC falhar ou não retornar dados, busca direto na tabela
+        if (!data) {
+          const { data: fallback, error: fbErr } = await supabase
+            .from('user_profiles')
+            .select('role, panels, filial_id')
+            .eq('user_id', user.id)
+            .single();
+          data = fallback;
+          if (fbErr) {
+            console.error('Erro ao buscar user_profiles:', fbErr);
+          }
+        }
+
         if (data) {
           setProfile({
-            role: data.role || user.app_metadata?.role || 'user',
+            role: data.role ?? user.app_metadata?.role ?? 'user',
             panels: Array.isArray(data.panels) ? data.panels : [],
             filial_id: data.filial_id ?? null,
           });
@@ -47,7 +72,7 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
           });
         }
       } catch (err) {
-        console.error('Erro inesperado ao chamar get_my_profile:', err);
+        console.error('Erro inesperado ao obter perfil:', err);
         setProfile({
           role: user.app_metadata?.role || 'user',
           panels: [],
