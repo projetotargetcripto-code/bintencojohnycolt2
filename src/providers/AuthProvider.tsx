@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     fetchSessionAndProfile();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       const newUser = session?.user ?? null;
       setUser(newUser);
@@ -89,13 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           is_active: true,
           filial_id: null,
         });
-        // Atualiza com dados secundários + allowed panels assim que chegar
-        const loadSecondary = async () => {
+
+        setLoading(true);
+        try {
           const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('user_id, full_name, panels, is_active, filial_id')
-          .eq('user_id', newUser.id)
-          .single();
+            .from('user_profiles')
+            .select('user_id, full_name, panels, is_active, filial_id')
+            .eq('user_id', newUser.id)
+            .single();
 
           const { data: allowedPanelsData } = await supabase.rpc('get_my_allowed_panels');
 
@@ -109,10 +110,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               filial_id: (profileData?.filial_id ?? prev?.filial_id ?? null) as string | null,
             }));
           }
-        };
-        loadSecondary();
+        } catch (error) {
+          console.error('Error loading secondary auth data:', error);
+        } finally {
+          setLoading(false);
+        }
       } else {
         setProfile(null);
+        setLoading(false);
       }
     });
 
