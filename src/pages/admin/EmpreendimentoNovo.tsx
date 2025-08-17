@@ -147,6 +147,14 @@ export default function EmpreendimentoNovo() {
       toast.error('O nome do empreendimento é obrigatório.');
       return;
     }
+    if (!geojsonFile) {
+      toast.error('O arquivo GeoJSON é obrigatório.');
+      return;
+    }
+    if (!masterplanFile) {
+      toast.error('O arquivo de masterplan é obrigatório.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -204,8 +212,9 @@ export default function EmpreendimentoNovo() {
 
       toast.success('Empreendimento criado com sucesso!');
       navigate('/admin-filial/mapa');
-    } catch (error: any) {
-      toast.error(`Erro: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Erro: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -233,8 +242,14 @@ export default function EmpreendimentoNovo() {
                     <Textarea id="descricao" value={formData.descricao} onChange={(e) => handleInputChange('descricao', e.target.value)} />
                   </div>
                   <div>
-                    <Label htmlFor="geojson">Arquivo GeoJSON</Label>
-                    <Input id="geojson" type="file" accept=".geojson,.json" onChange={(e) => e.target.files && handleGeojsonUpload(e.target.files[0])} />
+                    <Label htmlFor="geojson">Arquivo GeoJSON *</Label>
+                    <Input
+                      id="geojson"
+                      type="file"
+                      accept=".geojson,.json"
+                      required
+                      onChange={(e) => e.target.files && handleGeojsonUpload(e.target.files[0])}
+                    />
                     {geojsonFile && (
                       <div className="mt-2 text-sm text-green-600">
                         ✅ {geojsonFile.name} ({processedLotes.length} lotes)
@@ -242,8 +257,14 @@ export default function EmpreendimentoNovo() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="masterplan">Masterplan (Imagem)</Label>
-                    <Input id="masterplan" type="file" accept="image/*" onChange={(e) => e.target.files && handleMasterplanUpload(e.target.files[0])} />
+                    <Label htmlFor="masterplan">Masterplan (Imagem) *</Label>
+                    <Input
+                      id="masterplan"
+                      type="file"
+                      accept="image/*"
+                      required
+                      onChange={(e) => e.target.files && handleMasterplanUpload(e.target.files[0])}
+                    />
                   </div>
                   <Button type="submit" disabled={loading} className="w-full">
                     {loading ? 'Salvando...' : 'Criar Empreendimento'}
