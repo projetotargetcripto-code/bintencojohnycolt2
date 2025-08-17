@@ -221,7 +221,7 @@ export function MapView({
     try {
       const { error } = await supabase.rpc('update_lote_status', {
         p_lote_id: loteId,
-        p_status: newStatus
+        p_novo_status: newStatus
       });
 
       if (error) {

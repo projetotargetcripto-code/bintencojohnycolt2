@@ -122,23 +122,36 @@ export default function LotesVendas() {
     if (!editingLote) return;
 
     try {
-      const { error } = await supabase.rpc('update_lote_status', {
+      const { error: statusError } = await supabase.rpc('update_lote_status', {
         p_lote_id: editingLote.id,
-        p_status: editForm.status,
-        p_comprador_nome: editForm.comprador_nome || null,
-        p_comprador_email: editForm.comprador_email || null,
-        p_preco: editForm.preco ? parseFloat(editForm.preco) : null
+        p_novo_status: editForm.status,
       });
 
-      if (error) {
-        toast.error('Erro ao atualizar lote');
-        console.error('Erro:', error);
+      if (statusError) {
+        toast.error('Erro ao atualizar status do lote');
+        console.error('Erro:', statusError);
+        return;
+      }
+
+      const { error: detalhesError } = await supabase
+        .from('lotes')
+        .update({
+          comprador_nome: editForm.status === 'vendido' ? editForm.comprador_nome || null : null,
+          comprador_email: editForm.status === 'vendido' ? editForm.comprador_email || null : null,
+          valor: editForm.preco ? parseFloat(editForm.preco) : null,
+          preco: editForm.preco ? parseFloat(editForm.preco) : null,
+        })
+        .eq('id', editingLote.id);
+
+      if (detalhesError) {
+        toast.error('Erro ao atualizar detalhes do lote');
+        console.error('Erro:', detalhesError);
         return;
       }
 
       toast.success('Lote atualizado com sucesso!');
       setShowEditDialog(false);
-      
+
       // Recarregar lotes
       const { data } = await supabase
         .from('lotes')
@@ -149,7 +162,7 @@ export default function LotesVendas() {
         const mapped = data.map((l: any) => ({ id: l.id, nome: l.nome, numero: l.numero, status: l.status, area_m2: l.area_m2, preco: l.valor ?? null }));
         setLotes(mapped as any);
       }
-      
+
     } catch (error) {
       toast.error('Erro ao atualizar lote');
       console.error('Erro:', error);
