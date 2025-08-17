@@ -8,35 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-
-const ALL_PANELS = [
-  { key: 'adminfilial', label: 'Admin Filial (Geral)' },
-  { key: 'urbanista', label: 'Urbanismo (Mapa, Projetos)' },
-  { key: 'juridico', label: 'Jurídico' },
-  { key: 'contabilidade', label: 'Contabilidade' },
-  { key: 'marketing', label: 'Marketing' },
-  { key: 'comercial', label: 'Comercial (Vendas)' },
-  { key: 'imobiliaria', label: 'Imobiliária' },
-  { key: 'corretor', label: 'Corretor' },
-  { key: 'obras', label: 'Obras' },
-  { key: 'investidor', label: 'Investidor' },
-  { key: 'terrenista', label: 'Terrenista' },
-];
-
-const ALL_ROLES = [
-  "superadmin",
-  "adminfilial",
-  "urbanista",
-  "juridico",
-  "contabilidade",
-  "marketing",
-  "comercial",
-  "imobiliaria",
-  "corretor",
-  "obras",
-  "investidor",
-  "terrenista",
-];
+import { ALL_PANELS, ALL_ROLES } from "@/config/rolesPanels";
 
 type Filial = { id: string; nome: string; kind: string };
 type UserProfile = {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/dataClient";
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { ALL_ROLES, ALL_PANELS } from "@/config/rolesPanels";
 
 type Filial = { id: string; nome: string };
 type UserProfile = {
@@ -21,76 +22,60 @@ type UserProfile = {
   panels: string[] | null;
 };
 
-const ALL_ROLES = [
-  "superadmin",
-  "adminfilial",
-  "urbanista",
-  "juridico",
-  "contabilidade",
-  "marketing",
-  "comercial",
-  "imobiliaria",
-  "corretor",
-  "obras",
-  "investidor",
-  "terrenista",
-];
-
-const ALL_PANELS = [
-  { key: 'adminfilial', label: 'Admin Filial (Geral)' },
-  { key: 'urbanista', label: 'Urbanismo (Mapa, Projetos)' },
-  { key: 'juridico', label: 'Jurídico' },
-  { key: 'contabilidade', label: 'Contabilidade' },
-  { key: 'marketing', label: 'Marketing' },
-  { key: 'comercial', label: 'Comercial (Vendas)' },
-  { key: 'imobiliaria', label: 'Imobiliária' },
-  { key: 'corretor', label: 'Corretor' },
-  { key: 'obras', label: 'Obras' },
-  { key: 'investidor', label: 'Investidor' },
-  { key: 'terrenista', label: 'Terrenista' },
-];
+const PAGE_SIZE = 20;
 
 export default function UsuariosPage() {
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [filtered, setFiltered] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     document.title = "Usuários | BlockURB";
-    void init();
+    void loadFiliais();
   }, []);
 
   useEffect(() => {
-    const s = search.trim().toLowerCase();
-    const r = roleFilter.trim();
-    const out = users.filter((u) => {
-      const matchesSearch = !s ||
-        (u.email?.toLowerCase().includes(s) || u.full_name?.toLowerCase().includes(s));
-      const matchesRole = (r === "all") || (u.role === r);
-      return matchesSearch && matchesRole;
-    });
-    setFiltered(out);
-  }, [users, search, roleFilter]);
+    void loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, roleFilter]);
 
   const filialById = useMemo(() => Object.fromEntries(filiais.map(f => [f.id, f.nome])), [filiais]);
 
-  const init = async () => {
-    setLoading(true);
-    const [{ data: f }, { data: u }, { data: userData }] = await Promise.all([
-      supabase.from("filiais").select("id, nome").order("nome"),
-      supabase.from("user_profiles").select("user_id, email, full_name, role, filial_id, panels").order("full_name", { ascending: true }),
-      supabase.auth.getUser(),
-    ]);
-    setFiliais(f || []);
-    setUsers((u as any) || []);
-    setLoading(false);
+  const loadFiliais = async () => {
+    const { data } = await supabase.from("filiais").select("id, nome").order("nome");
+    setFiliais(data || []);
+    const { data: userData } = await supabase.auth.getUser();
     setCurrentUserId(userData.user?.id ?? null);
   };
+
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    let query = supabase
+      .from("user_profiles")
+      .select("user_id, email, full_name, role, filial_id, panels", { count: 'exact' })
+      .order("full_name", { ascending: true })
+      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+    if (search.trim()) {
+      const s = `%${search.trim()}%`;
+      query = query.or(`email.ilike.${s},full_name.ilike.${s}`);
+    }
+    if (roleFilter !== "all") {
+      query = query.eq("role", roleFilter);
+    }
+    const { data, count } = await query;
+    setUsers((data as any) || []);
+    setTotal(count || 0);
+    setLoading(false);
+  }, [page, roleFilter, search]);
 
   const updateRole = async (userId: string, newRole: string) => {
     const normalized: string | null = newRole === "no-role" ? null : newRole;
@@ -189,7 +174,7 @@ export default function UsuariosPage() {
                   </Select>
                 </div>
                 <div className="flex items-end">
-                  <Button variant="secondary" onClick={() => { setSearch(""); setRoleFilter(""); }}>Limpar filtros</Button>
+                  <Button variant="secondary" onClick={() => { setSearch(""); setRoleFilter("all"); }}>Limpar filtros</Button>
                 </div>
               </div>
 
@@ -207,7 +192,7 @@ export default function UsuariosPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map((u) => (
+                    {users.map((u) => (
                       <TableRow key={u.user_id}>
                         <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                         <TableCell>{u.email || "—"}</TableCell>
@@ -268,6 +253,10 @@ export default function UsuariosPage() {
                   </TableBody>
                 </Table>
               )}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>Anterior</Button>
+                <Button variant="outline" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(p => p + 1)}>Próxima</Button>
+              </div>
             </CardContent>
           </Card>
         </div>

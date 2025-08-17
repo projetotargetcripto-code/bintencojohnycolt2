@@ -145,7 +145,13 @@ serve(async (req) => {
       }).catch(() => {});
     }
 
-    console.log(JSON.stringify({ action: 'provision-filial', actor: user.id, filialId }));
+    await adminClient.from('audit_logs').insert({
+      actor: user.id,
+      action: 'provision-filial',
+      target: filialId,
+      metadata: { nome, kind }
+    }).catch(() => {});
+
     return new Response(JSON.stringify({ id: filialId }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
