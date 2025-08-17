@@ -16,15 +16,15 @@ interface AuthorizationState {
 const AuthorizationContext = createContext<AuthorizationState>({ profile: null, loading: true });
 
 export function AuthorizationProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<AuthorizationProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      if (!user) {
+      if (authLoading || !user) {
         setProfile(null);
-        setLoading(false);
+        setLoading(authLoading);
         return;
       }
       setLoading(true);
@@ -83,7 +83,7 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
       }
     };
     load();
-  }, [user?.id]);
+  }, [user, authLoading]);
 
   const value = useMemo(() => ({ profile, loading }), [profile, loading]);
   return <AuthorizationContext.Provider value={value}>{children}</AuthorizationContext.Provider>;
