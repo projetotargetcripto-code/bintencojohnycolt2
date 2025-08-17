@@ -92,15 +92,14 @@ $$ LANGUAGE plpgsql;
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION process_geojson_lotes(
     p_empreendimento_id UUID,
-    p_geojson JSONB
+    p_geojson JSONB,
+    p_empreendimento_nome TEXT
 )
-RETURNS TABLE(
-    total_lotes INTEGER,
-    lotes_processados JSONB
-) AS $$
+RETURNS TABLE(total_lotes INTEGER, lotes_processados JSONB) AS $$
 DECLARE
     feature JSONB;
-    lote_nome VARCHAR(100);
+    lote_nome_original TEXT;
+    lote_nome_final TEXT;
     lote_numero INTEGER;
     geometria JSONB;
     coordenadas JSONB;
@@ -111,35 +110,38 @@ DECLARE
 BEGIN
     -- Limpar lotes existentes do empreendimento
     DELETE FROM lotes WHERE empreendimento_id = p_empreendimento_id;
-    
+
     -- Processar cada feature do GeoJSON
     FOR feature IN SELECT JSONB_ARRAY_ELEMENTS(p_geojson->'features')
     LOOP
         contador := contador + 1;
-        
-        -- Extrair nome do lote
-        lote_nome := COALESCE(
+
+        -- Nome original do lote
+        lote_nome_original := COALESCE(
             feature->'properties'->>'Name',
             feature->'properties'->>'name',
             'Lote ' || contador::TEXT
         );
-        
-        -- Extrair número do lote (tentar do nome)
-        lote_numero := CASE 
-            WHEN lote_nome ~ '\d+' THEN 
-                (regexp_match(lote_nome, '\d+'))[1]::INTEGER
+
+        -- Nome final formatado
+        lote_nome_final := p_empreendimento_nome || ' - ' || lote_nome_original;
+
+        -- Extrair número do lote (do nome original)
+        lote_numero := CASE
+            WHEN lote_nome_original ~ '\d+' THEN
+                (regexp_match(lote_nome_original, '\d+'))[1]::INTEGER
             ELSE contador
         END;
-        
+
         -- Extrair geometria
         geometria := feature->'geometry'->'coordinates';
-        
+
         -- Calcular coordenadas do centro
         coordenadas := calculate_polygon_center(geometria);
-        
+
         -- Calcular área
         area_calculada := calculate_polygon_area(geometria);
-        
+
         -- Inserir lote
         INSERT INTO lotes (
             empreendimento_id,
@@ -152,7 +154,7 @@ BEGIN
             properties
         ) VALUES (
             p_empreendimento_id,
-            lote_nome,
+            lote_nome_final,
             lote_numero,
             'disponivel',
             area_calculada,
@@ -160,17 +162,16 @@ BEGIN
             geometria,
             feature->'properties'
         ) RETURNING id INTO lote_id;
-        
+
         -- Adicionar ao array de retorno
         lotes_array := lotes_array || JSONB_BUILD_OBJECT(
             'id', lote_id,
-            'nome', lote_nome,
+            'nome', lote_nome_final,
             'numero', lote_numero,
-            'area_m2', area_calculada,
-            'coordenadas', coordenadas
+            'area_m2', area_calculada
         );
     END LOOP;
-    
+
     -- Retornar resultado
     RETURN QUERY SELECT contador, lotes_array;
 END;
@@ -271,8 +272,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT ALL ON lotes TO authenticated;
 GRANT ALL ON lotes TO anon;
 
-GRANT EXECUTE ON FUNCTION process_geojson_lotes TO authenticated;
-GRANT EXECUTE ON FUNCTION process_geojson_lotes TO anon;
+GRANT EXECUTE ON FUNCTION process_geojson_lotes(uuid, jsonb, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION process_geojson_lotes(uuid, jsonb, text) TO anon;
 
 GRANT EXECUTE ON FUNCTION get_empreendimento_lotes TO authenticated;
 GRANT EXECUTE ON FUNCTION get_empreendimento_lotes TO anon;
