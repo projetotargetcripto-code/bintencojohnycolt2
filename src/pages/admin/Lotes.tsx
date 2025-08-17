@@ -57,37 +57,40 @@ function StatusSelector({ lote, onStatusChange }: { lote: Lote, onStatusChange: 
 
 // Componente para o Input de Valor com Debounce
 function ValorInput({ lote, onValorChange }: { lote: Lote, onValorChange: (loteId: string, novoValor: number) => void }) {
-  const [valor, setValor] = useState(lote.valor || '');
+  const initialFormatted =
+    lote.valor !== null && lote.valor !== undefined
+      ? lote.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '';
+  const initialRaw =
+    lote.valor !== null && lote.valor !== undefined ? lote.valor.toString() : '';
+
+  const [rawValue, setRawValue] = useState<string>(initialRaw);
+  const [formattedValue, setFormattedValue] = useState<string>(initialFormatted);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Debounce para salvar o valor
+  // Debounce para salvar o valor numérico
   useEffect(() => {
     const handler = setTimeout(() => {
-      // Verifica se o valor mudou do original para evitar chamadas desnecessárias
-      const valorNumerico = parseFloat(valor.toString().replace(/\./g, '').replace(',', '.'));
-      if (valor !== '' && !isNaN(valorNumerico) && valorNumerico !== lote.valor) {
+      if (rawValue === '') return;
+      const numero = parseFloat(rawValue);
+      if (!isNaN(numero) && numero !== lote.valor) {
         setIsUpdating(true);
-        onValorChange(lote.id, valorNumerico).finally(() => setIsUpdating(false));
+        onValorChange(lote.id, numero).finally(() => setIsUpdating(false));
       }
-    }, 1000); // Salva 1 segundo após o usuário parar de digitar
+    }, 1000);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [valor, lote.id, lote.valor, onValorChange]);
+  }, [rawValue, lote.id, lote.valor, onValorChange]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Permite apenas números e uma vírgula
-    const valorFormatado = e.target.value;
-    setValor(valorFormatado);
-  };
-  
-  // Formata o valor para exibição (ex: 100000.50 -> "100.000,50")
-  const formatForDisplay = (num: number | string) => {
-    if (typeof num === 'number') {
-      return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const valorDigitado = e.target.value;
+    const valorNumerico = valorDigitado.replace(/\./g, '').replace(',', '.');
+    if (/^[0-9.,]*$/.test(valorDigitado)) {
+      setFormattedValue(valorDigitado);
+      setRawValue(valorNumerico);
     }
-    return num;
   };
 
   return (
@@ -95,7 +98,7 @@ function ValorInput({ lote, onValorChange }: { lote: Lote, onValorChange: (loteI
       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
       <Input
         type="text"
-        value={formatForDisplay(valor)}
+        value={formattedValue}
         onChange={handleChange}
         className="pl-9 pr-2 text-right w-[150px]"
         disabled={isUpdating}
