@@ -55,11 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: allowedPanelsData } = await supabase.rpc('get_my_allowed_panels');
 
         if (profileData || allowedPanelsData) {
+          const branchPanels = Array.isArray(allowedPanelsData) ? allowedPanelsData : [];
+          const userPanels = Array.isArray(profileData?.panels) ? profileData.panels : [];
+          const mergedPanels = Array.from(new Set([...branchPanels, ...userPanels]));
           setProfile(prev => ({
             role: userRole,
             user_id: profileData?.user_id || currentUser.id,
             full_name: profileData?.full_name || prev?.full_name || currentUser.email,
-            panels: (allowedPanelsData as string[] | null) ?? profileData?.panels ?? prev?.panels ?? [],
+            panels: mergedPanels,
             is_active: (profileData?.is_active ?? prev?.is_active ?? true) as boolean,
             filial_id: (profileData?.filial_id ?? prev?.filial_id ?? null) as string | null,
           }));
@@ -100,11 +103,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const { data: allowedPanelsData } = await supabase.rpc('get_my_allowed_panels');
 
           if (profileData || allowedPanelsData) {
+            const branchPanels = Array.isArray(allowedPanelsData) ? allowedPanelsData : [];
+            const userPanels = Array.isArray(profileData?.panels) ? profileData.panels : [];
+            const mergedPanels = Array.from(new Set([...branchPanels, ...userPanels]));
             setProfile(prev => ({
               role: userRole,
               user_id: profileData?.user_id || newUser.id,
               full_name: profileData?.full_name || prev?.full_name || newUser.email,
-              panels: (allowedPanelsData as string[] | null) ?? profileData?.panels ?? prev?.panels ?? [],
+              panels: mergedPanels,
               is_active: (profileData?.is_active ?? prev?.is_active ?? true) as boolean,
               filial_id: (profileData?.filial_id ?? prev?.filial_id ?? null) as string | null,
             }));
