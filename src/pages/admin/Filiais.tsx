@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Table as UTable, TableHeader as UTableHeader, TableRow as UTableRow, TableHead as UTableHead, TableBody as UTableBody, TableCell as UTableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,6 +61,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
   const [total, setTotal] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editing, setEditing] = useState<Record<string, Partial<Filial>>>({});
+  const [search, setSearch] = useState("");
   // Admins de Filial (unificado)
   const [admins, setAdmins] = useState<AdminProfile[]>([]);
   const [adminsLoading, setAdminsLoading] = useState(true);
@@ -86,7 +88,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
 
   useEffect(() => {
     setPage(0);
-  }, [filter]);
+  }, [filter, search]);
 
   const PAGE_SIZE = 20;
 
@@ -100,6 +102,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     if (filter) {
       query = query.eq('kind', filter);
     }
+    if (search.trim()) {
+      query = query.ilike('nome', `%${search.trim()}%`);
+    }
     const { data, error, count } = await query;
 
     if (error) {
@@ -109,7 +114,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       setTotal(count || 0);
     }
     setLoading(false);
-  }, [filter, page]);
+  }, [filter, page, search]);
 
   const provisionFilial = async (payload: any, success: string) => {
     setIsSubmitting(true);
@@ -150,6 +155,16 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Falha ao atualizar filial';
       toast.error(message);
+    }
+  };
+
+  const toggleActive = async (filial: Filial, active: boolean) => {
+    const { error } = await supabase.from('filiais').update({ is_active: active }).eq('id', filial.id);
+    if (error) {
+      toast.error('Falha ao atualizar status');
+    } else {
+      toast.success(active ? 'Filial ativada' : 'Filial desativada');
+      fetchFiliais();
     }
   };
 
@@ -491,6 +506,14 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                 <CardDescription>Lista de todas as filiais existentes no sistema.</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-4 flex justify-end">
+                  <Input
+                    placeholder="Buscar filial..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full md:w-1/3"
+                  />
+                </div>
                 {loading ? (
                   <p className="text-center text-muted-foreground">Carregando...</p>
                 ) : (
@@ -502,6 +525,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                             <TableHead>Nome</TableHead>
                             <TableHead>Responsável</TableHead>
                             <TableHead>E-mail</TableHead>
+                            <TableHead>Ativa?</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -513,6 +537,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                                   <TableCell className="font-medium">{filial.nome}</TableCell>
                                   <TableCell>{admin ? admin.full_name : "N/A"}</TableCell>
                                   <TableCell>{admin ? admin.email : "N/A"}</TableCell>
+                                  <TableCell>
+                                    <Switch checked={!!filial.is_active} onCheckedChange={(c) => toggleActive(filial, c)} />
+                                  </TableCell>
                                 </TableRow>
                               );
                             })}
