@@ -107,11 +107,16 @@ serve(async (req) => {
     });
     if (upErr) return new Response(JSON.stringify({ error: upErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") || "";
+    const userAgent = req.headers.get("user-agent") || "";
     await adminClient.from('audit_logs').insert({
       actor: user.id,
       action: 'create-admin-filial',
       target: newUser.id,
-      metadata: { filial_id: filialIdToUse }
+      metadata: { filial_id: filialIdToUse },
+      ip_address: ipAddress,
+      user_agent: userAgent,
     }).catch(() => {});
 
     return new Response(

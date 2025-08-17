@@ -145,11 +145,16 @@ serve(async (req) => {
       }).catch(() => {});
     }
 
+    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") || "";
+    const userAgent = req.headers.get("user-agent") || "";
     await adminClient.from('audit_logs').insert({
       actor: user.id,
       action: 'provision-filial',
       target: filialId,
-      metadata: { nome, kind }
+      metadata: { nome, kind },
+      ip_address: ipAddress,
+      user_agent: userAgent,
     }).catch(() => {});
 
     return new Response(JSON.stringify({ id: filialId }), {
