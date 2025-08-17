@@ -18,6 +18,10 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
+  if (!import.meta.env.DEV) {
+    return null;
+  }
+
   if (quickLoginCredentials.length === 0) {
     return null;
   }
