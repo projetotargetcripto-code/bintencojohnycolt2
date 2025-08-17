@@ -45,7 +45,7 @@ export function QuickLoginWidget({ compact = false, className = "" }: QuickLogin
         navigate(cred.panel);
       }
     } catch (err) {
-      setError("Erro inesperado ao fazer login");
+      setError(err instanceof Error ? err.message : "Erro inesperado ao fazer login");
     } finally {
       setLoading(null);
     }

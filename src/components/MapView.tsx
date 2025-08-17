@@ -27,6 +27,7 @@ export function MapView({
   const [selectedLote, setSelectedLote] = useState<string | null>(null);
   const [hoveredLote, setHoveredLote] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const lotesLayersRef = useRef<Map<string, L.GeoJSON>>(new Map());
 
@@ -62,7 +63,8 @@ export function MapView({
     const loadLotes = async () => {
       try {
         setLoading(true);
-        
+        setError(null);
+
         const { data, error } = await supabase.rpc('get_empreendimento_lotes', {
           p_empreendimento_id: empreendimentoId
         });
@@ -73,6 +75,7 @@ export function MapView({
           if (error.message?.includes('function') || error.message?.includes('does not exist')) {
             console.warn('⚠️ RPC get_empreendimento_lotes não encontrada. Execute o SQL supabase-lotes-interativos.sql');
           }
+          setError(error.message || 'Erro ao carregar lotes');
           return;
         }
 
@@ -84,6 +87,7 @@ export function MapView({
         }
       } catch (error) {
         console.error('Erro ao carregar lotes:', error);
+        setError(error instanceof Error ? error.message : 'Erro ao carregar lotes');
       } finally {
         setLoading(false);
       }
@@ -235,13 +239,15 @@ export function MapView({
   // Atualizar status do lote
   const defaultUpdateLoteStatus = async (loteId: string, newStatus: string) => {
     try {
-      const { error } = await supabase.rpc('update_lote_status', {
+      setError(null);
+      const { error: rpcError } = await supabase.rpc('update_lote_status', {
         p_lote_id: loteId,
         p_novo_status: newStatus
       });
 
-      if (error) {
-        console.error('Erro ao atualizar status:', error);
+      if (rpcError) {
+        console.error('Erro ao atualizar status:', rpcError);
+        setError(rpcError.message || 'Erro ao atualizar status');
         return;
       }
 
@@ -258,6 +264,7 @@ export function MapView({
       }
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
+      setError(error instanceof Error ? error.message : 'Erro ao atualizar status');
     }
   };
 
@@ -278,7 +285,7 @@ export function MapView({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       {showControls && (
         <div className="mb-4 flex flex-wrap gap-4 items-center">
           <div className="flex gap-2">
@@ -328,6 +335,11 @@ export function MapView({
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
             <p className="text-sm text-gray-600">Carregando lotes...</p>
           </div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
+          <p className="text-sm text-red-600">Erro: {error}</p>
         </div>
       )}
     </div>
