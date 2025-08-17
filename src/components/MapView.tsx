@@ -10,14 +10,16 @@ interface MapViewProps {
   onLoteClick?: (lote: LoteData) => void;
   showControls?: boolean;
   readonly?: boolean;
+  onUpdateLoteStatus?: (loteId: string, newStatus: string) => Promise<void> | void;
 }
 
-export function MapView({ 
-  empreendimentoId, 
-  height = '500px', 
+export function MapView({
+  empreendimentoId,
+  height = '500px',
   onLoteClick,
   showControls = true,
-  readonly = false
+  readonly = false,
+  onUpdateLoteStatus
 }: MapViewProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -202,9 +204,9 @@ export function MapView({
         </div>
         ${!readonly ? `
           <div class="mt-3 flex gap-2">
-            ${lote.status !== 'vendido' ? `<button onclick="window.updateLoteStatus('${lote.id}', 'vendido')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Vender</button>` : ''}
-            ${lote.status !== 'reservado' ? `<button onclick="window.updateLoteStatus('${lote.id}', 'reservado')" class="px-2 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600">Reservar</button>` : ''}
-            ${lote.status !== 'disponivel' ? `<button onclick="window.updateLoteStatus('${lote.id}', 'disponivel')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">Disponibilizar</button>` : ''}
+            ${lote.status !== 'vendido' ? `<button data-status="vendido" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Vender</button>` : ''}
+            ${lote.status !== 'reservado' ? `<button data-status="reservado" class="px-2 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600">Reservar</button>` : ''}
+            ${lote.status !== 'disponivel' ? `<button data-status="disponivel" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">Disponibilizar</button>` : ''}
           </div>
         ` : ''}
       </div>
@@ -214,10 +216,24 @@ export function MapView({
       maxWidth: 300,
       className: 'lote-popup'
     }).openPopup();
+
+    if (!readonly) {
+      polygon.once('popupopen', () => {
+        const popupEl = polygon.getPopup()?.getElement();
+        popupEl?.querySelectorAll<HTMLButtonElement>('button[data-status]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const newStatus = btn.getAttribute('data-status');
+            if (newStatus && lote.id) {
+              handleUpdateLoteStatus(lote.id, newStatus);
+            }
+          });
+        });
+      });
+    }
   };
 
   // Atualizar status do lote
-  const updateLoteStatus = async (loteId: string, newStatus: string) => {
+  const defaultUpdateLoteStatus = async (loteId: string, newStatus: string) => {
     try {
       const { error } = await supabase.rpc('update_lote_status', {
         p_lote_id: loteId,
@@ -234,7 +250,7 @@ export function MapView({
         const { data } = await supabase.rpc('get_empreendimento_lotes', {
           p_empreendimento_id: empreendimentoId
         });
-        
+
         if (data) {
           setLotes(data);
           renderLotes(data);
@@ -245,14 +261,7 @@ export function MapView({
     }
   };
 
-  // Expor função globalmente para uso nos popups
-  useEffect(() => {
-    (window as any).updateLoteStatus = updateLoteStatus;
-    
-    return () => {
-      delete (window as any).updateLoteStatus;
-    };
-  }, [empreendimentoId]);
+  const handleUpdateLoteStatus = onUpdateLoteStatus ?? defaultUpdateLoteStatus;
 
   // Filtrar lotes por status
   useEffect(() => {
