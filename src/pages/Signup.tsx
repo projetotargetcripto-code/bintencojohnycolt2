@@ -7,6 +7,7 @@ import { labelFromScope } from "@/config/authConfig";
 export default function SignupPage() {
   const [params] = useSearchParams();
   const scope = params.get('scope');
+  const filialId = params.get('filialId') ?? undefined;
   const label = labelFromScope(scope);
   const title = label ? `Criar conta — ${label}` : 'Criar conta';
 
@@ -23,7 +24,7 @@ export default function SignupPage() {
 
   return (
     <AuthLayout>
-      <SignupForm title={title} scope={scope} />
+      <SignupForm title={title} scope={scope} filialId={filialId} />
     </AuthLayout>
   );
 }

@@ -9,9 +9,10 @@ import { useNavigate } from "react-router-dom";
 export interface SignupFormProps {
   title: string;
   scope?: string | null;
+  filialId?: string;
 }
 
-export function SignupForm({ title, scope }: SignupFormProps) {
+export function SignupForm({ title, scope, filialId }: SignupFormProps) {
   const { register, handleSubmit } = useForm<{ name: string; email: string; password: string; confirm: string; terms: boolean }>();
   const [agreeError, setAgreeError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,8 +24,16 @@ export function SignupForm({ title, scope }: SignupFormProps) {
     setError(null); setOk(null);
     if (!data.terms) { setAgreeError('Você deve aceitar os Termos para continuar.'); return; }
     if (data.password !== data.confirm) { setError('As senhas não coincidem.'); return; }
-    const { error } = await supabase.auth.signUp({ email: data.email, password: data.password, options: { data: { full_name: data.name } } });
+    const { data: signUpData, error } = await supabase.auth.signUp({ email: data.email, password: data.password, options: { data: { full_name: data.name } } });
     if (error) { setError(error.message || 'Falha ao criar conta'); return; }
+    const userId = signUpData.user?.id;
+    await supabase.from('user_profiles').upsert({
+      user_id: userId,
+      email: data.email,
+      full_name: data.name,
+      role: scope ?? 'investidor',
+      filial_id: filialId ?? null,
+    });
     const qs = new URLSearchParams();
     if (scope) qs.set('scope', scope);
     qs.set('msg', 'check-email');
