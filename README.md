@@ -74,7 +74,7 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-trick
 
 ## Quick login credentials (development)
 
-The quick login widget can load test accounts from environment variables. Create or update `.env.local` with pairs of email and password for each role:
+The quick login widget can load test accounts from environment variables. Create or update `.env.local` with pairs of email and password for each role. Use only throwaway passwords for these test accounts—**never** reuse real production credentials. The `.env.local` file should be listed in `.gitignore` so these values aren't committed:
 
 ```
 VITE_SUPERADMIN_EMAIL=superadmin@example.com
