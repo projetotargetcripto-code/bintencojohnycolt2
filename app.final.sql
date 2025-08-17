@@ -8,6 +8,7 @@
 -- ============== EXTENSIONS ====================
 create extension if not exists "pgcrypto";
 create extension if not exists "postgis";
+create extension if not exists "unaccent";
 
 -- ============== HELPERS =======================
 create or replace function public.set_updated_at()
@@ -16,6 +17,35 @@ begin
   new.updated_at = now();
   return new;
 end $$;
+
+create or replace function public.slugify(text)
+returns text language sql immutable as $$
+  select coalesce(nullif(regexp_replace(lower(unaccent($1)), '[^a-z0-9]+', '-', 'g'), ''), 'n-a');
+$$;
+
+create or replace function public.empreendimentos_set_defaults()
+returns trigger language plpgsql as $$
+begin
+  if new.slug is null or new.slug = '' then
+    new.slug := public.slugify(new.nome);
+  end if;
+  new.published := coalesce(new.status, '') = 'aprovado';
+  if new.bounds is not null then
+    begin
+      new.bbox := ST_MakeEnvelope(
+        (new.bounds->'sw'->>1)::double precision,
+        (new.bounds->'sw'->>0)::double precision,
+        (new.bounds->'ne'->>1)::double precision,
+        (new.bounds->'ne'->>0)::double precision,
+        4326
+      );
+    exception when others then
+      new.bbox := null;
+    end;
+  end if;
+  return new;
+end;
+$$;
 
 -- ============== TABLES ========================
 -- FILIAIS
@@ -80,6 +110,17 @@ end $$;
 create index if not exists idx_emp_filial on public.empreendimentos(filial_id);
 create index if not exists idx_emp_status on public.empreendimentos(status);
 create index if not exists idx_emp_published on public.empreendimentos(published);
+create unique index if not exists idx_emp_slug on public.empreendimentos(slug);
+create index if not exists idx_emp_bbox on public.empreendimentos using gist (bbox);
+
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'tg_emp_set_defaults') then
+    create trigger tg_emp_set_defaults
+    before insert or update on public.empreendimentos
+    for each row execute function public.empreendimentos_set_defaults();
+  end if;
+end $$;
 
 -- USER_PROFILES
 create table if not exists public.user_profiles (
