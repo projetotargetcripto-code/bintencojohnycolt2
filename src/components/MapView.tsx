@@ -78,7 +78,7 @@ export function MapView({
           setLotes(data);
           renderLotes(data);
         } else {
-          console.log('ℹ️ Nenhum lote encontrado para este empreendimento');
+          console.warn('⚠️ Nenhum lote encontrado para este empreendimento');
         }
       } catch (error) {
         console.error('Erro ao carregar lotes:', error);
