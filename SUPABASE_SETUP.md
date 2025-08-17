@@ -27,21 +27,7 @@ CREATE TABLE empreendimentos (
 ### Configuração do Storage
 
 1. Criar bucket `empreendimentos` no Supabase Storage
-2. Configurar políticas de acesso:
-
-```sql
--- Política para permitir upload de arquivos autenticados
-CREATE POLICY "Authenticated users can upload files" ON storage.objects
-FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
--- Política para permitir leitura pública dos arquivos
-CREATE POLICY "Public can view files" ON storage.objects
-FOR SELECT USING (bucket_id = 'empreendimentos');
-
--- Política para permitir update de arquivos pelo proprietário
-CREATE POLICY "Users can update own files" ON storage.objects
-FOR UPDATE USING (auth.uid()::text = (storage.foldername(name))[1]);
-```
+2. Aplicar as políticas de acesso definidas na seção de Storage de `NovoSetup/sql.final.referenciado.sql`.
 
 ## Configuração Local
 

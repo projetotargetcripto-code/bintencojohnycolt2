@@ -166,7 +166,8 @@ create table if not exists public.testemunhos (
     role text
 );
 
--- Políticas de Storage (de storage-policies.sql)
+-- Políticas de Storage
+-- Esta seção é a fonte de verdade para as políticas do bucket 'empreendimentos'
 create policy "Authenticated users can upload files"
   on storage.objects for insert
   with check (bucket_id = 'empreendimentos' and auth.role() = 'authenticated');

@@ -56,8 +56,7 @@ ALTER TABLE empreendimentos ADD COLUMN IF NOT EXISTS created_by_email TEXT;
 -- Políticas para empreendimentos
 CREATE POLICY "Public read approved empreendimentos" ON empreendimentos...
 
--- Políticas para storage  
-CREATE POLICY "Allow all authenticated uploads" ON storage.objects...
+-- Políticas para storage (ver NovoSetup/sql.final.referenciado.sql)
 ```
 
 #### **⚙️ Funções RPC Essenciais:**

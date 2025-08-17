@@ -22,7 +22,7 @@
 4. Marque **"Public bucket"** ✅
 5. Clique em **"Create bucket"**
 6. Volte ao **"SQL Editor"**
-7. Copie o conteúdo do arquivo `storage-policies.sql`
+7. Copie a seção de políticas de storage do arquivo `NovoSetup/sql.final.referenciado.sql`
 8. Execute no SQL Editor
 
 ### 4. **Verificar se Funcionou**

@@ -29,33 +29,7 @@ O erro "Erro ao fazer upload do arquivo GeoJSON" ocorre devido à configuração
 
 ### **Execute no Supabase Dashboard:**
 
-1. Acesse: https://supabase.com/dashboard/project/epsuxumkgakpqykvteij/sql
-2. Cole e execute o SQL abaixo:
-
-```sql
--- Remover políticas existentes
-DROP POLICY IF EXISTS "Allow all authenticated uploads" ON storage.objects;
-DROP POLICY IF EXISTS "Allow public read" ON storage.objects;
-DROP POLICY IF EXISTS "Allow authenticated updates" ON storage.objects;
-DROP POLICY IF EXISTS "Allow authenticated deletes" ON storage.objects;
-
--- Criar políticas simplificadas
-CREATE POLICY "Allow all authenticated uploads" 
-ON storage.objects FOR INSERT 
-WITH CHECK (bucket_id = 'empreendimentos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Allow public read" 
-ON storage.objects FOR SELECT 
-USING (bucket_id = 'empreendimentos');
-
-CREATE POLICY "Allow authenticated updates" 
-ON storage.objects FOR UPDATE 
-USING (bucket_id = 'empreendimentos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Allow authenticated deletes" 
-ON storage.objects FOR DELETE 
-USING (bucket_id = 'empreendimentos' AND auth.role() = 'authenticated');
-```
+Execute a seção de políticas de storage do arquivo `NovoSetup/sql.final.referenciado.sql` no **SQL Editor**.
 
 ## 🧪 **Como Testar**
 

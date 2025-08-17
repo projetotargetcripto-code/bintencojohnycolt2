@@ -230,20 +230,7 @@ async function applyAllFixes() {
     
     if (uploadError) {
       console.log('⚠️ Upload com restrições:', uploadError.message);
-      console.log('📋 Execute manualmente no Supabase Dashboard:');
-      console.log(`
-        -- Políticas de Storage
-        DROP POLICY IF EXISTS "Allow all authenticated uploads" ON storage.objects;
-        DROP POLICY IF EXISTS "Allow public read" ON storage.objects;
-        
-        CREATE POLICY "Allow all authenticated uploads" 
-        ON storage.objects FOR INSERT 
-        WITH CHECK (bucket_id = 'empreendimentos' AND auth.role() = 'authenticated');
-        
-        CREATE POLICY "Allow public read" 
-        ON storage.objects FOR SELECT 
-        USING (bucket_id = 'empreendimentos');
-      `);
+      console.log("📋 Execute manualmente no Supabase Dashboard a seção de políticas de storage do arquivo NovoSetup/sql.final.referenciado.sql.");
     } else {
       console.log('✅ Upload funcionando:', uploadData.path);
       // Limpar teste

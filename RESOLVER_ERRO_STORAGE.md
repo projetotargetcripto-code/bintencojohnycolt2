@@ -34,40 +34,7 @@ StorageApiError: mime type application/octet-stream is not supported
 
 ### **3. EXECUTAR SQL DE POLÍTICAS**
 
-Execute este SQL no **SQL Editor** do Supabase:
-
-```sql
--- Remover políticas antigas
-DROP POLICY IF EXISTS "Allow authenticated uploads" ON storage.objects;
-DROP POLICY IF EXISTS "Allow upload temp" ON storage.objects;
-DROP POLICY IF EXISTS "Public read access" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated can upload" ON storage.objects;
-
--- Permitir leitura pública
-CREATE POLICY "Public read access" ON storage.objects
-FOR SELECT USING (bucket_id = 'empreendimentos');
-
--- Permitir upload para usuários autenticados
-CREATE POLICY "Authenticated can upload" ON storage.objects
-FOR INSERT WITH CHECK (
-  bucket_id = 'empreendimentos' 
-  AND auth.role() = 'authenticated'
-);
-
--- Permitir update para usuários autenticados
-CREATE POLICY "Authenticated can update" ON storage.objects
-FOR UPDATE WITH CHECK (
-  bucket_id = 'empreendimentos' 
-  AND auth.role() = 'authenticated'
-);
-
--- Permitir delete para usuários autenticados
-CREATE POLICY "Authenticated can delete" ON storage.objects
-FOR DELETE USING (
-  bucket_id = 'empreendimentos' 
-  AND auth.role() = 'authenticated'
-);
-```
+Execute a seção de políticas de storage do arquivo `NovoSetup/sql.final.referenciado.sql` no **SQL Editor** do Supabase.
 
 ### **4. TESTAR NOVAMENTE**
 

@@ -7,7 +7,7 @@
 ### 2. Configurar o Storage
 1. No painel do Supabase, acesse **Storage → Create new bucket**.
 2. Nomeie o bucket como `empreendimentos`, marque-o como **Public** e adicione os MIME types permitidos: `application/json`, `application/geo+json`, `image/jpeg`, `image/png`, `image/gif`, `image/webp`.
-3. No **SQL Editor**, execute `storage-policies.sql` para criar as políticas de acesso do bucket.
+3. No **SQL Editor**, execute a seção de políticas de storage do arquivo `NovoSetup/sql.final.referenciado.sql` para criar as políticas de acesso do bucket.
 
 ### 3. Variáveis de ambiente da aplicação
 Crie um arquivo `.env.local` no projeto com:

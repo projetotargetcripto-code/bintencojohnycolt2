@@ -133,32 +133,7 @@ GRANT EXECUTE ON FUNCTION approve_empreendimento TO authenticated;
 -- 6. CORRIGIR POLÍTICAS DE STORAGE
 -- ===============================
 
--- Remover políticas antigas de storage
-DROP POLICY IF EXISTS "Allow all authenticated uploads" ON storage.objects;
-DROP POLICY IF EXISTS "Allow public read" ON storage.objects;
-DROP POLICY IF EXISTS "Allow authenticated updates" ON storage.objects;
-DROP POLICY IF EXISTS "Allow authenticated deletes" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload files" ON storage.objects;
-DROP POLICY IF EXISTS "Public can view files" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can update files" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can delete files" ON storage.objects;
-
--- Criar políticas de storage simplificadas
-CREATE POLICY "Allow all authenticated uploads" 
-ON storage.objects FOR INSERT 
-WITH CHECK (bucket_id = 'empreendimentos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Allow public read" 
-ON storage.objects FOR SELECT 
-USING (bucket_id = 'empreendimentos');
-
-CREATE POLICY "Allow authenticated updates" 
-ON storage.objects FOR UPDATE 
-USING (bucket_id = 'empreendimentos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Allow authenticated deletes" 
-ON storage.objects FOR DELETE 
-USING (bucket_id = 'empreendimentos' AND auth.role() = 'authenticated');
+-- As políticas de storage estão definidas na seção correspondente de NovoSetup/sql.final.referenciado.sql
 
 -- 7. LIMPAR DADOS DE TESTE ANTIGOS
 -- ===============================
