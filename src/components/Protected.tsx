@@ -1,6 +1,7 @@
 import { PropsWithChildren, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
+import { useAuthorization } from "@/providers/AuthorizationProvider";
 
 interface ProtectedProps {
   children: React.ReactNode;
@@ -11,9 +12,11 @@ interface ProtectedProps {
 }
 
 export function Protected({ children, redirectTo = "/login", allowedRoles, panelKey, debugBypass = false }: PropsWithChildren<ProtectedProps>) {
-	const { session, profile, loading } = useAuth();
-	const navigate = useNavigate();
-	const location = useLocation();
+        const { session, loading: authLoading } = useAuth();
+        const { profile, loading: authzLoading } = useAuthorization();
+        const loading = authLoading || authzLoading;
+        const navigate = useNavigate();
+        const location = useLocation();
 
 	useEffect(() => {
 		if (debugBypass || loading) return;

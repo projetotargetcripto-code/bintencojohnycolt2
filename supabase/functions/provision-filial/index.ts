@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as Sentry from "https://esm.sh/@sentry/deno@7";
+
+Sentry.init({ dsn: Deno.env.get("SENTRY_DSN") || "" });
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -26,6 +29,7 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization") || "";
     if (!authHeader.startsWith("Bearer ")) {
+      Sentry.addBreadcrumb({ message: 'unauthorized', data: { action: 'provision-filial' } });
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,6 +62,7 @@ serve(async (req) => {
       const isSuperadmin =
         profile?.role === "superadmin" || appRole === "superadmin";
     if (!isSuperadmin) {
+      Sentry.addBreadcrumb({ message: 'forbidden', data: { user: user.id, action: 'provision-filial' } });
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -140,11 +145,14 @@ serve(async (req) => {
       }).catch(() => {});
     }
 
+    console.log(JSON.stringify({ action: 'provision-filial', actor: user.id, filialId }));
     return new Response(JSON.stringify({ id: filialId }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    Sentry.captureException(e);
+    console.error('provision-filial error', e);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

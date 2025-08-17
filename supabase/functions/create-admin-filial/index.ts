@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as Sentry from "https://esm.sh/@sentry/deno@7";
+
+Sentry.init({ dsn: Deno.env.get("SENTRY_DSN") || "" });
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -25,6 +28,7 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") || "";
     if (!authHeader.startsWith("Bearer ")) {
+      Sentry.addBreadcrumb({ message: 'unauthorized access', data: { action: 'create-admin-filial' } });
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -50,6 +54,7 @@ serve(async (req) => {
 
     const isSuperadmin = (profile?.role === "superadmin") || ((user as any)?.app_metadata?.role === "superadmin");
     if (!isSuperadmin) {
+      Sentry.addBreadcrumb({ message: 'forbidden', data: { user: user.id, action: 'create-admin-filial' } });
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -102,6 +107,7 @@ serve(async (req) => {
     });
     if (upErr) return new Response(JSON.stringify({ error: upErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    console.log(JSON.stringify({ action: 'create-admin-filial', actor: user.id, target: newUser.id }));
     return new Response(
       JSON.stringify({ user_id: newUser.id, email, temp_password: finalPassword }),
       {
@@ -110,6 +116,8 @@ serve(async (req) => {
       }
     );
   } catch (e) {
+    Sentry.captureException(e);
+    console.error('create-admin-filial error', e);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

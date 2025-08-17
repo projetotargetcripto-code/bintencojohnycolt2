@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/dataClient";
 import { toast } from "sonner";
-import { useAuth } from "@/providers/AuthProvider";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { 
@@ -39,7 +38,6 @@ interface Empreendimento {
 }
 
 export default function AprovacaoEmpreendimentos() {
-  const { profile } = useAuth();
   const [empreendimentos, setEmpreendimentos] = useState<Empreendimento[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);

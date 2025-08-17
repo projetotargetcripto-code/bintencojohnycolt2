@@ -57,6 +57,32 @@ create index if not exists idx_up_filial on public.user_profiles(filial_id); -- 
 create trigger tg_up_updated_at before update on public.user_profiles
     for each row execute function public.set_updated_at(); -- app.final.sql
 
+-- Auditoria de mudanças de cargo/painéis
+create table if not exists public.audit_role_changes (
+    changed_at timestamptz default now(),
+    actor_id uuid,
+    target_user uuid,
+    old_role text,
+    new_role text,
+    old_panels text[],
+    new_panels text[]
+);
+
+create or replace function public.log_role_change()
+returns trigger language plpgsql as $$
+begin
+  if (old.role is distinct from new.role) or (old.panels is distinct from new.panels) then
+    insert into public.audit_role_changes(actor_id, target_user, old_role, new_role, old_panels, new_panels)
+    values (auth.uid(), new.user_id, old.role, new.role, old.panels, new.panels);
+  end if;
+  return new;
+end;
+$$;
+
+create trigger tg_audit_role_changes
+after update on public.user_profiles
+for each row execute function public.log_role_change();
+
 -- Controle de painéis permitidos por filial
 create table if not exists public.filial_allowed_panels (
     filial_id uuid not null references public.filiais(id) on delete cascade,
@@ -449,6 +475,7 @@ alter table public.user_profiles enable row level security;
 alter table public.lotes enable row level security;
 alter table public.masterplan_overlays enable row level security;
 alter table public.filial_allowed_panels enable row level security;
+alter table public.audit_role_changes enable row level security;
 
 create policy filiais_rls on public.filiais for all
   using (id = current_setting('request.jwt.claims.filial_id', true)::uuid)
@@ -500,4 +527,12 @@ create policy masterplan_overlays_rls on public.masterplan_overlays for all
 create policy filial_allowed_panels_rls on public.filial_allowed_panels for all
   using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
   with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid); -- app.final.sql
+
+create policy audit_role_changes_read on public.audit_role_changes for select
+  using (
+    exists (
+      select 1 from public.user_profiles up
+      where up.user_id = auth.uid() and up.role = 'superadmin'
+    )
+  );
 

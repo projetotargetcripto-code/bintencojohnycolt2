@@ -14,7 +14,7 @@ import L, { LatLngBoundsExpression, Layer } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
 import { LoteInfoModal, LoteDetalhado } from "@/components/LoteInfoModal";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuthorization } from "@/providers/AuthorizationProvider";
 
 // --- INÍCIO DA VERSÃO ESTÁVEL E CORRIGIDA ---
 
@@ -316,7 +316,7 @@ function MapView({ selected }: { selected?: Emp }) {
 // Componente Principal da Página
 export default function AdminMapa() {
   const [active, setActive] = useState<Emp | undefined>(undefined);
-  const { profile } = useAuth();
+  const { profile } = useAuthorization();
   useEffect(() => { document.title = `Mapa Interativo | BlockURB`; }, []);
 
   return (

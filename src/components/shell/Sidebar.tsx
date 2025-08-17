@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { NAV, inferMenuKey } from "@/config/nav";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuthorization } from "@/providers/AuthorizationProvider";
 import type { LucideIcon } from "lucide-react";
 import {
   Layout,
@@ -95,7 +95,7 @@ export function AppSidebar({ menuKey }: { menuKey?: string }) {
   const location = useLocation();
   const current = location.pathname;
   const key = menuKey || inferMenuKey(current);
-  const { profile } = useAuth();
+  const { profile } = useAuthorization();
   const rawItems: NavItem[] = NAV[key] || [];
   const isSuperAdmin = profile?.role === 'superadmin';
   const panels = Array.isArray(profile?.panels) ? (profile?.panels as string[]) : [];

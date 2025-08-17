@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as Sentry from "https://esm.sh/@sentry/deno@7";
+
+Sentry.init({ dsn: Deno.env.get("SENTRY_DSN") || "" });
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -29,6 +32,7 @@ serve(async (req) => {
     const domain = (domainParam || hostHeader).toLowerCase().split(":" )[0];
 
     if (!domain) {
+      Sentry.addBreadcrumb({ message: 'missing domain', data: { action: 'resolve-domain' } });
       return new Response(JSON.stringify({ error: "Domain required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -44,6 +48,7 @@ serve(async (req) => {
       .single();
 
     if (filialErr || !filial) {
+      Sentry.addBreadcrumb({ message: 'filial not found', data: { domain } });
       return new Response(JSON.stringify({ error: "Filial not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -55,6 +60,7 @@ serve(async (req) => {
       .select("panel")
       .eq("filial_id", filial.id);
 
+    console.log(JSON.stringify({ action: 'resolve-domain', domain, filial_id: filial.id }));
     return new Response(
       JSON.stringify({
         id: filial.id,
@@ -68,6 +74,8 @@ serve(async (req) => {
       },
     );
   } catch (e) {
+    Sentry.captureException(e);
+    console.error('resolve-domain error', e);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

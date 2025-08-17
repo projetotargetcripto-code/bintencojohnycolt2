@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/dataClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuthorization } from "@/providers/AuthorizationProvider";
 import { processGeoJSON, LoteData } from "@/lib/geojsonUtils";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -24,7 +24,7 @@ interface FormData {
 
 export default function EmpreendimentoNovo() {
   const navigate = useNavigate();
-  const { profile } = useAuth(); // Pega o perfil completo do usuário
+  const { profile } = useAuthorization(); // Pega o perfil completo do usuário
   const [formData, setFormData] = useState<FormData>({
     nome: '',
     descricao: '',
