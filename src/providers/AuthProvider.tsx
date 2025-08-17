@@ -6,12 +6,19 @@ interface AuthState {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  setSession: (tokens: { access_token: string; refresh_token: string }) => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthState>({ session: null, user: null, loading: true });
+export const AuthContext = createContext<AuthState>({
+  session: null,
+  user: null,
+  loading: true,
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  setSession: async () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSessionState] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
-      setSession(currentSession);
+      setSessionState(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
     };
@@ -30,13 +37,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess);
+      setSessionState(sess);
       setUser(sess?.user ?? null);
       setLoading(false);
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  const value = useMemo(() => ({ session, user, loading }), [session, user, loading]);
+  const applySession = async (tokens: { access_token: string; refresh_token: string }) => {
+    const {
+      data: { session: newSession },
+    } = await supabase.auth.setSession(tokens);
+    setSessionState(newSession);
+    setUser(newSession?.user ?? null);
+  };
+
+  const value = useMemo(() => ({ session, user, loading, setSession: applySession }), [session, user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
