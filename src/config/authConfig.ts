@@ -30,14 +30,24 @@ const scopeLabels: Record<AuthScope, string> = {
   terrenista: "Terrenista",
 };
 
-export function labelFromScope(scope?: string | null) {
+export function labelFromScope(scope?: string | null): string | undefined {
   if (!scope) return undefined;
-  const key = scope.toLowerCase() as AuthScope;
-  return (scopeLabels as any)[key] as string | undefined;
+
+  const key = scope.toLowerCase();
+  if (key in scopeLabels) {
+    return scopeLabels[key as AuthScope];
+  }
+
+  return undefined;
 }
 
-export function pathFromScope(scope?: string | null) {
+export function pathFromScope(scope?: string | null): string {
   if (!scope) return "/acessos";
-  const key = scope.toLowerCase() as AuthScope;
-  return (scopeRoutes as any)[key] ?? "/acessos";
+
+  const key = scope.toLowerCase();
+  if (key in scopeRoutes) {
+    return scopeRoutes[key as AuthScope];
+  }
+
+  return "/acessos";
 }
