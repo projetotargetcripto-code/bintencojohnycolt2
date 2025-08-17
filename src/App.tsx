@@ -32,7 +32,6 @@ import LotesVendas from "./pages/admin/LotesVendas";
 import AprovacaoEmpreendimentos from "./pages/admin/AprovacaoEmpreendimentos";
 import Logout from "./pages/Logout";
 import LotesPage from "./pages/admin/Lotes";
-import FiliaisPage from "./pages/admin/Filiais";
 import FiliaisInternasPage from "./pages/admin/FiliaisInternas";
 import ClientesSaasPage from "./pages/admin/ClientesSaas";
 import FiliaisAccessPage from "./pages/admin/FiliaisAccess";
