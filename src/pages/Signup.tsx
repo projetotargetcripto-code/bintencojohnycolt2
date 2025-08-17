@@ -1,14 +1,12 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { labelFromScope } from "@/config/authConfig";
 
 export default function SignupPage() {
-  const [params] = useSearchParams();
-  const scope = params.get('scope') ?? 'investidor';
+  const scope = 'investidor';
   const label = labelFromScope(scope);
-  const title = label ? `Criar conta — ${label}` : 'Criar conta';
+  const title = `Criar conta — ${label}`;
 
   useEffect(() => {
     document.title = `${title} | BlockURB`;

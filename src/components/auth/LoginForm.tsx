@@ -75,6 +75,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
   };
 
   const preserve = scope ? `?scope=${encodeURIComponent(scope)}` : '';
+  const showSignup = !scope || scope === 'investidor';
 
     // Credenciais de teste para desenvolvimento
     const quickCredentials = allowedPanels
@@ -181,7 +182,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
-          <a href={`/signup${preserve}`} className="story-link">Criar conta</a>
+          {showSignup && <a href={`/signup${preserve}`} className="story-link">Criar conta</a>}
           <a href={`/reset${preserve}`} className="story-link">Esqueci minha senha</a>
         </div>
 

@@ -15,15 +15,19 @@ export function SignupForm({ title, scope }: SignupFormProps) {
   const { register, handleSubmit } = useForm<{ name: string; email: string; password: string; confirm: string; terms: boolean }>();
   const [agreeError, setAgreeError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
   const onSubmit = handleSubmit(async (data) => {
-    setError(null); setOk(null);
+    setAgreeError(null);
+    setError(null);
     if (!data.terms) { setAgreeError('Você deve aceitar os Termos para continuar.'); return; }
     if (data.password !== data.confirm) { setError('As senhas não coincidem.'); return; }
-    const { error } = await supabase.auth.signUp({ email: data.email, password: data.password, options: { data: { full_name: data.name } } });
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: { data: { full_name: data.name, role: 'investidor' } }
+    });
     if (error) { setError(error.message || 'Falha ao criar conta'); return; }
     const qs = new URLSearchParams();
     if (scope) qs.set('scope', scope);
@@ -66,7 +70,6 @@ export function SignupForm({ title, scope }: SignupFormProps) {
       <Button type="submit" variant="cta" size="lg" className="w-full btn-glow active:scale-[0.99]">Criar conta</Button>
 
       {error && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{error}</p>}
-      {ok && <p className="text-sm text-primary" role="status" aria-live="polite">{ok}</p>}
 
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Já tem conta?</span>
