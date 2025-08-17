@@ -7,6 +7,7 @@ import { Eye, EyeOff, Crown, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { logAudit } from "@/lib/utils";
 
 export interface LoginFormProps {
   title: string;
@@ -38,6 +39,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormPro
       }
       
       if (res?.session) {
+        await logAudit("login", { table_name: "auth", record_id: res.session.user.id })
         navigate(redirectPath || "/admin");
       }
     } catch (err) {
@@ -63,6 +65,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath }: LoginFormPro
       }
       
       if (res?.session) {
+        await logAudit("login", { table_name: "auth", record_id: res.session.user.id })
         navigate(redirectPath || "/admin");
       }
     } catch (err) {

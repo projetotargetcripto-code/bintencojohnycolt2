@@ -7,6 +7,8 @@ import { ChartPlaceholder } from "@/components/app/ChartPlaceholder";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, Users, FileText, Target } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/dataClient";
 
 const columns = [
   { key: 'nome', header: 'Nome' },
@@ -25,15 +27,41 @@ const rows = [
   { nome: 'Felipe Costa', papel: 'Vendas', leads: 38, conv: '10%', status: 'Ativo' },
 ];
 
+interface KpiTotals {
+  logins: number
+  criacoes: number
+  atualizacoes: number
+  filiais: number
+}
+
 export default function AdminDashboard() {
+  const [totals, setTotals] = useState<KpiTotals>({ logins: 0, criacoes: 0, atualizacoes: 0, filiais: 0 })
+
+  useEffect(() => {
+    supabase.rpc('get_global_kpis').then(({ data }) => {
+      const arr = data || []
+      const totals = arr.reduce(
+        (acc: KpiTotals, item: any) => {
+          acc.logins += item.total_logins || 0
+          acc.criacoes += item.total_criacoes || 0
+          acc.atualizacoes += item.total_atualizacoes || 0
+          acc.filiais += 1
+          return acc
+        },
+        { logins: 0, criacoes: 0, atualizacoes: 0, filiais: 0 }
+      )
+      setTotals(totals)
+    })
+  }, [])
+
   return (
     <Protected debugBypass={true}>
       <AppShell breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin', href: '/admin' }, { label: 'Dashboard' }]}> 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPIStat label="Lotes disponíveis" value={128} icon={<Building2 className="text-primary" />} />
-          <KPIStat label="Reservas pendentes" value={12} icon={<FileText className="text-accent" />} tone="warning" />
-          <KPIStat label="Propostas no mês" value={46} delta="+12%" icon={<FileText className="text-primary" />} tone="positive" />
-          <KPIStat label="Conversão 30d" value="18%" delta="+2pp" icon={<Target className="text-primary" />} tone="positive" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"> 
+          <KPIStat label="Logins" value={totals.logins} icon={<Users className="text-primary" />} /> 
+          <KPIStat label="Criações" value={totals.criacoes} icon={<FileText className="text-primary" />} /> 
+          <KPIStat label="Alterações" value={totals.atualizacoes} icon={<Target className="text-primary" />} /> 
+          <KPIStat label="Filiais monitoradas" value={totals.filiais} icon={<Building2 className="text-primary" />} /> 
         </div>
 
         <div className="mt-6">
