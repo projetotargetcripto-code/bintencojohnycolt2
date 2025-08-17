@@ -71,3 +71,18 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Quick login credentials (development)
+
+The quick login widget can load test accounts from environment variables. Create or update `.env.local` with pairs of email and password for each role:
+
+```
+VITE_SUPERADMIN_EMAIL=superadmin@example.com
+VITE_SUPERADMIN_PASSWORD=strong-password
+VITE_ADMIN_EMAIL=admin@example.com
+VITE_ADMIN_PASSWORD=strong-password
+# repeat for other roles using the pattern
+# VITE_<ROLE>_EMAIL and VITE_<ROLE>_PASSWORD
+```
+
+Only roles with both variables defined will appear in the widget.
