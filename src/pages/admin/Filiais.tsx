@@ -163,7 +163,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
         filial_id: adminForm.filial_id,
       };
       if (adminForm.password) payload.password = adminForm.password;
-      const { data: result, error } = await supabase.functions.invoke('create-admin-filial', { body: payload });
+      const { data: result, error } = await supabase.functions.invoke('v1/create-admin-filial', { body: payload });
       if (error) throw new Error(error.message || 'Falha ao criar admin de filial');
       toast.success(`Admin de filial criado: ${result.email}`);
       setAdminForm({ filial_id: "", email: "", full_name: "", password: "" });

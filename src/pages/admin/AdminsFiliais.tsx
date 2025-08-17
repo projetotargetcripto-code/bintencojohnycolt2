@@ -58,7 +58,7 @@ export default function AdminsFiliaisPage() {
 
       console.debug("[AdminsFiliais] Criar admin de filial - payload:", payload);
 
-      const { data: result, error } = await supabase.functions.invoke("create-admin-filial", {
+      const { data: result, error } = await supabase.functions.invoke("v1/create-admin-filial", {
         body: payload,
       });
       if (error) {
