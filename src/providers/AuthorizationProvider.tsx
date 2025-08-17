@@ -28,21 +28,34 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
         return;
       }
       setLoading(true);
-      const { data } = await supabase.rpc('get_my_profile').single();
-      if (data) {
-        setProfile({
-          role: data.role || user.app_metadata?.role || 'user',
-          panels: Array.isArray(data.panels) ? data.panels : [],
-          filial_id: data.filial_id ?? null,
-        });
-      } else {
+      try {
+        const { data, error } = await supabase.rpc('get_my_profile').single();
+        if (error) {
+          console.error('Erro ao chamar get_my_profile:', error);
+        }
+        if (data) {
+          setProfile({
+            role: data.role || user.app_metadata?.role || 'user',
+            panels: Array.isArray(data.panels) ? data.panels : [],
+            filial_id: data.filial_id ?? null,
+          });
+        } else {
+          setProfile({
+            role: user.app_metadata?.role || 'user',
+            panels: [],
+            filial_id: null,
+          });
+        }
+      } catch (err) {
+        console.error('Erro inesperado ao chamar get_my_profile:', err);
         setProfile({
           role: user.app_metadata?.role || 'user',
           panels: [],
           filial_id: null,
         });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     load();
   }, [user?.id]);
