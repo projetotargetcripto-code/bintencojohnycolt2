@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '@/lib/dataClient';
 import { LoteData, getLoteStyle, formatArea, formatPrice } from '@/lib/geojsonUtils';
+import { renderToString } from 'react-dom/server';
 
 interface MapViewProps {
   empreendimentoId?: string;
@@ -27,6 +28,14 @@ export function MapView({
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const lotesLayersRef = useRef<Map<string, L.GeoJSON>>(new Map());
+
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
 
   // Inicializar mapa
   useEffect(() => {
@@ -129,25 +138,28 @@ export function MapView({
         }
       });
 
-      polygon.on('mouseover', (e) => {
+      polygon.on('mouseover', () => {
         setHoveredLote(lote.id || null);
-        
+
         // Atualizar estilo para hover
         polygon.setStyle(getLoteStyle(
-          lote.status || 'disponivel', 
-          true, 
+          lote.status || 'disponivel',
+          true,
           selectedLote === lote.id
         ));
 
         // Tooltip simples
-        polygon.bindTooltip(`
-          <strong>${lote.nome}</strong><br/>
-          Status: ${lote.status}<br/>
+        const tooltipHtml = `
+          <strong>${escapeHtml(lote.nome || '')}</strong><br/>
+          Status: ${escapeHtml(lote.status || '')}<br/>
           Área: ${formatArea(lote.area_m2)}
-        `, {
-          permanent: false,
-          direction: 'top'
-        }).openTooltip();
+        `;
+        polygon
+          .bindTooltip(tooltipHtml, {
+            permanent: false,
+            direction: 'top'
+          })
+          .openTooltip();
       });
 
       polygon.on('mouseout', () => {
@@ -181,39 +193,112 @@ export function MapView({
     }
   };
 
+  const LotePopupContent = ({ lote, readonly }: { lote: LoteData; readonly: boolean }) => {
+    const statusText = {
+      disponivel: 'Disponível',
+      reservado: 'Reservado',
+      vendido: 'Vendido'
+    }[lote.status || 'disponivel'];
+    const style = getLoteStyle(lote.status || 'disponivel');
+
+    return (
+      <div className="p-3 min-w-[200px]">
+        <h3 className="font-bold text-lg mb-2">{lote.nome}</h3>
+        <div className="space-y-1 text-sm">
+          <div>
+            <strong>Número:</strong> {lote.numero}
+          </div>
+          <div>
+            <strong>Status:</strong>{' '}
+            <span
+              className="inline-block px-2 py-1 rounded text-xs font-medium"
+              style={{
+                backgroundColor: `${style.fillColor}20`,
+                color: style.fillColor
+              }}
+            >
+              {statusText}
+            </span>
+          </div>
+          <div>
+            <strong>Área:</strong> {formatArea(lote.area_m2)}
+          </div>
+          {lote.preco && (
+            <div>
+              <strong>Preço:</strong> {formatPrice(lote.preco)}
+            </div>
+          )}
+          {lote.comprador_nome && (
+            <div>
+              <strong>Comprador:</strong> {lote.comprador_nome}
+            </div>
+          )}
+          {lote.data_venda && (
+            <div>
+              <strong>Vendido em:</strong> {new Date(lote.data_venda).toLocaleDateString('pt-BR')}
+            </div>
+          )}
+        </div>
+        {!readonly && (
+          <div className="mt-3 flex gap-2">
+            {lote.status !== 'vendido' && (
+              <button
+                data-status="vendido"
+                className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+              >
+                Vender
+              </button>
+            )}
+            {lote.status !== 'reservado' && (
+              <button
+                data-status="reservado"
+                className="px-2 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600"
+              >
+                Reservar
+              </button>
+            )}
+            {lote.status !== 'disponivel' && (
+              <button
+                data-status="disponivel"
+                className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
+              >
+                Disponibilizar
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Mostrar popup com detalhes do lote
   const showLotePopup = (lote: LoteData, polygon: L.Polygon) => {
-    const statusText = {
-      'disponivel': 'Disponível',
-      'reservado': 'Reservado', 
-      'vendido': 'Vendido'
-    }[lote.status || 'disponivel'];
-
-    const popupContent = `
-      <div class="p-3 min-w-[200px]">
-        <h3 class="font-bold text-lg mb-2">${lote.nome}</h3>
-        <div class="space-y-1 text-sm">
-          <div><strong>Número:</strong> ${lote.numero}</div>
-          <div><strong>Status:</strong> <span class="inline-block px-2 py-1 rounded text-xs font-medium" style="background-color: ${getLoteStyle(lote.status || 'disponivel').fillColor}20; color: ${getLoteStyle(lote.status || 'disponivel').fillColor}">${statusText}</span></div>
-          <div><strong>Área:</strong> ${formatArea(lote.area_m2)}</div>
-          ${lote.preco ? `<div><strong>Preço:</strong> ${formatPrice(lote.preco)}</div>` : ''}
-          ${lote.comprador_nome ? `<div><strong>Comprador:</strong> ${lote.comprador_nome}</div>` : ''}
-          ${lote.data_venda ? `<div><strong>Vendido em:</strong> ${new Date(lote.data_venda).toLocaleDateString('pt-BR')}</div>` : ''}
-        </div>
-        ${!readonly ? `
-          <div class="mt-3 flex gap-2">
-            ${lote.status !== 'vendido' ? `<button onclick="window.updateLoteStatus('${lote.id}', 'vendido')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Vender</button>` : ''}
-            ${lote.status !== 'reservado' ? `<button onclick="window.updateLoteStatus('${lote.id}', 'reservado')" class="px-2 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600">Reservar</button>` : ''}
-            ${lote.status !== 'disponivel' ? `<button onclick="window.updateLoteStatus('${lote.id}', 'disponivel')" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">Disponibilizar</button>` : ''}
-          </div>
-        ` : ''}
-      </div>
-    `;
+    const popupContent = renderToString(
+      <LotePopupContent lote={lote} readonly={readonly} />
+    );
 
     polygon.bindPopup(popupContent, {
       maxWidth: 300,
       className: 'lote-popup'
-    }).openPopup();
+    });
+
+    polygon.once('popupopen', () => {
+      const popupEl = polygon.getPopup()?.getElement();
+      if (!popupEl) return;
+      popupEl
+        .querySelectorAll<HTMLButtonElement>('button[data-status]')
+        .forEach(button => {
+          const status = button.dataset.status;
+          if (!status) return;
+          button.addEventListener('click', () => {
+            if (lote.id) {
+              updateLoteStatus(lote.id, status);
+            }
+          });
+        });
+    });
+
+    polygon.openPopup();
   };
 
   // Atualizar status do lote
@@ -244,15 +329,6 @@ export function MapView({
       console.error('Erro ao atualizar status:', error);
     }
   };
-
-  // Expor função globalmente para uso nos popups
-  useEffect(() => {
-    (window as any).updateLoteStatus = updateLoteStatus;
-    
-    return () => {
-      delete (window as any).updateLoteStatus;
-    };
-  }, [empreendimentoId]);
 
   // Filtrar lotes por status
   useEffect(() => {
