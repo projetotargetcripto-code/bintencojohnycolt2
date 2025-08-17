@@ -175,15 +175,26 @@ export default function EmpreendimentoNovo() {
         try {
             const text = await geojsonFile.text();
             const geojsonData = JSON.parse(text);
-            const { error: rpcError } = await supabase.rpc('process_geojson_lotes', {
+            // Tenta usar a versão mais recente da função (com nome do empreendimento)
+            let { error: rpcError } = await supabase.rpc('process_geojson_lotes', {
               p_empreendimento_id: data.id,
               p_geojson: geojsonData,
               p_empreendimento_nome: formData.nome
             });
+
+            // Se a função não existir com o novo parâmetro, tenta fallback sem ele
+            if (rpcError && rpcError.code === '42883') {
+              const { error: fallbackError } = await supabase.rpc('process_geojson_lotes', {
+                p_empreendimento_id: data.id,
+                p_geojson: geojsonData
+              });
+              rpcError = fallbackError;
+            }
+
             // Um erro aqui não deve impedir o fluxo, apenas avisar.
             if (rpcError) {
-                console.error("Erro na RPC process_geojson_lotes:", rpcError);
-                toast.warning("Empreendimento criado, mas falhou ao processar os lotes individuais.");
+              console.error("Erro na RPC process_geojson_lotes:", rpcError);
+              toast.warning("Empreendimento criado, mas falhou ao processar os lotes individuais.");
             }
         } catch (processError) {
              console.error("Erro ao processar GeoJSON para RPC:", processError);
