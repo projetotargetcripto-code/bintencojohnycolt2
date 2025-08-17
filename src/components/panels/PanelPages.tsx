@@ -30,7 +30,7 @@ export function PanelHomePage({ menuKey, title }: { menuKey: string; title: stri
         <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}>
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold">Ações rápidas</h2>
-            <Link to="/admin-filial/empreendimentos/novo">
+            <Link to={menuKey === 'adminfilial' ? '/admin-filial/empreendimentos/novo' : '/super-admin/empreendimentos/novo'}>
               <Button variant="cta" className="gap-2"><Plus className="size-4" /> Novo Empreendimento</Button>
             </Link>
           </div>

@@ -18,6 +18,8 @@ export const NAV: Record<string, NavEntry[]> = {
     },
     { label: "Organizações", href: "/super-admin/organizacoes", icon: "building" },
     { label: "Usuários", href: "/super-admin/usuarios", icon: "user" },
+    { label: "Empreendimentos", href: "/super-admin/empreendimentos", icon: "building" },
+    { label: "Novo Empreendimento", href: "/super-admin/empreendimentos/novo", icon: "plus-circle" },
     { label: "Aprovação", href: "/super-admin/aprovacao", icon: "check-circle" },
     
     { label: "Relatórios", href: "/super-admin/relatorios", icon: "bar-chart-2" },

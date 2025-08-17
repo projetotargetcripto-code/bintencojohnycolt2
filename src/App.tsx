@@ -41,6 +41,7 @@ import AdminsFiliaisPage from "./pages/admin/AdminsFiliais";
 import AcessoNegado from "./pages/AcessoNegado";
 import { Protected } from "@/components/Protected";
 import MapaSuperAdmin from "./pages/admin/MapaSuperAdmin";
+import EmpreendimentoNovoSuperAdmin from "./pages/admin/EmpreendimentoNovoSuperAdmin";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,8 @@ const App = () => (
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Configurações" /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
             <Route path="/super-admin/usuarios" element={<Protected allowedRoles={['superadmin']}><UsuariosPage /></Protected>} />
+            <Route path="/super-admin/empreendimentos" element={<Protected allowedRoles={['superadmin']} panelKey="superadmin"><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Empreendimentos" /></Protected>} />
+            <Route path="/super-admin/empreendimentos/novo" element={<Protected allowedRoles={['superadmin']} panelKey="superadmin"><EmpreendimentoNovoSuperAdmin /></Protected>} />
 
             {/* Admin Filial - Rotas padronizadas em /admin-filial */}
             <Route path="/admin-filial" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelHomePage menuKey="adminfilial" title="Admin Filial" /></Protected>} />
