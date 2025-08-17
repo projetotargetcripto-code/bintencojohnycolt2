@@ -39,7 +39,7 @@
 ## 📁 **ARQUIVOS CRIADOS/MODIFICADOS**
 
 ### 🆕 **Novos Arquivos:**
-1. **`supabase-lotes-interativos.sql`** - SQL completo para estrutura de lotes
+1. **`NovoSetup/sql.final.referenciado.sql`** - SQL completo para estrutura de lotes (substitui `supabase-lotes-interativos.sql`)
 2. **`src/lib/geojsonUtils.ts`** - Utilitários para processamento de GeoJSON
 3. **`src/components/MapView.tsx`** - Componente de mapa interativo
 4. **`src/pages/admin/MapaInterativo.tsx`** - Página principal do mapa
@@ -66,7 +66,7 @@
 ## 🗃️ **ESTRUTURA DO BANCO (EXECUTE NO SUPABASE)**
 
 ```sql
--- Execute PRIMEIRO o arquivo: supabase-lotes-interativos.sql
+-- Execute o arquivo: NovoSetup/sql.final.referenciado.sql
 -- Contém:
 -- ✅ Tabela lotes completa
 -- ✅ Funções de cálculo de área/centro

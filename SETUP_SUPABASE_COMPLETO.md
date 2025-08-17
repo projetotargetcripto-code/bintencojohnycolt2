@@ -10,7 +10,7 @@
 ### 2. **Configurar o Banco de Dados**
 1. No dashboard, clique em **"SQL Editor"** na barra lateral
 2. Clique em **"New Query"**
-3. Copie TODO o conteúdo do arquivo `supabase-setup.sql`
+3. Copie TODO o conteúdo de `NovoSetup/sql.final.referenciado.sql`
 4. Cole no editor SQL
 5. Clique em **"Run"** (ou Ctrl+Enter)
 6. ✅ Aguarde a execução (pode demorar 30-60 segundos)
@@ -21,9 +21,7 @@
 3. Nome do bucket: `empreendimentos`
 4. Marque **"Public bucket"** ✅
 5. Clique em **"Create bucket"**
-6. Volte ao **"SQL Editor"**
-7. Copie o conteúdo do arquivo `storage-policies.sql`
-8. Execute no SQL Editor
+6. As políticas de acesso já estão incluídas no script, não sendo necessário executar SQL adicional.
 
 ### 4. **Verificar se Funcionou**
 1. No SQL Editor, execute:
@@ -106,9 +104,9 @@ SELECT codigo, status, preco FROM lotes LIMIT 5;
 
 ## ✅ Checklist Final
 
-- [ ] SQL do banco executado com sucesso
+- [ ] SQL do banco executado com sucesso (NovoSetup/sql.final.referenciado.sql)
 - [ ] Bucket de storage criado
-- [ ] Políticas de storage aplicadas
+- [ ] Políticas de storage aplicadas (já incluídas no script)
 - [ ] Dados de exemplo inseridos
 - [ ] Aplicação rodando sem warnings de mock
 - [ ] Login/cadastro funcionando
