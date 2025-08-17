@@ -64,15 +64,28 @@ export default function UsuariosPage() {
 
   const init = async () => {
     setLoading(true);
-    const [{ data: f }, { data: u }, { data: userData }] = await Promise.all([
-      supabase.from("filiais").select("id, nome").order("nome"),
-      supabase.from("user_profiles").select("user_id, email, full_name, role, filial_id").order("full_name", { ascending: true }),
-      supabase.auth.getUser(),
-    ]);
-    setFiliais(f || []);
-    setUsers((u as any) || []);
-    setLoading(false);
-    setCurrentUserId(userData.user?.id ?? null);
+    try {
+      const [
+        { data: f, error: fError },
+        { data: u, error: uError },
+        { data: userData, error: userError },
+      ] = await Promise.all([
+        supabase.from("filiais").select("id, nome").order("nome"),
+        supabase.from("user_profiles").select("user_id, email, full_name, role, filial_id").order("full_name", { ascending: true }),
+        supabase.auth.getUser(),
+      ]);
+      if (fError) throw fError;
+      if (uError) throw uError;
+      if (userError) throw userError;
+      setFiliais(f || []);
+      setUsers((u as UserProfile[]) || []);
+      setCurrentUserId(userData.user?.id ?? null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateRole = async (userId: string, newRole: string) => {
@@ -91,8 +104,9 @@ export default function UsuariosPage() {
       if (error) throw error;
       toast.success("Papel atualizado.");
       setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, role: normalized } as UserProfile : u));
-    } catch (e: any) {
-      toast.error(e?.message || "Falha ao atualizar papel");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Falha ao atualizar papel";
+      toast.error(message);
     } finally {
       setUpdating(null);
     }
@@ -109,8 +123,9 @@ export default function UsuariosPage() {
       if (error) throw error;
       toast.success('Filial atualizada.');
       setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, filial_id: filialId } : u));
-    } catch (e: any) {
-      toast.error(e?.message || 'Falha ao atualizar filial');
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Falha ao atualizar filial';
+      toast.error(message);
     } finally {
       setUpdating(null);
     }
