@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
+import { useAuth } from "@/hooks/useAuth";
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -34,6 +36,8 @@ export default function UsuariosPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const navigate = useNavigate();
+  const { setSession } = useAuth();
 
   useEffect(() => {
     document.title = "Usuários | BlockURB";
@@ -144,6 +148,21 @@ export default function UsuariosPage() {
     void updatePanels(userId, updated);
   };
 
+  const impersonate = async (userId: string) => {
+    setUpdating(userId);
+    try {
+      const { data, error } = await supabase.rpc('impersonate_user', { p_user_id: userId });
+      if (error) throw error;
+      const tokens = data as { access_token: string; refresh_token: string };
+      await setSession(tokens);
+      navigate('/');
+    } catch (e: any) {
+      toast.error(e?.message || 'Falha ao entrar como usuário');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   return (
     <Protected allowedRoles={["superadmin"]}>
       <AppShell menuKey="superadmin" breadcrumbs={[{ label: "Super Admin" }, { label: "Usuários" }]}>        
@@ -189,6 +208,7 @@ export default function UsuariosPage() {
                       <TableHead>Filial</TableHead>
                       <TableHead>Papel</TableHead>
                       <TableHead>Painéis</TableHead>
+                      <TableHead>Entrar como</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -247,6 +267,11 @@ export default function UsuariosPage() {
                               </div>
                             </PopoverContent>
                           </Popover>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="outline" size="sm" disabled={updating === u.user_id} onClick={() => impersonate(u.user_id)}>
+                            Entrar como
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
