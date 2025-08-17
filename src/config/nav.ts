@@ -4,10 +4,12 @@ export const NAV: Record<string, NavItem[]> = {
   superadmin: [
     {
       title: 'Dashboard',
-      href: '/super-admin',
+      href: '/super-admin/dashboard',
       icon: 'layout-dashboard'
     },
     { label: "Mapa Interativo", href: "/super-admin/mapa", icon: "map" },
+    { label: "Mapa Real", href: "/super-admin/mapa-real", icon: "map-pin" },
+    { label: 'Gestão de Filiais', href: '/super-admin/filiais', icon: 'building' },
     { label: 'Filiais Internas Cadastradas', href: '/super-admin/filiais-internas', icon: 'building' },
     { label: 'Gestão SaaS', href: '/super-admin/clientes-saas', icon: 'users' },
     { label: "Acessos por Filial", href: "/super-admin/filiais-acessos", icon: "shield" },

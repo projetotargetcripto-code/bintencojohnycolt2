@@ -31,6 +31,9 @@ import { Protected } from "@/components/Protected";
 import MapaSuperAdmin from "./pages/admin/MapaSuperAdmin";
 import AuditLogsPage from "./pages/admin/AuditLogs";
 import ReportsDashboard from "./pages/admin/ReportsDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import FiliaisPage from "./pages/admin/Filiais";
+import MapaRealPage from "./pages/admin/MapaReal";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +65,9 @@ const App = () => (
             {/* Panels - ROTAS PROTEGIDAS */}
             {/* Super Admin */}
             <Route path="/super-admin" element={<Protected allowedRoles={['superadmin']}><PanelHomePage menuKey="superadmin" title="Super Admin" /></Protected>} />
+            <Route path="/super-admin/dashboard" element={<Protected allowedRoles={['superadmin']}><AdminDashboard /></Protected>} />
+            <Route path="/super-admin/filiais" element={<Protected allowedRoles={['superadmin']}><FiliaisPage /></Protected>} />
+            <Route path="/super-admin/mapa-real" element={<Protected allowedRoles={['superadmin']}><MapaRealPage /></Protected>} />
             <Route path="/super-admin/admins-filiais" element={<Protected allowedRoles={['superadmin']}><AdminsFiliaisPage /></Protected>} />
             <Route path="/super-admin/filiais-internas" element={<Protected allowedRoles={['superadmin']}><FiliaisInternasPage /></Protected>} />
 <Route path="/super-admin/clientes-saas" element={<Protected allowedRoles={['superadmin']}><ClientesSaasPage /></Protected>} />
