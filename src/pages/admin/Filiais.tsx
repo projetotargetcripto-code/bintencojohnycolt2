@@ -1,6 +1,6 @@
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/dataClient";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Table as UTable, TableHeader as UTableHeader, TableRow as UTableRow, Ta
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import VincularClienteSaas from "@/components/app/VincularClienteSaas";
+import { ALL_PANELS } from "@/config/rolesPanels";
 
 interface Filial {
   id: string;
@@ -55,6 +56,8 @@ interface AllowedPanel {
 export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" }) {
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editing, setEditing] = useState<Record<string, Partial<Filial>>>({});
   // Admins de Filial (unificado)
@@ -74,24 +77,39 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
 
   useEffect(() => {
     document.title = "Gestão de Filiais | BlockURB";
-    fetchFiliais();
     loadAdmins();
   }, []);
 
-  const fetchFiliais = async () => {
+  useEffect(() => {
+    fetchFiliais();
+  }, [fetchFiliais]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [filter]);
+
+  const PAGE_SIZE = 20;
+
+  const fetchFiliais = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('filiais')
-      .select('id, nome, created_at, kind, owner_name, owner_email, billing_plan, billing_status, domain, is_active, status')
-      .order('nome', { ascending: true });
+      .select('id, nome, created_at, kind, owner_name, owner_email, billing_plan, billing_status, domain, is_active, status', { count: 'exact' })
+      .order('nome', { ascending: true })
+      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+    if (filter) {
+      query = query.eq('kind', filter);
+    }
+    const { data, error, count } = await query;
 
     if (error) {
       toast.error("Erro ao buscar filiais: " + error.message);
     } else if (data) {
       setFiliais(data);
+      setTotal(count || 0);
     }
     setLoading(false);
-  };
+  }, [filter, page]);
 
   const provisionFilial = async (payload: any, success: string) => {
     setIsSubmitting(true);
@@ -207,7 +225,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
   };
 
   return (
-    <Protected>
+    <Protected allowedRoles={["superadmin"]}>
       <AppShell menuKey="superadmin" breadcrumbs={[{ label: 'Admin' }, { label: 'Gestão de Filiais' }]}>
         <div className="grid gap-6 md:grid-cols-2">
           {/* Coluna da Esquerda: Adicionar Nova Filial */}
@@ -416,10 +434,10 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       </div>
       {accessFilialId && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {['adminfilial','urbanista','juridico','contabilidade','marketing','comercial','imobiliaria','corretor','obras','investidor','terrenista'].map((k) => (
-            <label key={k} className="flex items-center gap-2 rounded-md border p-2">
-              <input type="checkbox" checked={accessPanels.includes(k)} onChange={() => togglePanel(k)} />
-              <span className="capitalize">{k}</span>
+          {ALL_PANELS.map((p) => (
+            <label key={p.key} className="flex items-center gap-2 rounded-md border p-2">
+              <input type="checkbox" checked={accessPanels.includes(p.key)} onChange={() => togglePanel(p.key)} />
+              <span className="capitalize">{p.label}</span>
             </label>
           ))}
         </div>
@@ -449,10 +467,10 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       </div>
       {accessFilialId && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {['adminfilial','urbanista','juridico','contabilidade','marketing','comercial','imobiliaria','corretor','obras','investidor','terrenista'].map((k) => (
-            <label key={k} className="flex items-center gap-2 rounded-md border p-2">
-              <input type="checkbox" checked={accessPanels.includes(k)} onChange={() => togglePanel(k)} />
-              <span className="capitalize">{k}</span>
+          {ALL_PANELS.map((p) => (
+            <label key={p.key} className="flex items-center gap-2 rounded-md border p-2">
+              <input type="checkbox" checked={accessPanels.includes(p.key)} onChange={() => togglePanel(p.key)} />
+              <span className="capitalize">{p.label}</span>
             </label>
           ))}
         </div>
@@ -488,7 +506,6 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                         </TableHeader>
                         <TableBody>
                           {filiais
-                            .filter(filial => !filter || filial.kind === filter)
                             .map((filial) => {
                               const admin = admins.find(a => a.filial_id === filial.id);
                               return (
@@ -518,7 +535,6 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                         </TableHeader>
                         <TableBody>
                           {filiais
-                            .filter(filial => !filter || filial.kind === filter)
                             .map((filial) => (
                               <TableRow key={filial.id}>
                                 <TableCell className="font-medium">{filial.nome}</TableCell>
@@ -557,6 +573,10 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
                     )}
                   </>
                 )}
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>Anterior</Button>
+                  <Button variant="outline" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(p => p + 1)}>Próxima</Button>
+                </div>
                 {!loading && filiais.length === 0 && (
                   <p className="text-center text-muted-foreground py-4">Nenhuma filial encontrada.</p>
                 )}

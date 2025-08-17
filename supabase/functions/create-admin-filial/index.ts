@@ -107,7 +107,13 @@ serve(async (req) => {
     });
     if (upErr) return new Response(JSON.stringify({ error: upErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    console.log(JSON.stringify({ action: 'create-admin-filial', actor: user.id, target: newUser.id }));
+    await adminClient.from('audit_logs').insert({
+      actor: user.id,
+      action: 'create-admin-filial',
+      target: newUser.id,
+      metadata: { filial_id: filialIdToUse }
+    }).catch(() => {});
+
     return new Response(
       JSON.stringify({ user_id: newUser.id, email, temp_password: finalPassword }),
       {

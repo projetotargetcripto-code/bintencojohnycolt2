@@ -60,22 +60,12 @@ export default function VincularClienteSaas({ filiais, onVincular }: Props) {
       setSaving(false);
       return;
     }
-    // Atualiza owner_name/owner_email na filial e filial_id no user_profiles
-    const { error: errFilial } = await supabase
-      .from("filiais")
-      .update({
-        owner_name: usuario.full_name,
-        owner_email: usuario.email,
-      })
-      .eq("id", filialId);
-    const { error: errUser } = await supabase
-      .from("user_profiles")
-      .update({
-        filial_id: filialId,
-      })
-      .eq("user_id", userId);
-    if (errFilial || errUser) {
-      toast.error("Erro ao vincular: " + (errFilial?.message || errUser?.message));
+    const { error } = await supabase.rpc('link_user_to_filial', {
+      p_user_id: userId,
+      p_filial_id: filialId,
+    });
+    if (error) {
+      toast.error("Erro ao vincular: " + error.message);
     } else {
       toast.success("Usuário vinculado à filial com sucesso!");
       setUserId("");
