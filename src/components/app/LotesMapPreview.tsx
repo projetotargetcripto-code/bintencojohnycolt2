@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '@/lib/dataClient';
+import { getLoteStatusStyle } from '@/lib/loteStyles';
 
 interface Props {
   empreendimentoId?: string;
@@ -41,14 +42,7 @@ export function LotesMapPreview({ empreendimentoId, height = '380px' }: Props) {
           layerRef.current = null;
         }
         const layer = L.geoJSON(data as any, {
-          style: (feature) => {
-            const status = feature?.properties?.status || 'disponivel';
-            switch (status) {
-              case 'reservado': return { color: '#EAB308', fillColor: '#EAB308', fillOpacity: 0.25, weight: 2 };
-              case 'vendido': return { color: '#EF4444', fillColor: '#EF4444', fillOpacity: 0.25, weight: 2 };
-              default: return { color: '#00C26E', fillColor: '#00C26E', fillOpacity: 0.25, weight: 2 };
-            }
-          }
+          style: (feature) => getLoteStatusStyle(feature?.properties?.status || 'disponivel')
         }).addTo(map);
         layerRef.current = layer;
         const bounds = layer.getBounds();
