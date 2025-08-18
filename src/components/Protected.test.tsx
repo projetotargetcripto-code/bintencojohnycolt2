@@ -1,0 +1,58 @@
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { Protected } from './Protected';
+
+const mockUseAuth = vi.fn();
+const mockUseAuthorization = vi.fn();
+const mockNavigate = vi.fn();
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+vi.mock('@/hooks/useAuthorization', () => ({
+  useAuthorization: () => mockUseAuthorization(),
+}));
+vi.mock('react-router-dom', async () => {
+  const actual: any = await vi.importActual('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+describe('Protected component', () => {
+  it('renders children when access is allowed', () => {
+    mockUseAuth.mockReturnValue({ session: {}, loading: false });
+    mockUseAuthorization.mockReturnValue({ profile: { role: 'admin', panels: ['dashboard'] }, loading: false });
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Protected allowedRoles={['admin']} panelKey="dashboard">
+          <div>Allowed</div>
+        </Protected>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Allowed')).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('redirects when role is denied', async () => {
+    mockUseAuth.mockReturnValue({ session: {}, loading: false });
+    mockUseAuthorization.mockReturnValue({ profile: { role: 'user', panels: [] }, loading: false });
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Protected allowedRoles={['admin']}>
+          <div>Denied</div>
+        </Protected>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledTimes(1));
+    expect(mockNavigate).toHaveBeenCalledWith('/acesso-negado', { replace: true });
+  });
+});
