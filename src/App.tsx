@@ -20,7 +20,7 @@ import EmpreendimentosPage from "./pages/admin/Empreendimentos";
 import AdminMapa from "./pages/admin/Mapa";
 import MapaInterativo from "./pages/admin/MapaInterativo";
 import LotesVendas from "./pages/admin/LotesVendas";
-import AprovacaoEmpreendimentos from "./pages/admin/AprovacaoEmpreendimentos";
+import Aprovacao from "./pages/admin/Aprovacao";
 import Logout from "./pages/Logout";
 import LotesPage from "./pages/admin/Lotes";
 import FiliaisInternasPage from "./pages/admin/FiliaisInternas";
@@ -96,7 +96,7 @@ const App = () => (
             <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesVendas /></Protected>} />
 
             {/* Super Admin - Aprovação */}
-            <Route path="/super-admin/aprovacao" element={<Protected allowedRoles={['superadmin']}><AprovacaoEmpreendimentos /></Protected>} />
+            <Route path="/super-admin/aprovacao" element={<Protected allowedRoles={['superadmin']}><Aprovacao /></Protected>} />
 
             {/* Urbanista */}
             <Route path="/urbanista" element={<Protected allowedRoles={['urbanista']}><PanelHomePage menuKey="urbanista" title="Urbanista" /></Protected>} />

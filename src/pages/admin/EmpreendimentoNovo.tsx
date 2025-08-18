@@ -254,6 +254,19 @@ export default function EmpreendimentoNovo() {
             toast.error('Erro ao ler o arquivo GeoJSON para processar os lotes.');
           }
         }
+        if (data) {
+          // registra pendência de aprovação
+          const { error: pendErr } = await supabase
+            .from('pendencias')
+            .insert({
+              tipo: 'empreendimento',
+              entidade_id: data.id,
+              dados: { nome: formData.nome },
+            });
+          if (pendErr) {
+            console.error('Erro ao criar pendência:', pendErr);
+          }
+        }
 
         toast.success('Empreendimento criado com sucesso!');
       }
