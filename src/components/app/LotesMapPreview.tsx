@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '@/lib/dataClient';
+import { toast } from 'sonner';
 
 interface Props {
   empreendimentoId?: string;
@@ -13,6 +14,7 @@ export function LotesMapPreview({ empreendimentoId, height = '380px' }: Props) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const layerRef = useRef<L.GeoJSON | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
@@ -32,6 +34,7 @@ export function LotesMapPreview({ empreendimentoId, height = '380px' }: Props) {
     const map = mapRef.current;
     if (!map || !empreendimentoId) return;
 
+    setLoading(true);
     supabase
       .rpc('lotes_geojson', { p_empreendimento_id: empreendimentoId })
       .then(({ data }) => {
@@ -53,8 +56,22 @@ export function LotesMapPreview({ empreendimentoId, height = '380px' }: Props) {
         layerRef.current = layer;
         const bounds = layer.getBounds();
         if (bounds.isValid()) map.fitBounds(bounds, { padding: [20, 20] });
-      });
+      })
+      .catch((err) => {
+        console.error('Erro ao carregar lotes:', err);
+        toast.error('Erro ao carregar lotes: ' + err.message);
+      })
+      .finally(() => setLoading(false));
   }, [empreendimentoId]);
 
-  return <div ref={containerRef} style={{ height }} />;
+  return (
+    <div style={{ height, position: 'relative' }}>
+      <div ref={containerRef} className="h-full" />
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
+      )}
+    </div>
+  );
 }
