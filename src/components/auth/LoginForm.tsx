@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
-import { quickLoginCredentials } from "@/config/quickLogin";
+import { filterQuickLoginCredentials } from "@/lib/quickLogin";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,9 +78,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
   const showSignup = !scope || scope === 'investidor';
 
     // Credenciais de teste para desenvolvimento
-    const quickCredentials = allowedPanels
-      ? quickLoginCredentials.filter((c) => allowedPanels.includes(c.role))
-      : quickLoginCredentials;
+    const quickCredentials = filterQuickLoginCredentials(allowedPanels);
 
   return (
     <div className="space-y-6">

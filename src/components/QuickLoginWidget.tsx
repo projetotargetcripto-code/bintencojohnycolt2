@@ -5,7 +5,8 @@ import { Settings, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { quickLoginCredentials, type QuickLoginCredential } from "@/config/quickLogin";
+import type { QuickLoginCredential } from "@/config/quickLogin";
+import { filterQuickLoginCredentials } from "@/lib/quickLogin";
 
 interface QuickLoginWidgetProps {
   compact?: boolean;
@@ -23,9 +24,7 @@ export function QuickLoginWidget({ compact = false, className = "", allowedPanel
       return null;
     }
 
-    const creds = allowedPanels
-      ? quickLoginCredentials.filter((c) => allowedPanels.includes(c.role))
-      : quickLoginCredentials;
+    const creds = filterQuickLoginCredentials(allowedPanels);
 
     if (creds.length === 0) {
       return null;
