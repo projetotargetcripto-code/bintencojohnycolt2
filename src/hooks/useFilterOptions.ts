@@ -13,36 +13,34 @@ export function useFilterOptions() {
   const [empreendimentos, setEmpreendimentos] = useState<Empreendimento[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from('empreendimentos')
-      .select('id, nome')
-      .order('nome')
-      .then(({ data, error }) => {
-        if (error) {
-          setError(error.message || 'Erro ao carregar empreendimentos');
-          return;
+    setLoading(true);
+    Promise.all([
+      supabase.from('empreendimentos').select('id, nome').order('nome'),
+      supabase.from('lotes').select('status')
+    ])
+      .then(([empRes, statusRes]) => {
+        if (empRes.error) {
+          throw empRes.error;
         }
-        if (data) setEmpreendimentos(data);
-      });
-
-    supabase
-      .from('lotes')
-      .select('status')
-      .then(({ data, error }) => {
-        if (error) {
-          setError(error.message || 'Erro ao carregar statuses');
-          return;
+        if (statusRes.error) {
+          throw statusRes.error;
         }
-        if (data) {
-          const unique = Array.from(new Set(data.map(d => d.status).filter(Boolean)));
+        if (empRes.data) setEmpreendimentos(empRes.data);
+        if (statusRes.data) {
+          const unique = Array.from(new Set(statusRes.data.map(d => d.status).filter(Boolean)));
           setStatuses(unique as string[]);
         }
-      });
+      })
+      .catch((err) => {
+        setError(err.message || 'Erro ao carregar filtros');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  return { empreendimentos, statuses, error };
+  return { empreendimentos, statuses, error, loading };
 }
 
 export type { Empreendimento };

@@ -53,7 +53,7 @@ export default function LotesVendas() {
           .order('nome');
 
         if (error) {
-          console.error('Erro ao carregar empreendimentos:', error);
+          toast.error('Erro ao carregar empreendimentos: ' + error.message);
           return;
         }
 
@@ -61,8 +61,8 @@ export default function LotesVendas() {
         if (data && data.length > 0) {
           setSelectedEmp(paramEmp || data[0].id);
         }
-      } catch (error) {
-        console.error('Erro ao carregar empreendimentos:', error);
+      } catch (error: any) {
+        toast.error('Erro ao carregar empreendimentos: ' + error.message);
       }
     };
 
@@ -84,7 +84,7 @@ export default function LotesVendas() {
           .order('numero', { ascending: true });
 
         if (error) {
-          console.error('Erro ao carregar lotes:', error);
+          toast.error('Erro ao carregar lotes: ' + error.message);
           return;
         }
 
@@ -97,8 +97,8 @@ export default function LotesVendas() {
           preco: l.valor ?? null,
         }));
         setLotes(mapped as any);
-      } catch (error) {
-        console.error('Erro ao carregar lotes:', error);
+      } catch (error: any) {
+        toast.error('Erro ao carregar lotes: ' + error.message);
       } finally {
         setLoading(false);
       }

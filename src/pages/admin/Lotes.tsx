@@ -114,12 +114,26 @@ export default function LotesPage() {
   const [selectedEmpreendimentoId, setSelectedEmpreendimentoId] = useState<string | null>(null);
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [loadingLotes, setLoadingLotes] = useState(false);
+  const [loadingEmp, setLoadingEmp] = useState(false);
 
   useEffect(() => {
     document.title = "Gestão de Lotes | BlockURB";
-    supabase.from('empreendimentos').select('id, nome').order('nome').then(({ data }) => {
-      if (data) setEmpreendimentos(data);
-    });
+    setLoadingEmp(true);
+    supabase
+      .from('empreendimentos')
+      .select('id, nome')
+      .order('nome')
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error('Erro ao carregar empreendimentos: ' + error.message);
+          return;
+        }
+        if (data) setEmpreendimentos(data);
+      })
+      .catch((err) => {
+        toast.error('Erro ao carregar empreendimentos: ' + err.message);
+      })
+      .finally(() => setLoadingEmp(false));
   }, []);
 
   useEffect(() => {
@@ -133,10 +147,17 @@ export default function LotesPage() {
       .select('id, nome, numero, status, area_m2, perimetro_m, valor') // Adiciona 'valor'
       .eq('empreendimento_id', selectedEmpreendimentoId)
       .order('numero')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error('Erro ao carregar lotes: ' + error.message);
+          return;
+        }
         if (data) setLotes(data);
-        setLoadingLotes(false);
-      });
+      })
+      .catch((err) => {
+        toast.error('Erro ao carregar lotes: ' + err.message);
+      })
+      .finally(() => setLoadingLotes(false));
   }, [selectedEmpreendimentoId]);
   
   // Função para chamar a RPC e atualizar o status
@@ -200,7 +221,7 @@ export default function LotesPage() {
             <CardContent>
               <Select onValueChange={setSelectedEmpreendimentoId}>
                 <SelectTrigger className="w-full md:w-[350px]">
-                  <SelectValue placeholder="Selecione um empreendimento..." />
+                  <SelectValue placeholder={loadingEmp ? "Carregando..." : "Selecione um empreendimento..."} />
                 </SelectTrigger>
                 <SelectContent>
                   {empreendimentos.map(emp => (
