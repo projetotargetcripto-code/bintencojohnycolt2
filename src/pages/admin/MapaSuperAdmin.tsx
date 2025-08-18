@@ -13,33 +13,39 @@ import L, { LatLngBoundsExpression, Layer } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
 import { LoteInfoModal, LoteDetalhado } from "@/components/LoteInfoModal";
-
-interface Emp {
-  id: string;
-  nome: string;
-  status: string;
+import { Empreendimento } from "@/types";
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
+interface Emp extends Empreendimento {
   filial_id: string;
   filial_nome: string;
   stats: { lotes: number; vendidos: number; pct: number; };
   bounds: { sw: [number, number]; ne: [number, number]; };
-  geojson_url?: string;
-  masterplan_url?: string;
   overlay?: { url: string; sw: [number, number]; ne: [number, number]; opacity: number; };
 }
 
+type EmpOverviewRow = {
+  empreendimento_id: string;
+  nome: string;
+  status: string;
+  filial_id: string;
+  filial_nome: string;
+  total_lotes: number;
+  lotes_vendidos: number;
+};
+
 const fetchEmpreendimentos = async (): Promise<Emp[]> => {
   try {
-    const { data: rows, error } = await supabase.rpc('get_all_empreendimentos_overview');
+    const { data: rows, error }: PostgrestSingleResponse<EmpOverviewRow[]> = await supabase.rpc('get_all_empreendimentos_overview');
     if (error) {
       console.error("Erro ao buscar empreendimentos:", error);
       return [];
     }
 
-    const ids: string[] = (rows || []).map((r: any) => r.empreendimento_id);
+    const ids = (rows || []).map((r) => r.empreendimento_id);
     if (ids.length === 0) return [];
 
     const { data: empRows, error: empError } = await supabase
-      .from('empreendimentos')
+      .from<Empreendimento>('empreendimentos')
       .select('id, nome, bounds, geojson_url, masterplan_url')
       .in('id', ids);
     if (empError) {
@@ -47,9 +53,9 @@ const fetchEmpreendimentos = async (): Promise<Emp[]> => {
       return [];
     }
 
-    const detailsById = Object.fromEntries((empRows || []).map((e: any) => [e.id, e]));
+    const detailsById = Object.fromEntries((empRows || []).map((e) => [e.id, e]));
 
-    return (rows || []).map((row: any) => {
+    return (rows || []).map((row) => {
       const det = detailsById[row.empreendimento_id] || {};
       const boundsRaw = det.bounds ? (typeof det.bounds === 'string' ? JSON.parse(det.bounds) : det.bounds) : { sw: [-23.5, -46.6], ne: [-23.5, -46.6] };
       const total = Number(row.total_lotes) || 0;
@@ -207,7 +213,7 @@ function MapView({ selected }: { selected?: Emp }) {
                 try {
                   if (!p.id) { toast.error("Este lote não possui um ID para carregar os detalhes."); return; }
                   const { data, error } = await supabase
-                    .from('lotes')
+                    .from<LoteDetalhado>('lotes')
                     .select('id, nome, numero, status, area_m2, perimetro_m, area_hectares, valor')
                     .eq('id', p.id)
                     .single();
@@ -232,9 +238,9 @@ function MapView({ selected }: { selected?: Emp }) {
           if (showOverlay) overlay.addTo(map);
           overlayLayerRef.current = overlay;
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Erro ao carregar dados do mapa:", error);
-        toast.error(`Não foi possível carregar os dados do loteamento. (${error.message})`);
+        toast.error(`Não foi possível carregar os dados do loteamento. ${(error as Error).message}`);
       } finally {
         setLoading(false);
       }
@@ -246,7 +252,7 @@ function MapView({ selected }: { selected?: Emp }) {
     <div className="relative h-[calc(100vh-180px)] rounded-md border bg-secondary/60">
       <div ref={mapContainerRef} className="absolute inset-0 z-0" />
       <div className="absolute left-3 top-3 z-40 rounded-md border bg-background/90 p-2 shadow space-y-2">
-        <Select value={baseLayer} onValueChange={(v: any) => setBaseLayer(v)}>
+        <Select value={baseLayer} onValueChange={(v: 'esri' | 'osm') => setBaseLayer(v)}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="esri">Satélite</SelectItem><SelectItem value="osm">Mapa</SelectItem></SelectContent>
         </Select>

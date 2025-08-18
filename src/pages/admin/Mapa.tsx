@@ -15,39 +15,41 @@ import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
 import { LoteInfoModal, LoteDetalhado } from "@/components/LoteInfoModal";
 import { useAuthorization } from "@/hooks/useAuthorization";
+import { Empreendimento } from "@/types";
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 // --- INÍCIO DA VERSÃO ESTÁVEL E CORRIGIDA ---
 
 // Interfaces e Funções de Busca (mantidas como estão)
-interface Emp {
-  id: string;
-  nome: string;
-  status: string;
+interface Emp extends Empreendimento {
   stats: { lotes: number; vendidos: number; pct: number; };
   bounds: { sw: [number, number]; ne: [number, number]; };
-  geojson_url?: string;
-  masterplan_url?: string;
   overlay?: { url: string; sw: [number, number]; ne: [number, number]; opacity: number; };
 }
+
+type FilialEmpRow = {
+  empreendimento_id: string;
+  nome: string;
+  status: string;
+  total_lotes: number;
+  lotes_vendidos: number;
+};
 const fetchEmpreendimentos = async (filialId?: string | null): Promise<Emp[]> => {
   try {
     if (!filialId) return [];
 
-    // 1) Estatísticas por empreendimento da filial
-    const { data: statsRows, error: statsError } = await supabase.rpc('get_filial_empreendimentos', {
-      p_filial_id: filialId,
-    });
+    const { data: statsRows, error: statsError }: PostgrestSingleResponse<FilialEmpRow[]> = await supabase
+      .rpc('get_filial_empreendimentos', { p_filial_id: filialId });
     if (statsError) {
       console.error("Erro ao buscar stats de empreendimentos:", statsError);
       return [];
     }
 
-    const ids: string[] = (statsRows || []).map((r: any) => r.empreendimento_id);
+    const ids = (statsRows || []).map((r) => r.empreendimento_id);
     if (ids.length === 0) return [];
 
-    // 2) Detalhes (bounds, urls) dos empreendimentos da filial
     const { data: empRows, error: empError } = await supabase
-      .from('empreendimentos')
+      .from<Empreendimento>('empreendimentos')
       .select('id, nome, bounds, geojson_url, masterplan_url')
       .in('id', ids);
     if (empError) {
@@ -55,9 +57,9 @@ const fetchEmpreendimentos = async (filialId?: string | null): Promise<Emp[]> =>
       return [];
     }
 
-    const detailsById = Object.fromEntries((empRows || []).map((e: any) => [e.id, e]));
+    const detailsById = Object.fromEntries((empRows || []).map((e) => [e.id, e]));
 
-    return (statsRows || []).map((row: any) => {
+    return (statsRows || []).map((row) => {
       const det = detailsById[row.empreendimento_id] || {};
       const boundsRaw = det.bounds ? (typeof det.bounds === 'string' ? JSON.parse(det.bounds) : det.bounds) : { sw: [-23.5, -46.6], ne: [-23.5, -46.6] };
       const total = Number(row.total_lotes) || 0;
@@ -240,8 +242,8 @@ function MapView({ selected }: { selected?: Emp }) {
                                     return;
                                 }
                                 const { data, error } = await supabase
-                                    .from('lotes')
-                                    .select('id, nome, numero, status, area_m2, perimetro_m, area_hectares, valor') // Adiciona 'valor'
+                                    .from<LoteDetalhado>('lotes')
+                                    .select('id, nome, numero, status, area_m2, perimetro_m, area_hectares, valor')
                                     .eq('id', p.id)
                                     .single();
                                 
@@ -288,7 +290,7 @@ function MapView({ selected }: { selected?: Emp }) {
     <div className="relative h-[calc(100vh-180px)] rounded-md border bg-secondary/60">
       <div ref={mapContainerRef} className="absolute inset-0 z-0" />
       <div className="absolute left-3 top-3 z-40 rounded-md border bg-background/90 p-2 shadow space-y-2">
-        <Select value={baseLayer} onValueChange={(v: any) => setBaseLayer(v)}>
+        <Select value={baseLayer} onValueChange={(v: 'esri' | 'osm') => setBaseLayer(v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="esri">Satélite</SelectItem><SelectItem value="osm">Mapa</SelectItem></SelectContent>
             </Select>
