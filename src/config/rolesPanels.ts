@@ -15,7 +15,7 @@ export const ALL_ROLES = [
 
 export const ALL_PANELS = [
   { key: 'adminfilial', label: 'Admin Filial (Geral)' },
-  { key: 'urbanista', label: 'Urbanismo (Mapa, Projetos)' },
+  { key: 'urbanista', label: 'Urbanista (Mapa, Projetos)' },
   { key: 'juridico', label: 'Jurídico' },
   { key: 'contabilidade', label: 'Contabilidade' },
   { key: 'marketing', label: 'Marketing' },

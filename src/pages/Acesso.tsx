@@ -18,7 +18,7 @@ import {
 const cards = [
   { title: "Painel Super Admin", desc: "Controle total da plataforma e permissões.", href: "/login/superadmin", Icon: Shield },
   { title: "Painel Admin Filial", desc: "Gestão completa da filial e operações.", href: "/login/admin", Icon: Building2 },
-  { title: "Painel Urbanismo", desc: "Projetos, mapas e integrações GIS.", href: "/login/urbanismo", Icon: Map },
+  { title: "Painel Urbanista", desc: "Projetos, mapas e integrações GIS.", href: "/login/urbanista", Icon: Map },
   { title: "Painel Jurídico", desc: "Contratos e regularização fundiária.", href: "/login/juridico", Icon: ScrollText },
   { title: "Painel Contabilidade", desc: "Financeiro e relatórios fiscais.", href: "/login/contabilidade", Icon: Calculator },
   { title: "Painel Marketing", desc: "Campanhas e materiais de venda.", href: "/login/marketing", Icon: Megaphone },
