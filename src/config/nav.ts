@@ -38,7 +38,7 @@ export const NAV: Record<string, NavItem[]> = {
     { label: "Configurações", href: "/admin-filial/config", icon: "settings", panelKey: "adminfilial" },
   ],
   urbanista: [
-    { title: "Urbanismo", href: "/urbanista", icon: "map" },
+    { title: "Urbanista", href: "/urbanista", icon: "map" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
   juridico: [

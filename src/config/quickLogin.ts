@@ -20,7 +20,7 @@ interface QuickLoginConfig {
 const configs: QuickLoginConfig[] = [
   { envPrefix: "SUPERADMIN", label: "Super Admin", role: "superadmin", panel: "/super-admin", icon: Crown },
   { envPrefix: "ADMIN", label: "Admin Filial", role: "adminfilial", panel: "/admin-filial", icon: User },
-  { envPrefix: "URBANISTA", label: "Urbanista", role: "urbanismo", panel: "/urbanismo", icon: User },
+  { envPrefix: "URBANISTA", label: "Urbanista", role: "urbanista", panel: "/urbanista", icon: User },
   { envPrefix: "JURIDICO", label: "Jurídico", role: "juridico", panel: "/juridico", icon: User },
   { envPrefix: "CONTABILIDADE", label: "Contabilidade", role: "contabilidade", panel: "/contabilidade", icon: User },
   { envPrefix: "MARKETING", label: "Marketing", role: "marketing", panel: "/marketing", icon: User },
