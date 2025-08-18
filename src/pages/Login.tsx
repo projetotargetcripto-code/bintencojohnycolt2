@@ -32,13 +32,14 @@ export default function LoginPage() {
     useEffect(() => {
       const host = window.location.host;
       const mapPanelToScope = (p: string) => (p === 'adminfilial' ? 'admin' : p);
+      const mapPanelToPath = (p: string) => pathFromScope(mapPanelToScope(p));
       fetch(`/resolve-domain?domain=${host}`)
-        .then((res) => res.ok ? res.json() : null)
+        .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data) {
             setBrand(data.nome || null);
             if (Array.isArray(data.panels)) {
-              setAllowedPanels(data.panels);
+              setAllowedPanels(data.panels.map(mapPanelToPath));
               if (!scopeParam && data.panels.length > 0) {
                 setDefaultScope(mapPanelToScope(data.panels[0]));
               }
