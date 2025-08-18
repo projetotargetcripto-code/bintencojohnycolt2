@@ -1,12 +1,9 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/dataClient';
 import { useAuth } from '@/hooks/useAuth';
-
-export interface AuthorizationProfile {
-  role: string;
-  panels: string[];
-  filial_id: string | null;
-}
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
+import { AuthorizationProfile } from '@/types';
+export type { AuthorizationProfile } from '@/types';
 
 interface AuthorizationState {
   profile: AuthorizationProfile | null;
@@ -29,26 +26,25 @@ export function AuthorizationProvider({ children }: { children: React.ReactNode 
       }
       setLoading(true);
       try {
-        let data: any = null;
-        let error: any = null;
+        let data: AuthorizationProfile | null = null;
 
         // Primeiro tenta via RPC que ignora RLS
         try {
-          const res = await supabase.rpc('get_my_profile').maybeSingle();
+          const res: PostgrestSingleResponse<AuthorizationProfile> = await supabase
+            .rpc('get_my_profile')
+            .maybeSingle();
           data = res.data;
-          error = res.error;
-          if (error) {
-            console.error('Erro ao chamar get_my_profile:', error);
+          if (res.error) {
+            console.error('Erro ao chamar get_my_profile:', res.error);
           }
         } catch (rpcErr) {
-          error = rpcErr;
           console.error('Erro ao chamar get_my_profile:', rpcErr);
         }
 
         // Se a RPC falhar ou não retornar dados, busca direto na tabela
         if (!data) {
-          const { data: fallback, error: fbErr } = await supabase
-            .from('user_profiles')
+          const { data: fallback, error: fbErr }: PostgrestSingleResponse<AuthorizationProfile> = await supabase
+            .from<AuthorizationProfile>('user_profiles')
             .select('role, panels, filial_id')
             .eq('user_id', user.id)
             .maybeSingle();

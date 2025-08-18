@@ -11,22 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/dataClient";
-import { LoteData, formatArea } from "@/lib/geojsonUtils";
+import { formatArea } from "@/lib/geojsonUtils";
 import { toast } from "sonner";
 import { Edit3, DollarSign, Users, TrendingUp } from "lucide-react";
-
-interface Empreendimento {
-  id: string;
-  nome: string;
-  total_lotes: number;
-}
+import { Empreendimento, Lote } from "@/types";
 
 export default function LotesVendas() {
   const [empreendimentos, setEmpreendimentos] = useState<Empreendimento[]>([]);
   const [selectedEmp, setSelectedEmp] = useState<string>('');
-  const [lotes, setLotes] = useState<LoteData[]>([]);
+  const [lotes, setLotes] = useState<Lote[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingLote, setEditingLote] = useState<LoteData | null>(null);
+  const [editingLote, setEditingLote] = useState<Lote | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [filter, setFilter] = useState<string>('todos');
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,7 +31,7 @@ export default function LotesVendas() {
   // Estados do formulário de edição
   const [editForm, setEditForm] = useState({
     status: '',
-    preco: '',
+    valor: '',
     comprador_nome: '',
     comprador_email: '',
     observacoes: ''
@@ -47,7 +42,7 @@ export default function LotesVendas() {
     const loadEmpreendimentos = async () => {
       try {
         const { data, error } = await supabase
-          .from('empreendimentos')
+          .from<Empreendimento>('empreendimentos')
           .select('id, nome, total_lotes')
           .eq('status', 'aprovado')
           .order('nome');
@@ -78,8 +73,8 @@ export default function LotesVendas() {
         setLoading(true);
         // Busca direta na tabela, trazendo todos os lotes do empreendimento
         const { data, error } = await supabase
-          .from('lotes')
-          .select('id, nome, numero, status, area_m2, valor')
+          .from<Lote>('lotes')
+          .select('id, nome, numero, status, area_m2, valor, comprador_nome, comprador_email, observacoes')
           .eq('empreendimento_id', selectedEmp)
           .order('numero', { ascending: true });
 
@@ -88,15 +83,18 @@ export default function LotesVendas() {
           return;
         }
 
-        const mapped = (data || []).map((l: any) => ({
+        const mapped: Lote[] = (data || []).map((l) => ({
           id: l.id,
           nome: l.nome,
           numero: l.numero,
-          status: l.status,
+          status: l.status as Lote['status'],
           area_m2: l.area_m2,
-          preco: l.valor ?? null,
+          valor: l.valor ?? null,
+          comprador_nome: l.comprador_nome ?? null,
+          comprador_email: l.comprador_email ?? null,
+          observacoes: l.observacoes ?? null,
         }));
-        setLotes(mapped as any);
+        setLotes(mapped);
       } catch (error) {
         console.error('Erro ao carregar lotes:', error);
       } finally {
@@ -108,11 +106,11 @@ export default function LotesVendas() {
   }, [selectedEmp]);
 
   // Abrir dialog de edição
-  const handleEditLote = (lote: LoteData) => {
+  const handleEditLote = (lote: Lote) => {
     setEditingLote(lote);
     setEditForm({
       status: lote.status || 'disponivel',
-      preco: lote.preco?.toString() || '',
+      valor: lote.valor?.toString() || '',
       comprador_nome: lote.comprador_nome || '',
       comprador_email: lote.comprador_email || '',
       observacoes: lote.observacoes || ''
@@ -137,12 +135,12 @@ export default function LotesVendas() {
       }
 
       const { error: detalhesError } = await supabase
-        .from('lotes')
+        .from<Lote>('lotes')
         .update({
           comprador_nome: editForm.status === 'vendido' ? editForm.comprador_nome || null : null,
           comprador_email: editForm.status === 'vendido' ? editForm.comprador_email || null : null,
-          valor: editForm.preco ? parseFloat(editForm.preco) : null,
-          preco: editForm.preco ? parseFloat(editForm.preco) : null,
+          valor: editForm.valor ? parseFloat(editForm.valor) : null,
+          preco: editForm.valor ? parseFloat(editForm.valor) : null,
         })
         .eq('id', editingLote.id);
 
@@ -157,13 +155,23 @@ export default function LotesVendas() {
 
       // Recarregar lotes
       const { data } = await supabase
-        .from('lotes')
-        .select('id, nome, numero, status, area_m2, valor')
+        .from<Lote>('lotes')
+        .select('id, nome, numero, status, area_m2, valor, comprador_nome, comprador_email, observacoes')
         .eq('empreendimento_id', selectedEmp)
         .order('numero', { ascending: true });
       if (data) {
-        const mapped = data.map((l: any) => ({ id: l.id, nome: l.nome, numero: l.numero, status: l.status, area_m2: l.area_m2, preco: l.valor ?? null }));
-        setLotes(mapped as any);
+        const mapped: Lote[] = data.map(l => ({
+          id: l.id,
+          nome: l.nome,
+          numero: l.numero,
+          status: l.status as Lote['status'],
+          area_m2: l.area_m2,
+          valor: l.valor ?? null,
+          comprador_nome: l.comprador_nome ?? null,
+          comprador_email: l.comprador_email ?? null,
+          observacoes: l.observacoes ?? null,
+        }));
+        setLotes(mapped);
       }
 
     } catch (error) {
@@ -186,7 +194,7 @@ export default function LotesVendas() {
     disponivel: lotes.filter(l => l.status === 'disponivel').length,
     reservado: lotes.filter(l => l.status === 'reservado').length,
     vendido: lotes.filter(l => l.status === 'vendido').length,
-    receita: lotes.filter(l => l.status === 'vendido').reduce((sum, l) => sum + (l.preco || 0), 0)
+    receita: lotes.filter(l => l.status === 'vendido').reduce((sum, l) => sum + (l.valor || 0), 0)
   };
 
   const formatCurrency = (value: number) => {
@@ -385,7 +393,7 @@ export default function LotesVendas() {
                             <TableCell>{formatArea(lote.area_m2)}</TableCell>
                             <TableCell>{getStatusBadge(lote.status || 'disponivel')}</TableCell>
                             <TableCell>
-                              {lote.preco ? formatCurrency(lote.preco) : '-'}
+                              {lote.valor ? formatCurrency(lote.valor) : '-'}
                             </TableCell>
                             <TableCell>
                               {lote.comprador_nome || '-'}
@@ -435,14 +443,14 @@ export default function LotesVendas() {
                 </div>
 
                 <div>
-                  <Label htmlFor="preco">Preço</Label>
+                  <Label htmlFor="valor">Preço</Label>
                   <Input
-                    id="preco"
+                    id="valor"
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    value={editForm.preco}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, preco: e.target.value }))}
+                    value={editForm.valor}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, valor: e.target.value }))}
                   />
                 </div>
 
