@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/dataClient";
 import { LoteData, formatArea } from "@/lib/geojsonUtils";
+import { getStatusVariant, getLoteColor } from "@/lib/loteStyles";
 import { toast } from "sonner";
 import { Edit3, DollarSign, Users, TrendingUp } from "lucide-react";
 
@@ -197,14 +198,12 @@ export default function LotesVendas() {
   };
 
   const getStatusBadge = (status: string) => {
-    const config = {
-      'disponivel': { variant: 'secondary' as const, label: 'Disponível' },
-      'reservado': { variant: 'default' as const, label: 'Reservado' },
-      'vendido': { variant: 'destructive' as const, label: 'Vendido' }
+    const labelMap: Record<string, string> = {
+      disponivel: 'Disponível',
+      reservado: 'Reservado',
+      vendido: 'Vendido'
     };
-    
-    const { variant, label } = config[status as keyof typeof config] || config.disponivel;
-    return <Badge variant={variant}>{label}</Badge>;
+    return <Badge variant={getStatusVariant(status)}>{labelMap[status] || labelMap.disponivel}</Badge>;
   };
 
   return (
@@ -265,34 +264,34 @@ export default function LotesVendas() {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gray-400 rounded-full" />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getLoteColor('disponivel') }} />
                     <div>
                       <p className="text-xs text-muted-foreground">Disponível</p>
-                      <p className="text-xl font-bold text-gray-600">{stats.disponivel}</p>
+                      <p className="text-xl font-bold" style={{ color: getLoteColor('disponivel') }}>{stats.disponivel}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getLoteColor('reservado') }} />
                     <div>
                       <p className="text-xs text-muted-foreground">Reservado</p>
-                      <p className="text-xl font-bold text-yellow-600">{stats.reservado}</p>
+                      <p className="text-xl font-bold" style={{ color: getLoteColor('reservado') }}>{stats.reservado}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-400 rounded-full" />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getLoteColor('vendido') }} />
                     <div>
                       <p className="text-xs text-muted-foreground">Vendido</p>
-                      <p className="text-xl font-bold text-red-600">{stats.vendido}</p>
+                      <p className="text-xl font-bold" style={{ color: getLoteColor('vendido') }}>{stats.vendido}</p>
                     </div>
                   </div>
                 </CardContent>

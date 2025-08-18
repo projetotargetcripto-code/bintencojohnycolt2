@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getStatusVariant } from "@/lib/loteStyles";
 
 // Interface para as propriedades detalhadas do lote
 export interface LoteDetalhado {
@@ -40,15 +41,6 @@ const formatCurrency = (num: number | null | undefined) => {
 
 export function LoteInfoModal({ lote, isOpen, onClose }: LoteInfoModalProps) {
   if (!lote) return null;
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-        case 'disponivel': return 'default';
-        case 'vendido': return 'destructive';
-        case 'reservado': return 'secondary';
-        default: return 'outline';
-    }
-  }
 
   const numeroTexto = (() => {
     if (lote.numero !== null && lote.numero !== undefined) return String(lote.numero);

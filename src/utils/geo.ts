@@ -1,13 +1,10 @@
 import { FeatureCollection, Geometry } from "geojson";
+import { getLoteStatusStyle } from "@/lib/loteStyles";
 
 export type ValidGeoJSON = FeatureCollection<Geometry, any>;
 
 export function guessStatusStyle(status?: string) {
-  const s = (status || "").toString().toLowerCase();
-  if (s === "disponivel" || s === "disponível") return { color: "#00C26E", weight: 2, fillColor: "#00C26E", fillOpacity: 0.25 };
-  if (s === "reservado") return { color: "#E3B341", weight: 2, fillColor: "#E3B341", fillOpacity: 0.25 };
-  if (s === "vendido") return { color: "#F05252", weight: 2, fillColor: "#F05252", fillOpacity: 0.25 };
-  return { color: "#38BDF8", weight: 2, fillColor: "#38BDF8", fillOpacity: 0.2 };
+  return getLoteStatusStyle((status || "").toString().toLowerCase());
 }
 
 export function computeBBox(fc: ValidGeoJSON): [number, number, number, number] {
