@@ -4,21 +4,33 @@ import { DataTable, type Column } from "@/components/app/DataTable";
 import { supabase } from "@/lib/dataClient";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function InvestidorExtratosPage() {
+export default function TerrenistaExtratosPage() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("investimentos")
-      .select("quota, doc_url")
-      .eq("user_id", user.id)
-      .then(({ data }) => {
-        setRows(data ?? []);
+
+    async function fetchData() {
+      const { data: terrenista } = await supabase
+        .from("terrenistas")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!terrenista) return;
+
+      const { data } = await supabase
+        .from("repasses")
+        .select("valor, doc_url, created_at")
+        .eq("terrenista_id", terrenista.id);
+
+      setRows(data ?? []);
+      if (data && data.length > 0) {
         setColumns([
-          { key: "quota", header: "Quota" },
+          { key: "valor", header: "Valor" },
+          { key: "created_at", header: "Data" },
           {
             key: "doc_url",
             header: "Documento",
@@ -35,13 +47,16 @@ export default function InvestidorExtratosPage() {
               ) : null,
           },
         ]);
-      });
+      }
+    }
+
+    fetchData();
   }, [user]);
 
   return (
     <AppShell
-      menuKey="investidor"
-      breadcrumbs={[{ label: "Investidor", href: "/investidor" }, { label: "Extratos" }]}
+      menuKey="terrenista"
+      breadcrumbs={[{ label: "Terrenista", href: "/terrenista" }, { label: "Extratos" }]}
     >
       <DataTable columns={columns} rows={rows} pageSize={5} />
     </AppShell>

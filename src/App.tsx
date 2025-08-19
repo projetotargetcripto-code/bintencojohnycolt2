@@ -49,6 +49,7 @@ import { publicWidgetEnabled } from "@/config/publicWidget";
 import RenegociacoesPage from "./pages/juridico/Renegociacoes";
 import ClienteCobrancasPage from "./pages/cliente/Cobrancas";
 import InvestidorExtratosPage from "./pages/investidor/Extratos";
+import TerrenistaExtratosPage from "./pages/terrenista/Extratos";
 
 const queryClient = new QueryClient();
 
@@ -193,6 +194,7 @@ const App = () => (
             <Route path="/terrenista" element={<Protected allowedRoles={['terrenista']}><PanelHomePage menuKey="terrenista" title="Terrenista" /></Protected>} />
             <Route path="/terrenista/relatorios" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Relatórios" /></Protected>} />
             <Route path="/terrenista/config" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Configurações" /></Protected>} />
+            <Route path="/terrenista/extratos" element={<Protected allowedRoles={['terrenista']}><TerrenistaExtratosPage /></Protected>} />
             <Route path="/terrenista/status" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
             <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
 
