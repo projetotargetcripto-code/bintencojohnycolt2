@@ -37,6 +37,7 @@ import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
+import ContratosPage from "./pages/admin/Contratos";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/super-admin/filiais-acessos" element={<Protected allowedRoles={['superadmin']}><FiliaisAccessPage /></Protected>} />
             <Route path="/super-admin/mapa" element={<Protected allowedRoles={['superadmin']}><MapaSuperAdmin /></Protected>} />
             <Route path="/super-admin/auditoria" element={<Protected allowedRoles={['superadmin']}><AuditLogsPage /></Protected>} />
+            <Route path="/super-admin/contratos" element={<Protected allowedRoles={['superadmin']}><ContratosPage /></Protected>} />
             <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard /></Protected>} />
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><ConfigPage /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
