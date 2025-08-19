@@ -30,6 +30,20 @@ export function MapView({
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const lotesLayersRef = useRef<Map<string, L.GeoJSON>>(new Map());
+  const [reservation, setReservation] = useState<{ loteId: string; expiresAt: Date } | null>(null);
+  const [remaining, setRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!reservation) return;
+    const update = () => {
+      const diff = Math.max(0, Math.floor((reservation.expiresAt.getTime() - Date.now()) / 1000));
+      setRemaining(diff);
+      if (diff <= 0) setReservation(null);
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [reservation]);
 
   // Inicializar mapa
   useEffect(() => {
@@ -240,26 +254,39 @@ export function MapView({
   const defaultUpdateLoteStatus = async (loteId: string, newStatus: string) => {
     try {
       setError(null);
-      const { error: rpcError } = await supabase.rpc('update_lote_status', {
-        p_lote_id: loteId,
-        p_novo_status: newStatus
-      });
-
-      if (rpcError) {
-        console.error('Erro ao atualizar status:', rpcError);
-        setError(rpcError.message || 'Erro ao atualizar status');
-        return;
-      }
-
-      // Recarregar lotes
-      if (empreendimentoId) {
-        const { data } = await supabase.rpc('get_empreendimento_lotes', {
-          p_empreendimento_id: empreendimentoId
+      if (newStatus === 'reservado') {
+        const { data, error: rpcError } = await supabase.rpc('reservar_lote', { p_lote_id: loteId });
+        if (rpcError || !data?.success) {
+          console.error('Erro ao reservar lote:', rpcError);
+          setError(rpcError?.message || 'Erro ao reservar lote');
+          return;
+        }
+        const newLotes = lotes.map(l => l.id === loteId ? { ...l, status: 'reservado', reserva_expira_em: data.expires_at } : l);
+        setLotes(newLotes);
+        renderLotes(newLotes);
+        if (data.expires_at) setReservation({ loteId, expiresAt: new Date(data.expires_at) });
+      } else {
+        const { error: rpcError } = await supabase.rpc('update_lote_status', {
+          p_lote_id: loteId,
+          p_novo_status: newStatus
         });
 
-        if (data) {
-          setLotes(data);
-          renderLotes(data);
+        if (rpcError) {
+          console.error('Erro ao atualizar status:', rpcError);
+          setError(rpcError.message || 'Erro ao atualizar status');
+          return;
+        }
+
+        // Recarregar lotes
+        if (empreendimentoId) {
+          const { data } = await supabase.rpc('get_empreendimento_lotes', {
+            p_empreendimento_id: empreendimentoId
+          });
+
+          if (data) {
+            setLotes(data);
+            renderLotes(data);
+          }
         }
       }
     } catch (error) {
@@ -322,9 +349,15 @@ export function MapView({
           )}
         </div>
       )}
-      
-      <div 
-        ref={mapContainerRef} 
+
+      {reservation && remaining > 0 && (
+        <div className="absolute top-2 right-2 bg-yellow-100 border border-yellow-300 text-yellow-800 px-2 py-1 rounded">
+          Reserva expira em: {remaining}s
+        </div>
+      )}
+
+      <div
+        ref={mapContainerRef}
         style={{ height, width: '100%' }}
         className="rounded-lg border"
       />

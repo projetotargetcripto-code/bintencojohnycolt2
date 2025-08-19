@@ -11,6 +11,7 @@ export interface LoteData {
   geometria: number[][][];
   properties: any;
   status?: 'disponivel' | 'reservado' | 'vendido';
+  reserva_expira_em?: string | null;
 }
 
 export interface GeoJSONFeature {
