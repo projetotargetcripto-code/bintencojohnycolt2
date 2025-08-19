@@ -77,13 +77,22 @@ async function directFixes() {
             email: 'superadmin@blockurb.com',
             password: 'BlockUrb2024!',
             full_name: 'Super Administrador',
-            role: 'superadmin'
+            role: 'superadmin',
+            panels: ['superadmin', 'adminfilial', 'cliente']
           },
           {
-            email: 'admin@blockurb.com', 
+            email: 'admin@blockurb.com',
             password: 'Admin2024!',
             full_name: 'Administrador',
-            role: 'admin'
+            role: 'admin',
+            panels: ['adminfilial']
+          },
+          {
+            email: 'investidor@blockurb.com',
+            password: 'Invest2024!',
+            full_name: 'Investidor Demo',
+            role: 'investidor',
+            panels: ['investidor']
           }
         ];
 
@@ -101,15 +110,15 @@ async function directFixes() {
               console.log(`✅ ${user.email} criado/verificado`);
               
               // Tentar criar perfil
-              if (authData?.user) {
-                const { error: profileError } = await supabase.from('user_profiles').upsert({
-                  user_id: authData.user.id,
-                  email: user.email,
-                  full_name: user.full_name,
-                  role: user.role,
-                  panels: user.role === 'superadmin' ? ['superadmin', 'adminfilial', 'cliente'] : ['adminfilial'],
-                  is_active: true
-                });
+                if (authData?.user) {
+                  const { error: profileError } = await supabase.from('user_profiles').upsert({
+                    user_id: authData.user.id,
+                    email: user.email,
+                    full_name: user.full_name,
+                    role: user.role,
+                    panels: user.panels,
+                    is_active: true
+                  });
                 
                 if (!profileError) {
                   console.log(`✅ Perfil criado para ${user.email}`);
