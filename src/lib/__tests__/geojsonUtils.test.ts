@@ -6,9 +6,22 @@ describe('geojsonUtils', () => {
   const fc = mockFeatureCollection();
   const polygon = fc.features[0].geometry.coordinates;
 
-  it('calculatePolygonArea returns 0 for provided polygon', () => {
-    const area = calculatePolygonArea(polygon as any);
-    expect(area).toBe(0);
+  it('calculatePolygonArea retorna área geodésica para o polígono fornecido', () => {
+    const areaValue = calculatePolygonArea(polygon as any);
+    expect(areaValue).toBeCloseTo(11334.76, 2);
+  });
+
+  it('calculatePolygonArea coincide com área conhecida de quadrado de 100m no equador', () => {
+    const delta = 100 / 111319.49079327357;
+    const square = [[[0, 0], [delta, 0], [delta, delta], [0, delta], [0, 0]]];
+    const areaValue = calculatePolygonArea(square as any);
+    expect(areaValue).toBeCloseTo(9977.66, 2);
+  });
+
+  it('calculatePolygonArea coincide com área conhecida de quadrado de 1° no equador', () => {
+    const squareDeg = [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]];
+    const areaValue = calculatePolygonArea(squareDeg as any);
+    expect(areaValue).toBeCloseTo(12363718145.18, 0);
   });
 
   it('calculatePolygonCenter computes centroid', () => {
@@ -26,7 +39,7 @@ describe('geojsonUtils', () => {
       properties: fc.features[0].properties,
       status: 'disponivel'
     });
-    expect(result.lotes[0].area_m2).toBe(calculatePolygonArea(polygon as any));
+    expect(result.lotes[0].area_m2).toBeCloseTo(calculatePolygonArea(polygon as any), 2);
     expect(result.lotes[0].coordenadas).toEqual(calculatePolygonCenter(polygon as any));
     expect(result.bounds).toEqual({
       sw: { lat: -23.5485, lng: -46.639 },
