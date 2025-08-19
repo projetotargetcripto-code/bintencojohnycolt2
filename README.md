@@ -88,3 +88,7 @@ VITE_ADMIN_PASSWORD=strong-password
 Only roles with both variables defined will appear in the widget.
 
 This quick login widget is available only during development and returns nothing in production builds.
+
+## RFCs
+
+- [RFC-000: Diagnóstico](docs/RFC-000-diagnostico.md)
