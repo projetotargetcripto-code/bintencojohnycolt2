@@ -41,6 +41,7 @@ import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
 import PublicWidgetPage from "./pages/public/Widget";
 import { publicWidgetEnabled } from "@/config/publicWidget";
+import RenegociacoesPage from "./pages/juridico/Renegociacoes";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,7 @@ const App = () => (
             <Route path="/juridico/config" element={<Protected allowedRoles={['juridico']}><PanelSectionPage menuKey="juridico" title="Jurídico" section="Configurações" /></Protected>} />
             <Route path="/juridico/contratos" element={<Protected allowedRoles={['juridico']}><PanelSectionPage menuKey="juridico" title="Jurídico" section="Contratos" /></Protected>} />
             <Route path="/juridico/processos" element={<Protected allowedRoles={['juridico']}><PanelSectionPage menuKey="juridico" title="Jurídico" section="Processos" /></Protected>} />
+            <Route path="/juridico/renegociacoes" element={<Protected allowedRoles={['juridico']}><RenegociacoesPage /></Protected>} />
 
             {/* Contabilidade */}
             <Route path="/contabilidade" element={<Protected allowedRoles={['contabilidade']}><PanelHomePage menuKey="contabilidade" title="Contabilidade" /></Protected>} />
