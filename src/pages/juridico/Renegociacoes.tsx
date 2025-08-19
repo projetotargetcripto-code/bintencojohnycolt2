@@ -4,6 +4,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { Button } from "@/components/ui/button";
 import { DataTable, Column } from "@/components/app/DataTable";
 import { supabase } from "@/lib/dataClient";
+import { supabaseRequest } from "@/lib/request";
 
 interface Renegociacao {
   id: string;
@@ -24,11 +25,15 @@ export default function RenegociacoesPage() {
   const [items, setItems] = useState<Renegociacao[]>([]);
 
   async function load() {
-    const { data } = await supabase
-      .from("renegociacoes")
-      .select("id, reserva_id, email, status, created_at")
-      .order("created_at", { ascending: false });
-    setItems((data as Renegociacao[]) || []);
+    const data = await supabaseRequest<Renegociacao[]>(
+      () =>
+        supabase
+          .from("renegociacoes")
+          .select("id, reserva_id, email, status, created_at")
+          .order("created_at", { ascending: false }),
+      { error: "Erro ao carregar renegociações" },
+    );
+    setItems(data || []);
   }
 
   useEffect(() => {
@@ -37,11 +42,21 @@ export default function RenegociacoesPage() {
   }, []);
 
   async function handleAction(id: string, email: string, status: string) {
-    await supabase.from("renegociacoes").update({ status }).eq("id", id);
+    await supabaseRequest(
+      () => supabase.from("renegociacoes").update({ status }).eq("id", id),
+      {
+        success: status === "approved" ? "Renegociação aprovada" : "Renegociação rejeitada",
+        error: "Erro ao atualizar renegociação",
+      },
+    );
     if (status === "approved") {
-      await supabase.functions.invoke("renegociacao-confirm", {
-        body: { email, status },
-      });
+      await supabaseRequest(
+        () =>
+          supabase.functions.invoke("renegociacao-confirm", {
+            body: { email, status },
+          }),
+        { error: "Erro ao confirmar renegociação" },
+      );
     }
     await load();
   }

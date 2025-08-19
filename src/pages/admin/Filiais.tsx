@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
 import { supabase } from "@/lib/dataClient";
+import { supabaseRequest } from "@/lib/request";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,33 +28,39 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     setLoading(true);
     let query = supabase.from("filiais").select("id, nome").order("nome");
     if (filter) query = query.eq("kind", filter);
-    const { data, error } = await query;
-    if (error) toast.error("Erro ao carregar filiais: " + error.message);
+    const data = await supabaseRequest<Filial[]>(() => query, {
+      error: "Erro ao carregar filiais",
+    });
     setFiliais(data || []);
     setLoading(false);
   }
 
   async function handleCreate() {
     if (!nome.trim()) { toast.error("Informe o nome"); return; }
-    const { error } = await supabase.from("filiais").insert({ nome: nome.trim(), kind: filter || "interna" });
-    if (error) toast.error("Erro ao criar filial: " + error.message);
-    else { toast.success("Filial criada"); setNome(""); load(); }
+    const res = await supabaseRequest(
+      () => supabase.from("filiais").insert({ nome: nome.trim(), kind: filter || "interna" }),
+      { success: "Filial criada", error: "Erro ao criar filial" },
+    );
+    if (res) { setNome(""); load(); }
   }
 
   async function handleUpdate() {
     if (!editingId) return;
     if (!nome.trim()) { toast.error("Informe o nome"); return; }
-    const { error } = await supabase.from("filiais").update({ nome: nome.trim() }).eq("id", editingId);
-    if (error) toast.error("Erro ao editar filial: " + error.message);
-    else { toast.success("Filial atualizada"); setEditingId(null); setNome(""); load(); }
+    const res = await supabaseRequest(
+      () => supabase.from("filiais").update({ nome: nome.trim() }).eq("id", editingId),
+      { success: "Filial atualizada", error: "Erro ao editar filial" },
+    );
+    if (res) { setEditingId(null); setNome(""); load(); }
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Tem certeza que deseja excluir esta filial?")) return;
-    const { error } = await supabase.from("filiais").delete().eq("id", id);
-    if (error) toast.error("Erro ao excluir filial: " + error.message);
-    else {
-      toast.success("Filial excluída");
+    const res = await supabaseRequest(
+      () => supabase.from("filiais").delete().eq("id", id),
+      { success: "Filial excluída", error: "Erro ao excluir filial" },
+    );
+    if (res) {
       if (editingId === id) { setEditingId(null); setNome(""); }
       load();
     }
