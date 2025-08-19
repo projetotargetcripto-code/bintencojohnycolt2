@@ -176,7 +176,11 @@ const App = () => (
             <Route path="/terrenista/config" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Configurações" /></Protected>} />
             <Route path="/terrenista/status" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
             <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
-            
+
+            {/* Cliente */}
+            <Route path="/cliente" element={<Protected allowedRoles={['cliente']}><PanelHomePage menuKey="cliente" title="Cliente" /></Protected>} />
+            <Route path="/cliente/extrato" element={<Protected allowedRoles={['cliente']}><PanelSectionPage menuKey="cliente" title="Cliente" section="Extrato" /></Protected>} />
+
             {/* Debug route */}
               <Route
                 path="/debug/connection"
