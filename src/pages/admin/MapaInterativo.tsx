@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapView } from "@/components/MapView";
 import { supabase } from "@/lib/dataClient";
-import { LoteData } from "@/lib/geojsonUtils";
+import { LoteData } from "@/lib/geo";
 import { RefreshCw, Search, TrendingUp } from "lucide-react";
 
 interface Empreendimento {

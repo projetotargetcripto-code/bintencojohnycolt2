@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '@/lib/dataClient';
-import { LoteData, getLoteStyle, formatArea, formatPrice } from '@/lib/geojsonUtils';
+import { LoteData, getLoteStyle, formatArea, formatPrice } from '@/lib/geo';
 
 interface MapViewProps {
   empreendimentoId?: string;

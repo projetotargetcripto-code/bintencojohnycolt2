@@ -10,7 +10,7 @@ import { supabase } from "@/lib/dataClient";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthorization } from "@/hooks/useAuthorization";
-import { processGeoJSON, LoteData } from "@/lib/geojsonUtils";
+import { processGeoJSON, LoteData } from "@/lib/geo";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
