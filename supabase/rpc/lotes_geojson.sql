@@ -12,8 +12,7 @@ as $$
         'nome', l.nome,
         'numero', l.numero,
         'status', l.status,
-        'valor', l.valor,
-        'preco', l.valor,
+        'preco', coalesce(l.preco, l.valor),
         'area_m2', l.area_m2
       )
     ) as f

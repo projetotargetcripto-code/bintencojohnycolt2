@@ -14,6 +14,7 @@ export interface LoteProperties {
   nome?: string;
   label?: string;
   description?: string;
+  preco?: number;
   [key: string]: unknown;
 }
 
@@ -22,6 +23,7 @@ export interface LoteData<P extends LoteProperties = LoteProperties> {
   nome: string;
   numero: number;
   area_m2: number;
+  preco?: number;
   coordenadas: { lat: number; lng: number };
   geometria: number[][][];
   properties: P;
