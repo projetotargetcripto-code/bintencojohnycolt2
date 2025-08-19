@@ -79,6 +79,10 @@ export const NAV: Record<string, NavItem[]> = {
     { title: "Terrenista", href: "/terrenista", icon: "landmark" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
+  cliente: [
+    { title: "Extrato", href: "/cliente/extrato", icon: "file-text" },
+    { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
+  ],
 };
 
 export function inferMenuKey(pathname: string) {

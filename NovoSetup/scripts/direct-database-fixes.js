@@ -107,7 +107,7 @@ async function directFixes() {
                   email: user.email,
                   full_name: user.full_name,
                   role: user.role,
-                  panels: user.role === 'superadmin' ? ['superadmin', 'adminfilial'] : ['adminfilial'],
+                  panels: user.role === 'superadmin' ? ['superadmin', 'adminfilial', 'cliente'] : ['adminfilial'],
                   is_active: true
                 });
                 
