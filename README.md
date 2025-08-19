@@ -38,6 +38,10 @@ npm run dev
 
 **Edit a file directly in GitHub**
 
+## Cálculo de área geodésica
+
+A função `calculatePolygonArea` agora utiliza [Turf.js](https://turfjs.org/) para obter a área geodésica dos polígonos com maior precisão. Um quadrado de 100 m no equador, por exemplo, é estimado como aproximadamente 9 977,66 m².
+
 - Navigate to the desired file(s).
 - Click the "Edit" button (pencil icon) at the top right of the file view.
 - Make your changes and commit the changes.

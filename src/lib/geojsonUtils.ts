@@ -52,23 +52,23 @@ export interface ProcessedGeoJSON<P extends LoteProperties = LoteProperties> {
   };
 }
 
+import area from '@turf/area';
+import { polygon } from '@turf/helpers';
+
 /**
- * Calcula a área de um polígono usando a fórmula do shoelace
+ * Calcula a área geodésica de um polígono em metros quadrados.
  */
-export function calculatePolygonArea(coordinates: number[][]): number {
-  if (!coordinates || coordinates.length < 3) return 0;
-  
-  let area = 0;
-  const coords = coordinates[0] || coordinates; // Primeiro ring (exterior)
-  
-  for (let i = 0; i < coords.length - 1; i++) {
-    const [lng1, lat1] = coords[i];
-    const [lng2, lat2] = coords[i + 1];
-    area += (lng1 * lat2 - lng2 * lat1);
-  }
-  
-  // Converte para metros quadrados (aproximação)
-  return Math.abs(area) * 111319.9 * 111319.9 / 2;
+export function calculatePolygonArea(
+  coordinates: number[][][] | number[][]
+): number {
+  const ring = Array.isArray((coordinates as any)[0][0])
+    ? (coordinates as number[][][])[0]
+    : (coordinates as number[][]);
+
+  if (!ring || ring.length < 3) return 0;
+
+  const poly = polygon([ring] as any);
+  return area(poly);
 }
 
 /**
