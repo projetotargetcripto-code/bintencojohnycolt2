@@ -7,24 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ComissaoRow {
   corretor_id: string;
-  total: number;
+  status: string;
+  total_comissao: number;
 }
 
 export default function RelatorioComissoes() {
   const [rows, setRows] = useState<ComissaoRow[]>([]);
 
   useEffect(() => {
-    const load = async () => {
-      const { data, error } = await supabase.from("vendas").select("corretor_id, comissao");
-      if (!error && data) {
-        const grouped: Record<string, number> = {};
-        data.forEach(v => {
-          grouped[v.corretor_id] = (grouped[v.corretor_id] || 0) + Number(v.comissao);
-        });
-        const list = Object.entries(grouped).map(([corretor_id, total]) => ({ corretor_id, total }));
-        setRows(list);
-      }
-    };
+      const load = async () => {
+        const { data, error } = await supabase.from("vw_comissoes").select("corretor_id, status, total_comissao");
+        if (!error && data) {
+          setRows(data as ComissaoRow[]);
+        }
+      };
     load();
   }, []);
 
@@ -40,14 +36,16 @@ export default function RelatorioComissoes() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Corretor</TableHead>
-                  <TableHead>Total Comissão</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Total Comissão</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map(r => (
                   <TableRow key={r.corretor_id}>
                     <TableCell>{r.corretor_id}</TableCell>
-                    <TableCell>{r.total.toFixed(2)}</TableCell>
+                    <TableCell>{r.status}</TableCell>
+                    <TableCell>{r.total_comissao.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
