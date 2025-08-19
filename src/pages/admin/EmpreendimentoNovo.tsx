@@ -88,12 +88,34 @@ export default function EmpreendimentoNovo() {
   };
 
   const handleGeojsonUpload = async (file: File) => {
-    setGeojsonFile(file);
     const map = mapRef.current;
     if (!map) return;
 
     try {
-      const text = await file.text();
+      let text: string;
+      let processedFile = file;
+
+      const isShapefile = /\.zip$/i.test(file.name) || /\.shp$/i.test(file.name);
+      if (isShapefile) {
+        const form = new FormData();
+        form.append('file', file);
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/convert-shapefile`, {
+          method: 'POST',
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: form,
+        });
+        if (!resp.ok) throw new Error('Falha na conversão do shapefile');
+        text = await resp.text();
+        processedFile = new File([text], file.name.replace(/\.(zip|shp)$/i, '.geojson'), { type: 'application/geo+json' });
+      } else {
+        text = await file.text();
+      }
+
+      setGeojsonFile(processedFile);
       const processed = processGeoJSON(text);
       setProcessedLotes(processed.lotes);
 
@@ -106,14 +128,14 @@ export default function EmpreendimentoNovo() {
       if (previewLayerRef.current) {
         map.removeLayer(previewLayerRef.current);
       }
-      
+
       const geojson = JSON.parse(text);
       const layer = L.geoJSON(geojson, { style: { color: '#3b82f6', weight: 2, fillOpacity: 0.3 } });
-      
+
       layer.addTo(map);
       previewLayerRef.current = layer;
       map.fitBounds(layer.getBounds(), { padding: [20, 20] });
-      
+
       toast.success(`${processed.totalLotes} lotes encontrados!`);
     } catch (error) {
       toast.error('Erro ao processar GeoJSON.');
@@ -304,11 +326,11 @@ export default function EmpreendimentoNovo() {
                     <Textarea id="descricao" value={formData.descricao} onChange={(e) => handleInputChange('descricao', e.target.value)} />
                   </div>
                   <div>
-                    <Label htmlFor="geojson">Arquivo GeoJSON {isEdit ? '' : '*'}</Label>
+                    <Label htmlFor="geojson">Arquivo GeoJSON ou Shapefile {isEdit ? '' : '*'}</Label>
                     <Input
                       id="geojson"
                       type="file"
-                      accept=".geojson,.json"
+                      accept=".geojson,.json,.zip,.shp"
                       required={!isEdit}
                       onChange={(e) => e.target.files && handleGeojsonUpload(e.target.files[0])}
                     />
