@@ -1,0 +1,5 @@
+[functions.cleanup-reservations]
+verify_jwt = false
+
+[functions.cleanup-reservations.cron]
+schedule = "*/5 * * * *"
