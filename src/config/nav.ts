@@ -58,6 +58,7 @@ export const NAV: Record<string, NavItem[]> = {
   ],
   comercial: [
     { title: "Comercial", href: "/comercial", icon: "briefcase" },
+    { title: "Cobranças", href: "/comercial/cobrancas", icon: "dollar-sign" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
   imobiliaria: [
@@ -82,6 +83,7 @@ export const NAV: Record<string, NavItem[]> = {
   ],
   cliente: [
     { title: "Extrato", href: "/cliente/extrato", icon: "file-text" },
+    { title: "Cobranças", href: "/cliente/cobrancas", icon: "dollar-sign" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
 };

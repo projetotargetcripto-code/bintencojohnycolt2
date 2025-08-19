@@ -22,6 +22,7 @@ import MapaInterativo from "./pages/admin/MapaInterativo";
 import LotesVendas from "./pages/admin/LotesVendas";
 import VendaLancamento from "./pages/admin/VendaLancamento";
 import RelatorioComissoes from "./pages/admin/RelatorioComissoes";
+import CobrancasPage from "./pages/admin/Cobrancas";
 import AssinaturasPage from "./pages/admin/Assinaturas";
 import Aprovacao from "./pages/admin/Aprovacao";
 import Logout from "./pages/Logout";
@@ -46,6 +47,7 @@ import WidgetTelemetryPage from "./pages/admin/WidgetTelemetry";
 import PublicWidgetPage from "./pages/public/Widget";
 import { publicWidgetEnabled } from "@/config/publicWidget";
 import RenegociacoesPage from "./pages/juridico/Renegociacoes";
+import ClienteCobrancasPage from "./pages/cliente/Cobrancas";
 
 const queryClient = new QueryClient();
 
@@ -154,6 +156,7 @@ const App = () => (
             <Route path="/comercial/leads" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Leads" /></Protected>} />
             <Route path="/comercial/propostas" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Propostas" /></Protected>} />
             <Route path="/comercial/vendas/nova" element={<Protected allowedRoles={['comercial', 'adminfilial', 'superadmin']} panelKey="comercial"><VendaLancamento /></Protected>} />
+            <Route path="/comercial/cobrancas" element={<Protected allowedRoles={['comercial']}><CobrancasPage /></Protected>} />
             <Route path="/comercial/comissoes" element={<Protected allowedRoles={['comercial', 'superadmin']} panelKey="comercial"><RelatorioComissoes /></Protected>} />
 
             {/* Imobiliária */}
@@ -194,6 +197,7 @@ const App = () => (
             {/* Cliente */}
             <Route path="/cliente" element={<Protected allowedRoles={['cliente']}><PanelHomePage menuKey="cliente" title="Cliente" /></Protected>} />
             <Route path="/cliente/extrato" element={<Protected allowedRoles={['cliente']}><PanelSectionPage menuKey="cliente" title="Cliente" section="Extrato" /></Protected>} />
+            <Route path="/cliente/cobrancas" element={<Protected allowedRoles={['cliente']}><ClienteCobrancasPage /></Protected>} />
 
             {/* Debug route */}
               <Route
