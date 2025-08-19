@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/dataClient";
-import { formatArea } from "@/lib/geojsonUtils";
+import { formatArea } from "@/lib/geo";
 import { toast } from "sonner";
 import { Edit3, DollarSign, Users, TrendingUp } from "lucide-react";
 import { Empreendimento, Lote } from "@/types";

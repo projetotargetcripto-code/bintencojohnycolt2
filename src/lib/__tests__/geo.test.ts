@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { calculatePolygonArea, calculatePolygonCenter, processGeoJSON } from '../geojsonUtils';
-import { mockFeatureCollection } from '../../utils/geo';
+import {
+  calculatePolygonArea,
+  calculatePolygonCenter,
+  processGeoJSON,
+  mockFeatureCollection
+} from '../geo';
 
-describe('geojsonUtils', () => {
+describe('geo utils', () => {
   const fc = mockFeatureCollection();
   const polygon = fc.features[0].geometry.coordinates;
 
@@ -61,3 +65,4 @@ describe('geojsonUtils', () => {
     expect(() => processGeoJSON(invalid)).toThrow('Arquivo GeoJSON inválido');
   });
 });
+
