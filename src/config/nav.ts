@@ -34,6 +34,7 @@ export const NAV: Record<string, NavItem[]> = {
     { label: "Novo Empreendimento", href: "/admin-filial/empreendimentos/novo", icon: "plus-circle", panelKey: "adminfilial" },
     { label: "Mapa Interativo", href: "/admin-filial/mapa", icon: "map", panelKey: "urbanista" },
     { label: "Vendas de Lotes", href: "/admin-filial/lotes-vendas", icon: "dollar-sign", panelKey: "comercial" },
+    { label: "Assinaturas", href: "/admin-filial/assinaturas", icon: "pen-line", panelKey: "adminfilial" },
     { label: "Auditoria", href: "/admin-filial/auditoria", icon: "file-text", panelKey: "adminfilial" },
     { label: "Relatórios", href: "/admin-filial/relatorios", icon: "chart", panelKey: "adminfilial" },
     { label: "Configurações", href: "/admin-filial/config", icon: "settings", panelKey: "adminfilial" },
