@@ -14,6 +14,7 @@ import { useFilterOptions } from "@/hooks/useFilterOptions";
 import { LotesMapPreview } from "@/components/app/LotesMapPreview";
 import { SelectedEmpreendimentoProvider, useSelectedEmpreendimento } from "@/hooks/useSelectedEmpreendimento";
 import { supabase } from "@/lib/dataClient";
+import { Progress } from "@/components/ui/progress";
 
 const panelTableMap: Record<string, string> = {
   comercial: 'leads',
@@ -38,6 +39,7 @@ function PanelHomePageInner({ menuKey, title }: { menuKey: string; title: string
   const [status, setStatus] = useState<string>('todos');
   const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
+  const [progress, setProgress] = useState(0);
 
   const table = panelTableMap[menuKey];
 
@@ -54,6 +56,23 @@ function PanelHomePageInner({ menuKey, title }: { menuKey: string; title: string
         }
       });
   }, [table, selectedEmpreendimento]);
+
+  useEffect(() => {
+    if (menuKey !== 'obras' || !selectedEmpreendimento) return;
+    supabase
+      .from('etapas_obras')
+      .select('concluida')
+      .eq('empreendimento_id', selectedEmpreendimento)
+      .then(({ data }) => {
+        if (data) {
+          const total = data.length;
+          const done = data.filter(e => e.concluida).length;
+          setProgress(total ? Math.round((done / total) * 100) : 0);
+        } else {
+          setProgress(0);
+        }
+      });
+  }, [menuKey, selectedEmpreendimento]);
 
   if (menuKey === 'superadmin' || menuKey === 'adminfilial') {
     return (
@@ -127,7 +146,7 @@ function PanelHomePageInner({ menuKey, title }: { menuKey: string; title: string
 
   return (
     <Protected>
-      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}> 
+      <AppShell menuKey={menuKey} breadcrumbs={[{ label: 'Home', href: '/' }, { label: title }]}>
         <FiltersBar>
           <Select value={selectedEmpreendimento ?? ''} onValueChange={setSelectedEmpreendimento}>
             <SelectTrigger className="w-[200px]">
@@ -140,6 +159,13 @@ function PanelHomePageInner({ menuKey, title }: { menuKey: string; title: string
             </SelectContent>
           </Select>
         </FiltersBar>
+        {menuKey === 'obras' && selectedEmpreendimento && (
+          <div className="mt-6">
+            <h3 className="mb-2 font-semibold">Progresso</h3>
+            <Progress value={progress} />
+            <p className="mt-1 text-sm text-muted-foreground">{progress}% concluído</p>
+          </div>
+        )}
         <div className="mt-6">
           {selectedEmpreendimento ? (
             <DataTable columns={columns} rows={rows} pageSize={5} />
