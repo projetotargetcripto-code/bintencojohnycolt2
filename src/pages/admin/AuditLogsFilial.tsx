@@ -27,6 +27,8 @@ interface AuditLog {
   action: string;
   target: string | null;
   metadata: any;
+  ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
 }
 
@@ -54,7 +56,7 @@ export default function AuditLogsFilialPage() {
     setLoading(true);
     let query = supabase
       .from("audit_logs")
-      .select("id, actor, action, target, metadata, created_at")
+      .select("id, actor, action, target, metadata, ip_address, user_agent, created_at")
       .order("created_at", { ascending: false });
 
     query = query.contains("metadata", { filial_id: filialId });
@@ -140,6 +142,8 @@ export default function AuditLogsFilialPage() {
                       <TableHead>Usuário</TableHead>
                       <TableHead>Ação</TableHead>
                       <TableHead>Alvo</TableHead>
+                      <TableHead>IP</TableHead>
+                      <TableHead>User Agent</TableHead>
                       <TableHead>Detalhes</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -150,6 +154,8 @@ export default function AuditLogsFilialPage() {
                         <TableCell className="font-mono">{log.actor}</TableCell>
                         <TableCell>{log.action}</TableCell>
                         <TableCell className="font-mono">{log.target ?? "—"}</TableCell>
+                        <TableCell className="font-mono">{log.ip_address ?? "—"}</TableCell>
+                        <TableCell className="max-w-xs truncate">{log.user_agent ?? "—"}</TableCell>
                         <TableCell className="max-w-xs truncate">{JSON.stringify(log.metadata ?? {})}</TableCell>
                       </TableRow>
                     ))}
