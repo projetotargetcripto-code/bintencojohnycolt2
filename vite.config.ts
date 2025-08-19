@@ -21,5 +21,6 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     environment: "jsdom",
+    exclude: ["e2e/**", "node_modules/**"],
   },
 }));
