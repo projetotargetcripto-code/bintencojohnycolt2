@@ -20,6 +20,8 @@ import EmpreendimentosPage from "./pages/admin/Empreendimentos";
 import AdminMapa from "./pages/admin/Mapa";
 import MapaInterativo from "./pages/admin/MapaInterativo";
 import LotesVendas from "./pages/admin/LotesVendas";
+import VendaLancamento from "./pages/admin/VendaLancamento";
+import RelatorioComissoes from "./pages/admin/RelatorioComissoes";
 import AssinaturasPage from "./pages/admin/Assinaturas";
 import Aprovacao from "./pages/admin/Aprovacao";
 import Logout from "./pages/Logout";
@@ -104,6 +106,8 @@ const App = () => (
             <Route path="/admin-filial/mapa-interativo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><MapaInterativo /></Protected>} />
             <Route path="/admin-filial/lotes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesPage /></Protected>} />
             <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesVendas /></Protected>} />
+            <Route path="/admin-filial/vendas/novo" element={<Protected allowedRoles={['adminfilial', 'comercial', 'superadmin']} panelKey="adminfilial"><VendaLancamento /></Protected>} />
+            <Route path="/admin-filial/comissoes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><RelatorioComissoes /></Protected>} />
             <Route path="/admin-filial/assinaturas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AssinaturasPage /></Protected>} />
             <Route path="/admin-filial/auditoria" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AuditLogsFilialPage /></Protected>} />
 
@@ -145,6 +149,8 @@ const App = () => (
             <Route path="/comercial/config" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Configurações" /></Protected>} />
             <Route path="/comercial/leads" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Leads" /></Protected>} />
             <Route path="/comercial/propostas" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Propostas" /></Protected>} />
+            <Route path="/comercial/vendas/nova" element={<Protected allowedRoles={['comercial', 'adminfilial', 'superadmin']} panelKey="comercial"><VendaLancamento /></Protected>} />
+            <Route path="/comercial/comissoes" element={<Protected allowedRoles={['comercial', 'superadmin']} panelKey="comercial"><RelatorioComissoes /></Protected>} />
 
             {/* Imobiliária */}
             <Route path="/imobiliaria" element={<Protected allowedRoles={['imobiliaria']}><PanelHomePage menuKey="imobiliaria" title="Imobiliária" /></Protected>} />

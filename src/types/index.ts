@@ -30,3 +30,13 @@ export interface AuthorizationProfile {
   panels: string[];
   filial_id: string | null;
 }
+
+export interface Venda {
+  id: string;
+  lote_id: string;
+  filial_id: string;
+  corretor_id: string;
+  valor: number;
+  comissao: number;
+  created_at?: string;
+}
