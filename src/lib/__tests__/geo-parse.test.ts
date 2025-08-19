@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { parseAndValidateGeoJSON, guessStatusStyle, mockFeatureCollection } from '../geo';
+import {
+  parseAndValidateGeoJSON,
+  guessStatusStyle,
+  mockFeatureCollection
+} from '../geo';
 
-describe('geo utils', () => {
+describe('parse and style utils', () => {
   it('parseAndValidateGeoJSON parses valid feature collection', async () => {
     const fc = mockFeatureCollection();
     const { fc: parsed, featuresCount, bbox } = await parseAndValidateGeoJSON(JSON.stringify(fc));
@@ -25,9 +29,10 @@ describe('geo utils', () => {
   });
 
   it('guessStatusStyle returns style for each status', () => {
-    expect(guessStatusStyle('disponivel')).toMatchObject({ color: '#00C26E' });
-    expect(guessStatusStyle('reservado')).toMatchObject({ color: '#E3B341' });
-    expect(guessStatusStyle('vendido')).toMatchObject({ color: '#F05252' });
-    expect(guessStatusStyle('outro')).toMatchObject({ color: '#38BDF8' });
+    expect(guessStatusStyle('disponivel')).toMatchObject({ color: '#22c55e' });
+    expect(guessStatusStyle('reservado')).toMatchObject({ color: '#eab308' });
+    expect(guessStatusStyle('vendido')).toMatchObject({ color: '#ef4444' });
+    expect(guessStatusStyle('outro')).toMatchObject({ color: '#3b82f6' });
   });
 });
+
