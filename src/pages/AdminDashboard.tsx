@@ -10,6 +10,10 @@ import { Building2, FileText, Target } from "lucide-react";
 import { useState } from "react";
 import { useFilterOptions } from "@/hooks/useFilterOptions";
 import { LotesMapPreview } from "@/components/app/LotesMapPreview";
+import { VGVChart } from "@/components/app/VGVChart";
+import { InadimplenciaTable } from "@/components/app/InadimplenciaTable";
+import { Heatmap } from "@/components/app/Heatmap";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const columns = [
   { key: 'nome', header: 'Nome' },
@@ -90,6 +94,36 @@ export default function AdminDashboard() {
           <div className="mt-4">
             <Button variant="outline">Abrir mapa completo</Button>
           </div>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>VGV por Filial</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <VGVChart />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Inadimplência</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InadimplenciaTable />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Heatmap de Vendas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Heatmap />
+            </CardContent>
+          </Card>
         </div>
       </AppShell>
     </Protected>
