@@ -103,6 +103,21 @@ const Index = () => {
                 <a href="#contato">
                   <Button variant="cta" size="lg" className="hover-scale btn-glow">Falar com Especialista</Button>
                 </a>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() =>
+                    fetch("/functions/v1/generate-boleto", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ cnab: null, pix: null }),
+                    })
+                      .then((r) => r.json())
+                      .then((data) => console.log("Boleto gerado", data))
+                  }
+                >
+                  Gerar Boleto
+                </Button>
               </div>
             </div>
           </div>
