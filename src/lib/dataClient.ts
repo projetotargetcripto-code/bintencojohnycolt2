@@ -1,12 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
 const isDev = import.meta.env.DEV
 const isTest = import.meta.env.MODE === 'test'
 
-function assertEnv(value: string | undefined, name: string) {
+function assertEnv(value: string | undefined, name: string): asserts value is string {
   if (!value) {
     const msg = `❌ ${name} não definida: adicione-a ao arquivo .env.local na raiz do projeto ou configure a variável de ambiente em produção.`
     if (isDev && !isTest) {
@@ -17,7 +14,10 @@ function assertEnv(value: string | undefined, name: string) {
   }
 }
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 assertEnv(supabaseUrl, 'VITE_SUPABASE_URL')
+
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 assertEnv(supabaseAnonKey, 'VITE_SUPABASE_ANON_KEY')
 
 export const supabase =
