@@ -18,6 +18,7 @@ export function QuickLoginWidget({ compact = false, className = "", allowedPanel
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [widgetId] = useState(() => crypto.randomUUID());
   const navigate = useNavigate();
 
     if (!import.meta.env.DEV) {
@@ -35,14 +36,20 @@ export function QuickLoginWidget({ compact = false, className = "", allowedPanel
     setLoading(cred.email);
     
     try {
-      const { data: res, error } = await supabase.auth.signInWithPassword({ 
-        email: cred.email, 
-        password: cred.password 
+      const { data: res, error } = await supabase.auth.signInWithPassword({
+        email: cred.email,
+        password: cred.password
       });
-      
-      if (error) { 
-        setError(error.message || "Falha ao entrar"); 
-        return; 
+
+      await supabase.rpc('log_widget_event', {
+        widget_id: widgetId,
+        evento: 'quick_login_attempt',
+        meta: { email: cred.email }
+      });
+
+      if (error) {
+        setError(error.message || "Falha ao entrar");
+        return;
       }
       
       if (res?.session) {
