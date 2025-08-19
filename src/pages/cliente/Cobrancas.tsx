@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/shell/AppShell";
 import { DataTable, type Column } from "@/components/app/DataTable";
 import { supabase } from "@/lib/dataClient";
+import { supabaseRequest } from "@/lib/request";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function ClienteCobrancasPage() {
@@ -11,14 +12,21 @@ export default function ClienteCobrancasPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .rpc("buscar_cobrancas_por_user_id", { p_user_id: user.id })
-      .then(({ data }) => {
-        setRows(data ?? []);
-        if (data && data.length > 0) {
-          setColumns(Object.keys(data[0]).map(key => ({ key, header: key })));
+    async function load() {
+      const data = await supabaseRequest<any[]>(
+        () => supabase.rpc("buscar_cobrancas_por_user_id", { p_user_id: user.id }),
+        { error: "Erro ao buscar cobranças" },
+      );
+      if (data) {
+        setRows(data);
+        if (data.length > 0) {
+          setColumns(Object.keys(data[0]).map((key) => ({ key, header: key })));
         }
-      });
+      } else {
+        setRows([]);
+      }
+    }
+    load();
   }, [user]);
 
   return (
