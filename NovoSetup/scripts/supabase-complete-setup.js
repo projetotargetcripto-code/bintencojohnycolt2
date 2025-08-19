@@ -72,6 +72,13 @@ async function completeSupabaseSetup() {
         full_name: 'Administrador Principal',
         role: 'admin',
         panels: ['adminfilial']
+      },
+      {
+        email: 'investidor@blockurb.com',
+        password: 'Invest2024!',
+        full_name: 'Investidor Demo',
+        role: 'investidor',
+        panels: ['investidor']
       }
     ];
 

@@ -48,6 +48,7 @@ import PublicWidgetPage from "./pages/public/Widget";
 import { publicWidgetEnabled } from "@/config/publicWidget";
 import RenegociacoesPage from "./pages/juridico/Renegociacoes";
 import ClienteCobrancasPage from "./pages/cliente/Cobrancas";
+import InvestidorExtratosPage from "./pages/investidor/Extratos";
 
 const queryClient = new QueryClient();
 
@@ -184,6 +185,7 @@ const App = () => (
             <Route path="/investidor" element={<Protected allowedRoles={['investidor']}><PanelHomePage menuKey="investidor" title="Investidor" /></Protected>} />
             <Route path="/investidor/relatorios" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Relatórios" /></Protected>} />
             <Route path="/investidor/config" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Configurações" /></Protected>} />
+            <Route path="/investidor/extratos" element={<Protected allowedRoles={['investidor']}><InvestidorExtratosPage /></Protected>} />
             <Route path="/investidor/carteira" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Carteira" /></Protected>} />
             <Route path="/investidor/suporte" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Suporte" /></Protected>} />
 
