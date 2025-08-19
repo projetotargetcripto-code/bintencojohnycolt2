@@ -35,6 +35,7 @@ import MapaSuperAdmin from "./pages/admin/MapaSuperAdmin";
 import AuditLogsPage from "./pages/admin/AuditLogs";
 import AuditLogsFilialPage from "./pages/admin/AuditLogsFilial";
 import ReportsDashboard from "./pages/admin/ReportsDashboard";
+import InadimplenciaDashboard from "./pages/admin/InadimplenciaDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="/super-admin/mapa" element={<Protected allowedRoles={['superadmin']}><MapaSuperAdmin /></Protected>} />
             <Route path="/super-admin/auditoria" element={<Protected allowedRoles={['superadmin']}><AuditLogsPage /></Protected>} />
             <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard /></Protected>} />
+            <Route path="/super-admin/inadimplencia" element={<Protected allowedRoles={['superadmin']}><InadimplenciaDashboard /></Protected>} />
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><ConfigPage /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
             <Route path="/super-admin/usuarios" element={<Protected allowedRoles={['superadmin']}><UsuariosPage /></Protected>} />
