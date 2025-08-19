@@ -37,6 +37,8 @@ import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
+import CobrancasComercialPage from "./pages/admin/Cobrancas";
+import PortalCobrancasPage from "./pages/portal/Cobrancas";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +136,7 @@ const App = () => (
             <Route path="/comercial/config" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Configurações" /></Protected>} />
             <Route path="/comercial/leads" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Leads" /></Protected>} />
             <Route path="/comercial/propostas" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Propostas" /></Protected>} />
+            <Route path="/comercial/cobrancas" element={<Protected allowedRoles={['comercial']}><CobrancasComercialPage /></Protected>} />
 
             {/* Imobiliária */}
             <Route path="/imobiliaria" element={<Protected allowedRoles={['imobiliaria']}><PanelHomePage menuKey="imobiliaria" title="Imobiliária" /></Protected>} />
@@ -169,7 +172,11 @@ const App = () => (
             <Route path="/terrenista/config" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Configurações" /></Protected>} />
             <Route path="/terrenista/status" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
             <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
-            
+
+            {/* Portal do Cliente */}
+            <Route path="/portal" element={<Protected><PanelHomePage menuKey="portal" title="Portal do Cliente" /></Protected>} />
+            <Route path="/portal/cobrancas" element={<Protected><PortalCobrancasPage /></Protected>} />
+
             {/* Debug route */}
               <Route
                 path="/debug/connection"

@@ -56,6 +56,7 @@ export const NAV: Record<string, NavItem[]> = {
   ],
   comercial: [
     { title: "Comercial", href: "/comercial", icon: "briefcase" },
+    { title: "Cobranças", href: "/comercial/cobrancas", icon: "dollar-sign" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
   imobiliaria: [
@@ -77,6 +78,10 @@ export const NAV: Record<string, NavItem[]> = {
   terrenista: [
     { title: "Terrenista", href: "/terrenista", icon: "landmark" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
+  ],
+  portal: [
+    { title: "Portal", href: "/portal", icon: "home" },
+    { title: "Cobranças", href: "/portal/cobrancas", icon: "dollar-sign" },
   ],
 };
 
