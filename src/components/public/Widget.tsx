@@ -28,6 +28,15 @@ export function Widget({ empreendimentoId, height = '400px' }: WidgetProps) {
   }, []);
 
   useEffect(() => {
+    if (!empreendimentoId) return;
+    void supabase.rpc('log_widget_event', {
+      widget_id: empreendimentoId,
+      evento: 'view',
+      meta: { empreendimento_id: empreendimentoId }
+    });
+  }, [empreendimentoId]);
+
+  useEffect(() => {
     const map = mapRef.current;
     if (!map || !empreendimentoId) return;
 

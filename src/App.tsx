@@ -41,6 +41,7 @@ import InadimplenciaDashboard from "./pages/admin/InadimplenciaDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
+import WidgetTelemetryPage from "./pages/admin/WidgetTelemetry";
 import PublicWidgetPage from "./pages/public/Widget";
 import { publicWidgetEnabled } from "@/config/publicWidget";
 import RenegociacoesPage from "./pages/juridico/Renegociacoes";
@@ -88,6 +89,7 @@ const App = () => (
             <Route path="/super-admin/mapa" element={<Protected allowedRoles={['superadmin']}><MapaSuperAdmin /></Protected>} />
             <Route path="/super-admin/auditoria" element={<Protected allowedRoles={['superadmin']}><AuditLogsPage /></Protected>} />
             <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard /></Protected>} />
+            <Route path="/super-admin/widget-telemetry" element={<Protected allowedRoles={['superadmin']}><WidgetTelemetryPage /></Protected>} />
             <Route path="/super-admin/inadimplencia" element={<Protected allowedRoles={['superadmin']}><InadimplenciaDashboard /></Protected>} />
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><ConfigPage /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
