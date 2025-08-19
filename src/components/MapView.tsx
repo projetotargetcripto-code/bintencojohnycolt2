@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from '@/lib/dataClient';
-import { LoteData, getLoteStyle, formatArea, formatPrice } from '@/lib/geojsonUtils';
+import { LoteData, LoteProperties, getLoteStyle, formatArea, formatPrice } from '@/lib/geojsonUtils';
 
 interface MapViewProps {
   empreendimentoId?: string;
   height?: string;
-  onLoteClick?: (lote: LoteData) => void;
+  onLoteClick?: (lote: LoteData<LoteProperties>) => void;
   showControls?: boolean;
   readonly?: boolean;
   onUpdateLoteStatus?: (loteId: string, newStatus: string) => Promise<void> | void;
@@ -23,7 +23,7 @@ export function MapView({
 }: MapViewProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [lotes, setLotes] = useState<LoteData[]>([]);
+  const [lotes, setLotes] = useState<LoteData<LoteProperties>[]>([]);
   const [selectedLote, setSelectedLote] = useState<string | null>(null);
   const [hoveredLote, setHoveredLote] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,7 +111,7 @@ export function MapView({
   }, [empreendimentoId]);
 
   // Renderizar lotes no mapa
-  const renderLotes = (lotesData: LoteData[]) => {
+  const renderLotes = (lotesData: LoteData<LoteProperties>[]) => {
     if (!mapRef.current) return;
 
     // Limpar layers existentes

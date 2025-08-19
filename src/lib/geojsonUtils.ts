@@ -2,29 +2,49 @@
 // UTILITÁRIOS PARA PROCESSAMENTO DE GEOJSON
 // =============================================================================
 
-export interface LoteData {
+/**
+ * Propriedades reconhecidas em um feature de lote.
+ *
+ * Campos conhecidos:
+ * - `Name` | `name` | `NOME` | `nome`: identificadores do lote
+ * - `label`: rótulo alternativo
+ * - `description`: descrição textual
+ *
+ * Outros campos são preservados, porém não utilizados diretamente.
+ */
+export interface LoteProperties {
+  Name?: string;
+  name?: string;
+  NOME?: string;
+  nome?: string;
+  label?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+export interface LoteData<P extends LoteProperties = LoteProperties> {
   id?: string;
   nome: string;
   numero: number;
   area_m2: number;
   coordenadas: { lat: number; lng: number };
   geometria: number[][][];
-  properties: any;
+  properties: P;
   status?: 'disponivel' | 'reservado' | 'vendido';
   reserva_expira_em?: string | null;
 }
 
-export interface GeoJSONFeature {
+export interface GeoJSONFeature<P extends LoteProperties = LoteProperties> {
   type: 'Feature';
-  properties: { [key: string]: any };
+  properties: P;
   geometry: {
     type: 'Polygon';
     coordinates: number[][][];
   };
 }
 
-export interface ProcessedGeoJSON {
-  lotes: LoteData[];
+export interface ProcessedGeoJSON<P extends LoteProperties = LoteProperties> {
+  lotes: LoteData<P>[];
   totalLotes: number;
   bounds: {
     sw: { lat: number; lng: number };
@@ -77,7 +97,9 @@ export function calculatePolygonCenter(coordinates: number[][]): { lat: number; 
 /**
  * Calcula os bounds (limites) de um conjunto de features
  */
-export function calculateBounds(features: GeoJSONFeature[]): { sw: { lat: number; lng: number }; ne: { lat: number; lng: number } } {
+export function calculateBounds<P extends LoteProperties>(
+  features: GeoJSONFeature<P>[]
+): { sw: { lat: number; lng: number }; ne: { lat: number; lng: number } } {
   if (!features || features.length === 0) {
     return {
       sw: { lat: -23.5489, lng: -46.6388 },
@@ -107,9 +129,10 @@ export function calculateBounds(features: GeoJSONFeature[]): { sw: { lat: number
 }
 
 /**
- * Extrai nome do lote das properties
+ * Extrai o nome do lote a partir de propriedades conhecidas
+ * (`Name`, `name`, `NOME`, `nome`, `label`, `description`).
  */
-export function extractLoteName(properties: any, index: number): string {
+export function extractLoteName<P extends LoteProperties>(properties: P, index: number): string {
   const name = properties?.Name || 
                properties?.name || 
                properties?.NOME || 
@@ -135,12 +158,14 @@ export function extractLoteNumber(name: string, index: number): number {
 /**
  * Processa GeoJSON completo e retorna dados estruturados dos lotes
  */
-export function processGeoJSON(geojsonText: string): ProcessedGeoJSON {
+export function processGeoJSON<P extends LoteProperties = LoteProperties>(
+  geojsonText: string
+): ProcessedGeoJSON<P> {
   try {
-    const geojson = JSON.parse(geojsonText);
-    const features: GeoJSONFeature[] = geojson.features || [];
+    const geojson = JSON.parse(geojsonText) as { features?: GeoJSONFeature<P>[] };
+    const features: GeoJSONFeature<P>[] = geojson.features || [];
     
-    const lotes: LoteData[] = features.map((feature, index) => {
+    const lotes: LoteData<P>[] = features.map((feature, index) => {
       const nome = extractLoteName(feature.properties, index);
       const numero = extractLoteNumber(nome, index);
       const geometria = feature.geometry.coordinates;

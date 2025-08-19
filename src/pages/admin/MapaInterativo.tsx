@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapView } from "@/components/MapView";
 import { supabase } from "@/lib/dataClient";
-import { LoteData } from "@/lib/geojsonUtils";
+import { LoteData, LoteProperties } from "@/lib/geojsonUtils";
 import { RefreshCw, Search, TrendingUp } from "lucide-react";
 
 interface Empreendimento {
@@ -38,7 +38,7 @@ export default function MapaInterativo() {
   const [empreendimentos, setEmpreendimentos] = useState<Empreendimento[]>([]);
   const [selectedEmp, setSelectedEmp] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [selectedLote, setSelectedLote] = useState<LoteData | null>(null);
+  const [selectedLote, setSelectedLote] = useState<LoteData<LoteProperties> | null>(null);
   const [stats, setStats] = useState<VendasStats | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [params] = useSearchParams();
@@ -102,7 +102,7 @@ export default function MapaInterativo() {
     }
   }, [selectedEmp]);
 
-  const handleLoteClick = (lote: LoteData) => {
+  const handleLoteClick = (lote: LoteData<LoteProperties>) => {
     setSelectedLote(lote);
   };
 

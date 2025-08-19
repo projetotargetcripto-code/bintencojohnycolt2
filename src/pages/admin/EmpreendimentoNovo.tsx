@@ -10,7 +10,7 @@ import { supabase } from "@/lib/dataClient";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuthorization } from "@/hooks/useAuthorization";
-import { processGeoJSON, LoteData } from "@/lib/geojsonUtils";
+import { processGeoJSON, LoteData, LoteProperties } from "@/lib/geojsonUtils";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -35,7 +35,7 @@ export default function EmpreendimentoNovo() {
   const [geojsonFile, setGeojsonFile] = useState<File | null>(null);
   const [masterplanFile, setMasterplanFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [processedLotes, setProcessedLotes] = useState<LoteData[]>([]);
+  const [processedLotes, setProcessedLotes] = useState<LoteData<LoteProperties>[]>([]);
 
   const mapRef = useRef<L.Map | null>(null);
   const previewLayerRef = useRef<L.Layer | null>(null);
