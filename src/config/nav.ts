@@ -23,7 +23,7 @@ export const NAV: Record<string, NavItem[]> = {
     { label: "Aprovação", href: "/super-admin/aprovacao", icon: "check-circle" },
     { label: "Tokenização", href: "/super-admin/tokenizacao", icon: "key" },
     { label: "Auditoria", href: "/super-admin/auditoria", icon: "file-text" },
-
+    { label: "Comissões", href: "/super-admin/comissoes", icon: "dollar-sign" },
     { label: "Relatórios", href: "/super-admin/relatorios", icon: "bar-chart-2" },
     { label: "Configurações", href: "/super-admin/config", icon: "settings" },
   ],
@@ -34,6 +34,7 @@ export const NAV: Record<string, NavItem[]> = {
     { label: "Novo Empreendimento", href: "/admin-filial/empreendimentos/novo", icon: "plus-circle", panelKey: "adminfilial" },
     { label: "Mapa Interativo", href: "/admin-filial/mapa", icon: "map", panelKey: "urbanista" },
     { label: "Vendas de Lotes", href: "/admin-filial/lotes-vendas", icon: "dollar-sign", panelKey: "comercial" },
+    { label: "Comissões", href: "/admin-filial/comissoes", icon: "dollar-sign", panelKey: "comercial" },
     { label: "Assinaturas", href: "/admin-filial/assinaturas", icon: "pen-line", panelKey: "adminfilial" },
     { label: "Auditoria", href: "/admin-filial/auditoria", icon: "file-text", panelKey: "adminfilial" },
     { label: "Relatórios", href: "/admin-filial/relatorios", icon: "chart", panelKey: "adminfilial" },
@@ -65,6 +66,7 @@ export const NAV: Record<string, NavItem[]> = {
   ],
   corretor: [
     { title: "Corretor", href: "/corretor", icon: "user" },
+    { label: "Comissões", href: "/corretor/comissoes", icon: "dollar-sign" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
   obras: [

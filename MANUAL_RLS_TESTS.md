@@ -19,4 +19,10 @@ These steps verify that row level security policies based on `filial_id` prevent
 5. **Masterplan overlays and lotes**
    - Repeat similar `select` and `insert` tests on `lotes` and `masterplan_overlays` ensuring cross-filial access is denied.
 
+6. **View vw_comissoes**
+   - Insert vendas for at least two corretores across different filiais.
+   - Authenticate as `user_a` and run `select * from vw_comissoes;`.
+   - Confirm only aggregates for `filial_a` are returned.
+   - Authenticate as `user_b` and ensure only `filial_b` rows appear.
+
 Document the observed results for future reference.

@@ -83,6 +83,7 @@ const App = () => (
             <Route path="/super-admin/filiais-acessos" element={<Protected allowedRoles={['superadmin']}><FiliaisAccessPage /></Protected>} />
             <Route path="/super-admin/mapa" element={<Protected allowedRoles={['superadmin']}><MapaSuperAdmin /></Protected>} />
             <Route path="/super-admin/auditoria" element={<Protected allowedRoles={['superadmin']}><AuditLogsPage /></Protected>} />
+            <Route path="/super-admin/comissoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Comissões" /></Protected>} />
             <Route path="/super-admin/relatorios" element={<Protected allowedRoles={['superadmin']}><ReportsDashboard /></Protected>} />
             <Route path="/super-admin/config" element={<Protected allowedRoles={['superadmin']}><ConfigPage /></Protected>} />
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
@@ -101,6 +102,7 @@ const App = () => (
             <Route path="/admin-filial/mapa-interativo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><MapaInterativo /></Protected>} />
             <Route path="/admin-filial/lotes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesPage /></Protected>} />
             <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesVendas /></Protected>} />
+            <Route path="/admin-filial/comissoes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Comissões" /></Protected>} />
             <Route path="/admin-filial/assinaturas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AssinaturasPage /></Protected>} />
             <Route path="/admin-filial/auditoria" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AuditLogsFilialPage /></Protected>} />
 
@@ -155,6 +157,7 @@ const App = () => (
             <Route path="/corretor/config" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Configurações" /></Protected>} />
             <Route path="/corretor/leads" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Leads" /></Protected>} />
             <Route path="/corretor/vendas" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Vendas" /></Protected>} />
+            <Route path="/corretor/comissoes" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Comissões" /></Protected>} />
 
             {/* Obras */}
             <Route path="/obras" element={<Protected allowedRoles={['obras']}><PanelHomePage menuKey="obras" title="Obras" /></Protected>} />
