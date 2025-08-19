@@ -38,6 +38,7 @@ import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
+import TerrenistaExtrato from "./pages/terrenista/Extrato";
 import PublicWidgetPage from "./pages/public/Widget";
 import { publicWidgetEnabled } from "@/config/publicWidget";
 
@@ -176,7 +177,8 @@ const App = () => (
             <Route path="/terrenista/config" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Configurações" /></Protected>} />
             <Route path="/terrenista/status" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
             <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
-            
+            <Route path="/terrenista/extrato" element={<Protected allowedRoles={['terrenista']}><TerrenistaExtrato /></Protected>} />
+
             {/* Debug route */}
               <Route
                 path="/debug/connection"

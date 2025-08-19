@@ -77,7 +77,7 @@ export const NAV: Record<string, NavItem[]> = {
   ],
   terrenista: [
     { title: "Terrenista", href: "/terrenista", icon: "landmark" },
-    { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
+    { title: "Extrato", href: "/terrenista/extrato", icon: "file-text" },
   ],
 };
 
