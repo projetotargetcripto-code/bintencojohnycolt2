@@ -3,3 +3,9 @@ verify_jwt = false
 
 [functions.cleanup-reservations.cron]
 schedule = "*/5 * * * *"
+
+[functions.refresh-bi]
+verify_jwt = false
+
+[functions.refresh-bi.cron]
+schedule = "0 * * * *"
