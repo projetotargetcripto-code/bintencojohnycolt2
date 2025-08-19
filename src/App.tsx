@@ -32,6 +32,7 @@ import AcessoNegado from "./pages/AcessoNegado";
 import { Protected } from "@/components/Protected";
 import MapaSuperAdmin from "./pages/admin/MapaSuperAdmin";
 import AuditLogsPage from "./pages/admin/AuditLogs";
+import AuditLogsFilialPage from "./pages/admin/AuditLogsFilial";
 import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
@@ -94,6 +95,7 @@ const App = () => (
             <Route path="/admin-filial/mapa-interativo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><MapaInterativo /></Protected>} />
             <Route path="/admin-filial/lotes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesPage /></Protected>} />
             <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesVendas /></Protected>} />
+            <Route path="/admin-filial/auditoria" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AuditLogsFilialPage /></Protected>} />
 
             {/* Super Admin - Aprovação */}
             <Route path="/super-admin/aprovacao" element={<Protected allowedRoles={['superadmin']}><Aprovacao /></Protected>} />

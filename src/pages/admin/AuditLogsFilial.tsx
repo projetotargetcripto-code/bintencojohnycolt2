@@ -19,25 +19,28 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuthorization } from "@/hooks/useAuthorization";
 
-type AuditLog = {
+interface AuditLog {
   id: string;
   actor: string;
   action: string;
   target: string | null;
   metadata: any;
   created_at: string;
-};
+}
 
 const PAGE_SIZE = 20;
 
-export default function AuditLogsPage() {
+export default function AuditLogsFilialPage() {
+  const { profile } = useAuthorization();
+  const filialId = profile?.filial_id ?? null;
+
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [userFilter, setUserFilter] = useState("");
-  const [filialFilter, setFilialFilter] = useState("");
   const [actionFilter, setActionFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -47,70 +50,34 @@ export default function AuditLogsPage() {
   }, []);
 
   const loadLogs = useCallback(async () => {
+    if (!filialId) return;
     setLoading(true);
-
-    // busca ações gerais
-    let logsQuery = supabase
+    let query = supabase
       .from("audit_logs")
-      .select("id, actor, action, target, metadata, created_at");
+      .select("id, actor, action, target, metadata, created_at")
+      .order("created_at", { ascending: false });
 
+    query = query.contains("metadata", { filial_id: filialId });
     if (userFilter.trim()) {
-      logsQuery = logsQuery.eq("actor", userFilter.trim());
-    }
-    if (filialFilter.trim()) {
-      logsQuery = logsQuery.contains("metadata", { filial_id: filialFilter.trim() });
+      query = query.eq("actor", userFilter.trim());
     }
     if (actionFilter.trim()) {
-      logsQuery = logsQuery.eq("action", actionFilter.trim());
+      query = query.eq("action", actionFilter.trim());
     }
     if (startDate) {
-      logsQuery = logsQuery.gte("created_at", startDate);
+      query = query.gte("created_at", startDate);
     }
     if (endDate) {
-      logsQuery = logsQuery.lte("created_at", endDate);
+      query = query.lte("created_at", endDate);
     }
 
-    const { data: generalLogs } = await logsQuery;
-
-    // busca alterações de cargos
-    let roleLogs: AuditLog[] = [];
-    if (!actionFilter.trim() || actionFilter.trim() === "role_change") {
-      let rcQuery = supabase
-        .from("audit_role_changes")
-        .select("changed_at, actor_id, target_user, old_role, new_role, old_panels, new_panels");
-      if (userFilter.trim()) {
-        rcQuery = rcQuery.eq("actor_id", userFilter.trim());
-      }
-      if (startDate) {
-        rcQuery = rcQuery.gte("changed_at", startDate);
-      }
-      if (endDate) {
-        rcQuery = rcQuery.lte("changed_at", endDate);
-      }
-      const { data: rcData } = await rcQuery;
-      roleLogs = (rcData || []).map((r) => ({
-        id: `rc-${r.changed_at}-${r.target_user}`,
-        actor: r.actor_id,
-        action: "role_change",
-        target: r.target_user,
-        metadata: {
-          old_role: r.old_role,
-          new_role: r.new_role,
-          old_panels: r.old_panels,
-          new_panels: r.new_panels,
-        },
-        created_at: r.changed_at,
-      }));
-    }
-
-    const combined: AuditLog[] = [...((generalLogs as any) || []), ...roleLogs].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
-    setTotal(combined.length);
-    setLogs(combined.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
+    const { data } = await query;
+    const allLogs = (data as AuditLog[] | null) || [];
+    allLogs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setTotal(allLogs.length);
+    setLogs(allLogs.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
     setLoading(false);
-  }, [page, userFilter, filialFilter, actionFilter, startDate, endDate]);
+  }, [filialId, userFilter, actionFilter, startDate, endDate, page]);
 
   useEffect(() => {
     void loadLogs();
@@ -118,59 +85,23 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [userFilter, filialFilter, actionFilter, startDate, endDate]);
-
-  const exportCsv = () => {
-    const header = [
-      "id",
-      "actor",
-      "action",
-      "target",
-      "filial_id",
-      "created_at",
-      "details",
-    ];
-    const rows = logs.map((l) => [
-      l.id,
-      l.actor,
-      l.action,
-      l.target ?? "",
-      l.metadata?.filial_id ?? "",
-      l.created_at,
-      JSON.stringify(l.metadata ?? {}),
-    ]);
-    const csv = [
-      header.join(","),
-      ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "audit_logs.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  }, [userFilter, actionFilter, startDate, endDate]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <Protected allowedRoles={["superadmin"]}>
-      <AppShell menuKey="superadmin" breadcrumbs={[{ label: "Super Admin" }, { label: "Auditoria" }]}>
+    <Protected allowedRoles={["adminfilial", "superadmin"]} panelKey="adminfilial">
+      <AppShell menuKey="adminfilial" breadcrumbs={[{ label: "Admin Filial" }, { label: "Auditoria" }]}>
         <Card>
           <CardHeader>
-            <CardTitle>Auditoria de Ações</CardTitle>
-            <CardDescription>Histórico de operações realizadas na plataforma.</CardDescription>
+            <CardTitle>Auditoria da Filial</CardTitle>
+            <CardDescription>Histórico de ações realizadas nesta filial.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
                 <label className="text-sm text-muted-foreground">Usuário (ID)</label>
                 <Input value={userFilter} onChange={(e) => setUserFilter(e.target.value)} placeholder="ID do usuário" />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Filial</label>
-                <Input value={filialFilter} onChange={(e) => setFilialFilter(e.target.value)} placeholder="ID da filial" />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Ação</label>
@@ -185,12 +116,11 @@ export default function AuditLogsPage() {
                 <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-end">
               <Button
                 variant="secondary"
                 onClick={() => {
                   setUserFilter("");
-                  setFilialFilter("");
                   setActionFilter("");
                   setStartDate("");
                   setEndDate("");
@@ -198,7 +128,6 @@ export default function AuditLogsPage() {
               >
                 Limpar filtros
               </Button>
-              <Button onClick={exportCsv}>Exportar CSV</Button>
             </div>
             {loading ? (
               <p className="text-center text-muted-foreground">Carregando...</p>
@@ -211,7 +140,6 @@ export default function AuditLogsPage() {
                       <TableHead>Usuário</TableHead>
                       <TableHead>Ação</TableHead>
                       <TableHead>Alvo</TableHead>
-                      <TableHead>Filial</TableHead>
                       <TableHead>Detalhes</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -222,10 +150,7 @@ export default function AuditLogsPage() {
                         <TableCell className="font-mono">{log.actor}</TableCell>
                         <TableCell>{log.action}</TableCell>
                         <TableCell className="font-mono">{log.target ?? "—"}</TableCell>
-                        <TableCell className="font-mono">{log.metadata?.filial_id ?? "—"}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {JSON.stringify(log.metadata ?? {})}
-                        </TableCell>
+                        <TableCell className="max-w-xs truncate">{JSON.stringify(log.metadata ?? {})}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -233,8 +158,22 @@ export default function AuditLogsPage() {
                 <div className="flex justify-between items-center pt-2 text-sm">
                   <span>Página {page + 1} de {totalPages}</span>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>Anterior</Button>
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>Próxima</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                      disabled={page >= totalPages - 1}
+                    >
+                      Próxima
+                    </Button>
                   </div>
                 </div>
               </div>
