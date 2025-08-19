@@ -1,3 +1,5 @@
+-- Ensure reservar_lote uses security definer and has execute privileges
+
 create or replace function public.reservar_lote(
   p_lote_id uuid,
   p_ttl integer default 300
@@ -39,3 +41,5 @@ exception
     return next;
 end;
 $$;
+
+grant execute on function public.reservar_lote(uuid, integer) to authenticated;

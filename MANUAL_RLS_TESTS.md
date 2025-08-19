@@ -18,5 +18,9 @@ These steps verify that row level security policies based on `filial_id` prevent
    - Authenticated as `user_b`, attempt to `update` a row belonging to `filial_a` and confirm it fails.
 5. **Masterplan overlays and lotes**
    - Repeat similar `select` and `insert` tests on `lotes` and `masterplan_overlays` ensuring cross-filial access is denied.
+6. **Reservas e concorrência**
+   - Confirme que as tabelas `lotes` e `reservas` têm RLS habilitado com políticas usando `filial_id` do JWT.
+   - A função `reservar_lote` roda como `security definer`, mas depende dessas políticas para restringir acesso entre filiais.
+   - Para validar, tente reservar o mesmo `lote_id` simultaneamente em duas sessões; apenas uma deve obter `success = true`.
 
 Document the observed results for future reference.
