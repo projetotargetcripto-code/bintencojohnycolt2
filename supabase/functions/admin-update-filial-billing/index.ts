@@ -82,11 +82,16 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") || "";
+    const userAgent = req.headers.get("user-agent") || "";
     await adminClient.from('audit_logs').insert({
       actor: user.id,
       action: 'admin-update-filial-billing',
       target: filial_id,
-      metadata: { action, plan }
+      metadata: { action, plan },
+      ip_address: ipAddress,
+      user_agent: userAgent,
     }).catch(() => {});
 
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
