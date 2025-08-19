@@ -22,6 +22,7 @@ export interface Lote {
   comprador_nome?: string | null;
   comprador_email?: string | null;
   observacoes?: string | null;
+  reserva_expira_em?: string | null;
 }
 
 export interface AuthorizationProfile {
