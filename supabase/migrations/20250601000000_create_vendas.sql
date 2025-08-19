@@ -3,8 +3,8 @@ create table if not exists public.vendas (
     lote_id uuid not null references public.lotes(id) on delete cascade,
     filial_id uuid not null references public.filiais(id) on delete cascade,
     corretor_id uuid not null references auth.users(id) on delete cascade,
-    valor numeric not null,
-    comissao numeric not null,
+    valor numeric(12,2) not null,
+    comissao numeric(12,2) not null,
     created_at timestamptz default now()
 );
 
