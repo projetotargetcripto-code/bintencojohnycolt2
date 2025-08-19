@@ -73,6 +73,7 @@ export const NAV: Record<string, NavItem[]> = {
   ],
   investidor: [
     { title: "Investidor", href: "/investidor", icon: "line-chart" },
+    { title: "Extratos", href: "/investidor/extratos", icon: "file-text" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
   terrenista: [

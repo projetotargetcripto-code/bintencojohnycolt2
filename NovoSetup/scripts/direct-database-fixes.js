@@ -80,10 +80,16 @@ async function directFixes() {
             role: 'superadmin'
           },
           {
-            email: 'admin@blockurb.com', 
+            email: 'admin@blockurb.com',
             password: 'Admin2024!',
             full_name: 'Administrador',
             role: 'admin'
+          },
+          {
+            email: 'investidor@blockurb.com',
+            password: 'Invest2024!',
+            full_name: 'Investidor Demo',
+            role: 'investidor'
           }
         ];
 
@@ -107,7 +113,11 @@ async function directFixes() {
                   email: user.email,
                   full_name: user.full_name,
                   role: user.role,
-                  panels: user.role === 'superadmin' ? ['superadmin', 'adminfilial'] : ['adminfilial'],
+                  panels: user.role === 'superadmin'
+                    ? ['superadmin', 'adminfilial']
+                    : user.role === 'admin'
+                    ? ['adminfilial']
+                    : ['investidor'],
                   is_active: true
                 });
                 

@@ -38,6 +38,7 @@ import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
+import InvestidorExtratosPage from "./pages/investidor/Extratos";
 import PublicWidgetPage from "./pages/public/Widget";
 import { publicWidgetEnabled } from "@/config/publicWidget";
 
@@ -168,6 +169,7 @@ const App = () => (
             <Route path="/investidor/relatorios" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Relatórios" /></Protected>} />
             <Route path="/investidor/config" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Configurações" /></Protected>} />
             <Route path="/investidor/carteira" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Carteira" /></Protected>} />
+            <Route path="/investidor/extratos" element={<Protected allowedRoles={['investidor']}><InvestidorExtratosPage /></Protected>} />
             <Route path="/investidor/suporte" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Suporte" /></Protected>} />
 
             {/* Terrenista */}
