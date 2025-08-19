@@ -37,6 +37,8 @@ import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import FiliaisPage from "./pages/admin/Filiais";
 import MapaRealPage from "./pages/admin/MapaReal";
+import PublicWidgetPage from "./pages/public/Widget";
+import { publicWidgetEnabled } from "@/config/publicWidget";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,9 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/whitepaper" element={<Whitepaper />} />
             <Route path="/acesso" element={<Acesso />} />
+            {publicWidgetEnabled && (
+              <Route path="/public/widget" element={<PublicWidgetPage />} />
+            )}
 
             {/* Auth base routes */}
             <Route path="/login" element={<Login />} />
