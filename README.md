@@ -89,6 +89,13 @@ Only roles with both variables defined will appear in the widget.
 
 This quick login widget is available only during development and returns nothing in production builds.
 
+## Cálculo de áreas geodésicas
+
+As áreas dos polígonos são calculadas com [Turf.js](https://turfjs.org/),
+utilizando fórmulas geodésicas que consideram a curvatura da Terra. O método
+anterior baseado em aproximação plana foi substituído, resultando em valores
+mais precisos, geralmente com erro inferior a 1 m² para lotes pequenos.
+
 ## RFCs
 
 - [RFC-000: Diagnóstico](docs/RFC-000-diagnostico.md)

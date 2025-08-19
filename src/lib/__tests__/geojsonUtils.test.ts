@@ -6,9 +6,16 @@ describe('geojsonUtils', () => {
   const fc = mockFeatureCollection();
   const polygon = fc.features[0].geometry.coordinates;
 
-  it('calculatePolygonArea returns 0 for provided polygon', () => {
+  it('calculatePolygonArea returns accurate area for provided polygon', () => {
     const area = calculatePolygonArea(polygon as any);
-    expect(area).toBe(0);
+    expect(area).toBeCloseTo(11334.76, 2);
+  });
+
+  it('calculatePolygonArea handles small square at equator', () => {
+    const d = 100 / 111319.9;
+    const square = [[[0, 0], [d, 0], [d, d], [0, d], [0, 0]]];
+    const area = calculatePolygonArea(square as any);
+    expect(area).toBeCloseTo(9977.59, 2);
   });
 
   it('calculatePolygonCenter computes centroid', () => {
@@ -26,7 +33,7 @@ describe('geojsonUtils', () => {
       properties: fc.features[0].properties,
       status: 'disponivel'
     });
-    expect(result.lotes[0].area_m2).toBe(calculatePolygonArea(polygon as any));
+    expect(result.lotes[0].area_m2).toBeCloseTo(calculatePolygonArea(polygon as any), 2);
     expect(result.lotes[0].coordenadas).toEqual(calculatePolygonCenter(polygon as any));
     expect(result.bounds).toEqual({
       sw: { lat: -23.5485, lng: -46.639 },

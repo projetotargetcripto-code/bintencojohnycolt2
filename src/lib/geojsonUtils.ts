@@ -2,6 +2,8 @@
 // UTILITÁRIOS PARA PROCESSAMENTO DE GEOJSON
 // =============================================================================
 
+import { area as turfArea, polygon as turfPolygon } from '@turf/turf';
+
 export interface LoteData {
   id?: string;
   nome: string;
@@ -33,22 +35,18 @@ export interface ProcessedGeoJSON {
 }
 
 /**
- * Calcula a área de um polígono usando a fórmula do shoelace
+ * Calcula a área geodésica de um polígono usando Turf.js
  */
-export function calculatePolygonArea(coordinates: number[][]): number {
-  if (!coordinates || coordinates.length < 3) return 0;
-  
-  let area = 0;
-  const coords = coordinates[0] || coordinates; // Primeiro ring (exterior)
-  
-  for (let i = 0; i < coords.length - 1; i++) {
-    const [lng1, lat1] = coords[i];
-    const [lng2, lat2] = coords[i + 1];
-    area += (lng1 * lat2 - lng2 * lat1);
-  }
-  
-  // Converte para metros quadrados (aproximação)
-  return Math.abs(area) * 111319.9 * 111319.9 / 2;
+export function calculatePolygonArea(coordinates: number[][][] | number[][]): number {
+  if (!coordinates || coordinates.length === 0) return 0;
+
+  // Garante o formato [[[]]] esperado pelo Turf.js
+  const polygonCoords: number[][][] =
+    typeof (coordinates as any)[0][0] === 'number'
+      ? [coordinates as number[][]]
+      : (coordinates as number[][][]);
+
+  return turfArea(turfPolygon(polygonCoords));
 }
 
 /**
