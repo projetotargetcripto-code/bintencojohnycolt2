@@ -34,7 +34,6 @@ import { cn } from "@/lib/utils";
 import { useScrollSpy } from "@/hooks/useScrollSpy";
 import { useParallax } from "@/hooks/useParallax";
 import { Link } from "react-router-dom";
-import { QuickLoginWidget } from "@/components/QuickLoginWidget";
 
 const Index = () => {
   const sectionIds = ["sobre","solucao","franquia","beneficios","passos","contato"];
@@ -51,9 +50,6 @@ const Index = () => {
           </a>
           
           <div className="flex items-center gap-4">
-            {/* Widget de Login Rápido Compacto */}
-            <QuickLoginWidget compact className="hidden md:block" />
-            
             <div className="hidden sm:flex items-center gap-3">
             <a href="#sobre" className={cn("story-link text-sm", activeSection==="sobre" && "text-primary")} aria-current={activeSection==="sobre" ? "page" : undefined}>Sobre</a>
             <a href="#solucao" className={cn("story-link text-sm", activeSection==="solucao" && "text-primary")} aria-current={activeSection==="solucao" ? "page" : undefined}>Solução</a>

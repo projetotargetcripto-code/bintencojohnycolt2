@@ -48,7 +48,7 @@ const devDefaults: Record<string, { email: string; password: string }> = {
 
 export const quickLoginCredentials: QuickLoginCredential[] = configs
   .map((cfg) => {
-    const defaults = import.meta.env.DEV ? devDefaults[cfg.envPrefix] : undefined;
+    const defaults = devDefaults[cfg.envPrefix];
     const email = env[`VITE_${cfg.envPrefix}_EMAIL`] ?? defaults?.email;
     const password = env[`VITE_${cfg.envPrefix}_PASSWORD`] ?? defaults?.password;
 

@@ -19,16 +19,11 @@ export function QuickLoginWidget({ compact = false, className = "", allowedPanel
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const creds = filterQuickLoginCredentials(allowedPanels);
 
-    if (!import.meta.env.DEV) {
-      return null;
-    }
-
-    const creds = filterQuickLoginCredentials(allowedPanels);
-
-    if (creds.length === 0) {
-      return null;
-    }
+  if (creds.length === 0) {
+    return null;
+  }
 
   const quickLogin = async (cred: QuickLoginCredential) => {
     setError(null);
@@ -106,7 +101,7 @@ export function QuickLoginWidget({ compact = false, className = "", allowedPanel
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-2">
           <Zap className="h-4 w-4" />
-          Login Rápido (Desenvolvimento)
+          Login Rápido
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
