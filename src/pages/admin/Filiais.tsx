@@ -48,20 +48,29 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       toast.error("Sessão inválida");
       return;
     }
-    const { data, error } = await supabase.functions.invoke<{ error?: string }>("provision-filial", {
-      body: { nome: nome.trim(), kind: filter || "interna" },
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    if (error || data?.error) {
-      console.error(error || data?.error);
-      toast.error(
-        `Erro ao criar filial: ${data?.error || error?.message || "Erro desconhecido"}`,
+    try {
+      const { data } = await supabase.functions.invoke<{ error?: string }>(
+        "provision-filial",
+        {
+          body: { nome: nome.trim(), kind: filter || "interna" },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        },
       );
-      return;
+      if (data?.error) {
+        toast.error(`Erro ao criar filial: ${data.error}`);
+        return;
+      }
+      toast.success("Filial criada");
+      setNome("");
+      void load();
+    } catch (err: any) {
+      const status = err?.context?.status ?? err?.status;
+      const msg =
+        status === 403
+          ? "Acesso não autorizado"
+          : err?.message || "Erro desconhecido";
+      toast.error(`Erro ao criar filial: ${msg}`);
     }
-    toast.success("Filial criada");
-    setNome("");
-    load();
   }
 
   async function handleUpdate() {

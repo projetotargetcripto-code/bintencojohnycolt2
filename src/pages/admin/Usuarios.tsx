@@ -37,12 +37,15 @@ export default function UsuariosPage() {
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const navigate = useNavigate();
-  const { setSession } = useAuth();
+  const { setSession, loading: authLoading } = useAuth();
+  const [filiaisLoaded, setFiliaisLoaded] = useState(false);
 
+  // Wait for authentication to finish before triggering initial filial fetch
   useEffect(() => {
+    if (authLoading) return;
     document.title = "Usuários | BlockURB";
-    void loadFiliais();
-  }, []);
+    void loadFiliais().then(() => setFiliaisLoaded(true));
+  }, [authLoading]);
 
   useEffect(() => {
     setPage(0);
@@ -51,35 +54,50 @@ export default function UsuariosPage() {
   const filialById = useMemo(() => Object.fromEntries(filiais.map(f => [f.id, f.nome])), [filiais]);
 
   const loadFiliais = async () => {
-    const { data } = await supabase.from("filiais").select("id, nome").order("nome");
-    setFiliais(data || []);
-    const { data: userData } = await supabase.auth.getUser();
-    setCurrentUserId(userData.user?.id ?? null);
+    try {
+      const { data, error } = await supabase.from("filiais").select("id, nome").order("nome");
+      if (error) throw error;
+      setFiliais(data || []);
+      const { data: userData } = await supabase.auth.getUser();
+      setCurrentUserId(userData.user?.id ?? null);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao carregar filiais");
+    }
   };
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
-    let query = supabase
-      .from("user_profiles")
-      .select("user_id, email, full_name, role, filial_id, panels", { count: 'exact' })
-      .order("full_name", { ascending: true })
-      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-    if (search.trim()) {
-      const s = `%${search.trim()}%`;
-      query = query.or(`email.ilike.${s},full_name.ilike.${s}`);
+    try {
+      let query = supabase
+        .from("user_profiles")
+        .select("user_id, email, full_name, role, filial_id, panels", { count: 'exact' })
+        .order("full_name", { ascending: true })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      if (search.trim()) {
+        const s = `%${search.trim()}%`;
+        query = query.or(`email.ilike.${s},full_name.ilike.${s}`);
+      }
+      if (roleFilter !== "all") {
+        query = query.eq("role", roleFilter);
+      }
+      const { data, count, error } = await query;
+      if (error) throw error;
+      setUsers((data as any) || []);
+      setTotal(count || 0);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao carregar usuários");
+      setUsers([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
     }
-    if (roleFilter !== "all") {
-      query = query.eq("role", roleFilter);
-    }
-    const { data, count } = await query;
-    setUsers((data as any) || []);
-    setTotal(count || 0);
-    setLoading(false);
   }, [page, roleFilter, search]);
 
+  // Load users only after filiais have been fetched and authentication resolved
   useEffect(() => {
+    if (authLoading || !filiaisLoaded) return;
     void loadUsers();
-  }, [loadUsers]);
+  }, [loadUsers, authLoading, filiaisLoaded]);
 
   const updateRole = async (userId: string, newRole: string) => {
     const normalized: string | null = newRole === "no-role" ? null : newRole;
