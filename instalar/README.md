@@ -29,25 +29,25 @@ Este diretório reúne um script SQL unificado e instruções para preparar um n
 
 ## Funções Edge
 
-Implante todas as funções localizadas em `supabase/functions`:
+Implante todas as funções localizadas em `instalar/functions` (use `--workdir instalar`):
 ```bash
-supabase functions deploy admin-update-filial-billing
-supabase functions deploy cleanup-reservations
-supabase functions deploy convert-shapefile
-supabase functions deploy create-admin-filial
-supabase functions deploy generate-boleto
-supabase functions deploy notify-expiring-plans
-supabase functions deploy pix-webhook
-supabase functions deploy provision-filial
-supabase functions deploy reconcile-payments
-supabase functions deploy refresh-bi
-supabase functions deploy render-docx
-supabase functions deploy renegociacao-confirm
-supabase functions deploy resolve-domain
-supabase functions deploy signature-callback
-supabase functions deploy upload-retorno
+supabase functions deploy admin-update-filial-billing --workdir instalar
+supabase functions deploy cleanup-reservations --workdir instalar
+supabase functions deploy convert-shapefile --workdir instalar
+supabase functions deploy create-admin-filial --workdir instalar
+supabase functions deploy generate-boleto --workdir instalar
+supabase functions deploy notify-expiring-plans --workdir instalar
+supabase functions deploy pix-webhook --workdir instalar
+supabase functions deploy provision-filial --workdir instalar
+supabase functions deploy reconcile-payments --workdir instalar
+supabase functions deploy refresh-bi --workdir instalar
+supabase functions deploy render-docx --workdir instalar
+supabase functions deploy renegociacao-confirm --workdir instalar
+supabase functions deploy resolve-domain --workdir instalar
+supabase functions deploy signature-callback --workdir instalar
+supabase functions deploy upload-retorno --workdir instalar
 ```
-Adapte os secrets necessários para cada função conforme o `supabase/config.toml` do projeto.
+Adapte os secrets necessários para cada função conforme o `instalar/config.toml` do projeto.
 
 ## Configurações
 
