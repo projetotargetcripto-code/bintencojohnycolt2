@@ -5,7 +5,7 @@ Este diretório reúne um script SQL unificado e instruções para preparar um n
 ## Banco de Dados
 
 1. Crie um banco vazio ou limpe o existente.
-2. Execute o script:
+2. Execute o script principal:
    ```bash
    psql < banco.sql
    # ou
@@ -13,6 +13,11 @@ Este diretório reúne um script SQL unificado e instruções para preparar um n
    ```
    O arquivo inclui todas as tabelas, políticas de RLS, permissões e funções RPC usadas pelo projeto.
    As extensões necessárias (`unaccent`, `postgis`, `pgcrypto`) e os papéis de acesso (`superadmin`, `adminfilial`, `comercial`, etc.) são criados automaticamente.
+3. (Opcional) Importe funções adicionais:
+   ```bash
+   psql < provision_filial.sql
+   ```
+   Este arquivo disponibiliza a função `provision_filial` em PL/pgSQL para provisionar novas filiais diretamente pelo banco.
 
 ## Storage
 
