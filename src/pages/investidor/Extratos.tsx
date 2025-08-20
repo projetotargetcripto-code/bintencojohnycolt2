@@ -1,49 +1,42 @@
-import { useEffect, useState } from "react";
-import { AppShell } from "@/components/shell/AppShell";
-import { DataTable, type Column } from "@/components/app/DataTable";
+import type { User } from "@supabase/supabase-js";
+import { ExtratosPage } from "@/components/app/ExtratosPage";
 import { supabase } from "@/lib/dataClient";
-import { useAuth } from "@/hooks/useAuth";
+import type { Column } from "@/components/app/DataTable";
+
+const columns: Column[] = [
+  { key: "quota", header: "Quota" },
+  {
+    key: "doc_url",
+    header: "Documento",
+    render: (row) =>
+      row.doc_url ? (
+        <a
+          href={row.doc_url as string}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          Baixar
+        </a>
+      ) : null,
+  },
+];
+
+async function fetchRows(user: User) {
+  const { data } = await supabase
+    .from("investimentos")
+    .select("quota, doc_url")
+    .eq("user_id", user.id);
+  return data ?? [];
+}
 
 export default function InvestidorExtratosPage() {
-  const { user } = useAuth();
-  const [rows, setRows] = useState<Record<string, any>[]>([]);
-  const [columns, setColumns] = useState<Column[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("investimentos")
-      .select("quota, doc_url")
-      .eq("user_id", user.id)
-      .then(({ data }) => {
-        setRows(data ?? []);
-        setColumns([
-          { key: "quota", header: "Quota" },
-          {
-            key: "doc_url",
-            header: "Documento",
-            render: (row) =>
-              row.doc_url ? (
-                <a
-                  href={row.doc_url as string}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline"
-                >
-                  Baixar
-                </a>
-              ) : null,
-          },
-        ]);
-      });
-  }, [user]);
-
   return (
-    <AppShell
+    <ExtratosPage
       menuKey="investidor"
       breadcrumbs={[{ label: "Investidor", href: "/investidor" }, { label: "Extratos" }]}
-    >
-      <DataTable columns={columns} rows={rows} pageSize={5} />
-    </AppShell>
+      columns={columns}
+      query={fetchRows}
+    />
   );
 }
