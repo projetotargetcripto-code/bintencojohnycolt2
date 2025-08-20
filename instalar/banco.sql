@@ -355,12 +355,12 @@ as $$
 declare
     v_user_role text;
 begin
-    -- Verificar se o usuário é admin ou superadmin
+    -- Verificar se o usuário é adminfilial ou superadmin
     select role into v_user_role
     from public.user_profiles
     where user_id = auth.uid();
 
-    if v_user_role not in ('admin', 'superadmin') then
+    if v_user_role not in ('adminfilial', 'superadmin') then
         raise exception 'Apenas administradores podem aprovar empreendimentos';
     end if;
 
@@ -571,22 +571,22 @@ create policy "Authenticated users can create" on public.empreendimentos
     status = 'pendente'
   );
 
-create policy "Admin or owner can update" on public.empreendimentos
+create policy "Adminfilial or owner can update" on public.empreendimentos
   for update using (
     auth.uid() = created_by or
     exists (
       select 1 from public.user_profiles
       where user_profiles.user_id = auth.uid()
-        and user_profiles.role in ('admin', 'superadmin')
+        and user_profiles.role in ('adminfilial', 'superadmin')
     )
   );
 
-create policy "Admin can delete" on public.empreendimentos
+create policy "Adminfilial can delete" on public.empreendimentos
   for delete using (
     exists (
       select 1 from public.user_profiles
       where user_profiles.user_id = auth.uid()
-        and user_profiles.role in ('admin', 'superadmin')
+        and user_profiles.role in ('adminfilial', 'superadmin')
     )
   );
 
@@ -625,8 +625,12 @@ language plpgsql
 security definer
 as $$
 begin
-  if not public.is_admin(auth.uid()) then
-    raise exception 'admin required';
+  if not exists (
+      select 1 from public.user_profiles
+      where user_id = auth.uid()
+        and role in ('adminfilial', 'superadmin')
+    ) then
+    raise exception 'adminfilial required';
   end if;
   return query select * from auth.users;
 end $$;
