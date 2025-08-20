@@ -40,6 +40,22 @@ describe('Protected component', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it('allows superadmin even when not explicitly allowed', () => {
+    mockUseAuth.mockReturnValue({ session: {}, loading: false });
+    mockUseAuthorization.mockReturnValue({ profile: { role: 'superadmin', panels: [] }, loading: false });
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Protected allowedRoles={['admin']}>
+          <div>Super Allowed</div>
+        </Protected>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Super Allowed')).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it('redirects when role is denied', async () => {
     mockUseAuth.mockReturnValue({ session: {}, loading: false });
     mockUseAuthorization.mockReturnValue({ profile: { role: 'user', panels: [] }, loading: false });

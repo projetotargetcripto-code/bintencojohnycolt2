@@ -18,6 +18,7 @@ function useRequiresLogin(session: unknown, loading: boolean) {
 function useRoleDenied(allowedRoles: string[] | undefined, profile: any) {
   return useMemo(() => {
     if (!allowedRoles?.length || !profile) return false;
+    if (profile.role === "superadmin") return false;
     return !allowedRoles.includes(profile.role);
   }, [allowedRoles, profile]);
 }
