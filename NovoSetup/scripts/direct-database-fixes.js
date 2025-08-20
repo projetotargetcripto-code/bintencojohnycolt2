@@ -78,7 +78,7 @@ async function directFixes() {
             password: 'BlockUrb2024!',
             full_name: 'Super Administrador',
             role: 'superadmin',
-            panels: ['superadmin', 'adminfilial', 'cliente']
+            panels: ['superadmin', 'adminfilial']
           },
           {
             email: 'admin@blockurb.com',

@@ -5,7 +5,7 @@ import { supabase } from "@/lib/dataClient";
 import { supabaseRequest } from "@/lib/request";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function ClienteCobrancasPage() {
+export default function InvestidorCobrancasPage() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
@@ -31,8 +31,8 @@ export default function ClienteCobrancasPage() {
 
   return (
     <AppShell
-      menuKey="cliente"
-      breadcrumbs={[{ label: "Cliente", href: "/cliente" }, { label: "Cobranças" }]}
+      menuKey="investidor"
+      breadcrumbs={[{ label: "Investidor", href: "/investidor" }, { label: "Cobranças" }]}
     >
       <DataTable columns={columns} rows={rows} pageSize={5} />
     </AppShell>

@@ -47,7 +47,7 @@ import WidgetTelemetryPage from "./pages/admin/WidgetTelemetry";
 import PublicWidgetPage from "./pages/public/Widget";
 import { publicWidgetEnabled } from "@/config/publicWidget";
 import RenegociacoesPage from "./pages/juridico/Renegociacoes";
-import ClienteCobrancasPage from "./pages/cliente/Cobrancas";
+import InvestidorCobrancasPage from "./pages/investidor/Cobrancas";
 import InvestidorExtratosPage from "./pages/investidor/Extratos";
 import TerrenistaExtratosPage from "./pages/terrenista/Extratos";
 
@@ -187,6 +187,7 @@ const App = () => (
             <Route path="/investidor/relatorios" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Relatórios" /></Protected>} />
             <Route path="/investidor/config" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Configurações" /></Protected>} />
             <Route path="/investidor/extratos" element={<Protected allowedRoles={['investidor']}><InvestidorExtratosPage /></Protected>} />
+            <Route path="/investidor/cobrancas" element={<Protected allowedRoles={['investidor']}><InvestidorCobrancasPage /></Protected>} />
             <Route path="/investidor/carteira" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Carteira" /></Protected>} />
             <Route path="/investidor/suporte" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Suporte" /></Protected>} />
 
@@ -197,11 +198,6 @@ const App = () => (
             <Route path="/terrenista/extratos" element={<Protected allowedRoles={['terrenista']}><TerrenistaExtratosPage /></Protected>} />
             <Route path="/terrenista/status" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
             <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
-
-            {/* Cliente */}
-            <Route path="/cliente" element={<Protected allowedRoles={['cliente']}><PanelHomePage menuKey="cliente" title="Cliente" /></Protected>} />
-            <Route path="/cliente/extrato" element={<Protected allowedRoles={['cliente']}><PanelSectionPage menuKey="cliente" title="Cliente" section="Extrato" /></Protected>} />
-            <Route path="/cliente/cobrancas" element={<Protected allowedRoles={['cliente']}><ClienteCobrancasPage /></Protected>} />
 
             {/* Debug route */}
               <Route
