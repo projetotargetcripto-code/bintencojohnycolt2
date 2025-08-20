@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DataTable, Column } from "@/components/app/DataTable";
+import { useAuthorization } from "@/hooks/useAuthorization";
 
 interface Filial {
   id: string;
@@ -19,6 +20,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
   const [nome, setNome] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { profile } = useAuthorization();
 
   useEffect(() => {
     load();
@@ -37,11 +39,29 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
 
   async function handleCreate() {
     if (!nome.trim()) { toast.error("Informe o nome"); return; }
-    const res = await supabaseRequest(
-      () => supabase.from("filiais").insert({ nome: nome.trim(), kind: filter || "interna" }),
-      { success: "Filial criada", error: "Erro ao criar filial" },
-    );
-    if (res) { setNome(""); load(); }
+    if (profile?.role !== "superadmin") {
+      toast.error("Acesso não autorizado");
+      return;
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Sessão inválida");
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke<{ error?: string }>("provision-filial", {
+      body: { nome: nome.trim(), kind: filter || "interna" },
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (error || data?.error) {
+      console.error(error || data?.error);
+      toast.error(
+        `Erro ao criar filial: ${data?.error || error?.message || "Erro desconhecido"}`,
+      );
+      return;
+    }
+    toast.success("Filial criada");
+    setNome("");
+    load();
   }
 
   async function handleUpdate() {
