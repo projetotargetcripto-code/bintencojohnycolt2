@@ -29,24 +29,11 @@ Este diretório reúne um script SQL unificado e instruções para preparar um n
 
 ## Funções Edge
 
-Implante todas as funções localizadas em `supabase/functions`:
+Todas as funções edge do projeto estão disponíveis no diretório `functions` deste pacote, espelhando `supabase/functions` para facilitar a instalação. Para implantá-las de uma vez, execute:
 ```bash
-supabase functions deploy admin-update-filial-billing
-supabase functions deploy cleanup-reservations
-supabase functions deploy convert-shapefile
-supabase functions deploy create-admin-filial
-supabase functions deploy generate-boleto
-supabase functions deploy notify-expiring-plans
-supabase functions deploy pix-webhook
-supabase functions deploy provision-filial
-supabase functions deploy reconcile-payments
-supabase functions deploy refresh-bi
-supabase functions deploy render-docx
-supabase functions deploy renegociacao-confirm
-supabase functions deploy resolve-domain
-supabase functions deploy signature-callback
-supabase functions deploy upload-retorno
+./deploy_functions.sh
 ```
+O script percorre cada subpasta e roda `supabase functions deploy` para cada função.
 Adapte os secrets necessários para cada função conforme o `supabase/config.toml` do projeto.
 
 ## Configurações
