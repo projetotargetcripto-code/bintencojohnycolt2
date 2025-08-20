@@ -78,16 +78,12 @@ export const NAV: Record<string, NavItem[]> = {
   investidor: [
     { title: "Investidor", href: "/investidor", icon: "line-chart" },
     { title: "Extratos", href: "/investidor/extratos", icon: "file-text" },
+    { title: "Cobranças", href: "/investidor/cobrancas", icon: "dollar-sign" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
   terrenista: [
     { title: "Terrenista", href: "/terrenista", icon: "landmark" },
     { title: "Extratos", href: "/terrenista/extratos", icon: "file-text" },
-    { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
-  ],
-  cliente: [
-    { title: "Extrato", href: "/cliente/extrato", icon: "file-text" },
-    { title: "Cobranças", href: "/cliente/cobrancas", icon: "dollar-sign" },
     { title: "Em Desenvolvimento", href: "#", icon: "wrench" },
   ],
 };

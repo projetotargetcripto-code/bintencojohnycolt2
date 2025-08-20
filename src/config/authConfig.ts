@@ -11,7 +11,6 @@ export const scopeRoutes = {
   obras: "/obras",
   investidor: "/investidor",
   terrenista: "/terrenista",
-  cliente: "/cliente",
 } as const;
 
 export type AuthScope = keyof typeof scopeRoutes;
@@ -31,7 +30,6 @@ const scopeLabels: Record<AuthScope, string> = {
   obras: "Obras",
   investidor: "Investidor",
   terrenista: "Terrenista",
-  cliente: "Cliente",
 };
 
 export function labelFromScope(scope?: string | null): string | undefined {

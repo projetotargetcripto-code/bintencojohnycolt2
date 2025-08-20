@@ -64,7 +64,7 @@ async function completeSupabaseSetup() {
         password: 'BlockUrb2024!',
         full_name: 'Super Administrador',
         role: 'superadmin',
-        panels: ['superadmin', 'adminfilial', 'urbanista', 'juridico', 'contabilidade', 'marketing', 'comercial', 'imobiliaria', 'corretor', 'obras', 'investidor', 'terrenista', 'cliente']
+        panels: ['superadmin', 'adminfilial', 'urbanista', 'juridico', 'contabilidade', 'marketing', 'comercial', 'imobiliaria', 'corretor', 'obras', 'investidor', 'terrenista']
       },
       {
         email: 'admin@blockurb.com',
