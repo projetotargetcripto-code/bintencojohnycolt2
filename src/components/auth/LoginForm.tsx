@@ -77,8 +77,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
   const preserve = scope ? `?scope=${encodeURIComponent(scope)}` : '';
   const showSignup = !scope || scope === 'investidor';
 
-    // Credenciais de teste para desenvolvimento
-    const quickCredentials = filterQuickLoginCredentials(allowedPanels);
+  const quickCredentials = scope ? filterQuickLoginCredentials(allowedPanels) : [];
 
   return (
     <div className="space-y-6">
@@ -87,7 +86,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
         <Card className="border-dashed border-2 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-2">
-              ⚡ Login Rápido (Desenvolvimento)
+              ⚡ Login Rápido
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -113,9 +112,6 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
                 );
               })}
             </div>
-            <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-              Estes botões são apenas para desenvolvimento e testes.
-            </p>
           </CardContent>
         </Card>
       )}
