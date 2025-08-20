@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { filterQuickLoginCredentials } from "@/lib/quickLogin";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
+import { pathFromScope } from "@/config/authConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface LoginFormProps {
@@ -40,7 +41,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin");
+        navigate(redirectPath || pathFromScope('adminfilial'));
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");
@@ -65,7 +66,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin");
+        navigate(redirectPath || pathFromScope('adminfilial'));
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");
