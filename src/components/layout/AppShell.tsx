@@ -22,30 +22,30 @@ const sections = [
   {
     label: "Geral",
     items: [
-      { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-      { title: "Equipe", url: "/admin/equipe", icon: Users },
-      { title: "Leads", url: "/admin/leads", icon: Users },
-      { title: "Propostas", url: "/admin/propostas", icon: FileText },
+      { title: "Dashboard", url: "/admin-filial", icon: LayoutDashboard },
+      { title: "Equipe", url: "/admin-filial/equipe", icon: Users },
+      { title: "Leads", url: "/admin-filial/leads", icon: Users },
+      { title: "Propostas", url: "/admin-filial/propostas", icon: FileText },
     ],
   },
   {
     label: "Operação",
     items: [
-      { title: "Mapa", url: "/admin/mapa", icon: Map },
-      { title: "Obras", url: "/admin/obras", icon: Hammer },
+      { title: "Mapa", url: "/admin-filial/mapa", icon: Map },
+      { title: "Obras", url: "/admin-filial/obras", icon: Hammer },
     ],
   },
   {
     label: "Financeiro",
     items: [
-      { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign },
-      { title: "Relatórios", url: "/admin/relatorios", icon: BarChart3 },
+      { title: "Financeiro", url: "/admin-filial/financeiro", icon: DollarSign },
+      { title: "Relatórios", url: "/admin-filial/relatorios", icon: BarChart3 },
     ],
   },
   {
     label: "Configurações",
     items: [
-      { title: "Configurações", url: "/admin/configuracoes", icon: Cog },
+      { title: "Configurações", url: "/admin-filial/configuracoes", icon: Cog },
     ],
   },
 ];
