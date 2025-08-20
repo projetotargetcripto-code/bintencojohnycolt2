@@ -101,6 +101,7 @@ const App = () => (
             <Route path="/super-admin/organizacoes" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Organizações" /></Protected>} />
             <Route path="/super-admin/usuarios" element={<Protected allowedRoles={['superadmin']}><UsuariosPage /></Protected>} />
             <Route path="/super-admin/tokenizacao" element={<Protected allowedRoles={['superadmin']}><PanelSectionPage menuKey="superadmin" title="Super Admin" section="Tokenização" /></Protected>} />
+            <Route path="/super-admin/aprovacao" element={<Protected allowedRoles={['superadmin']}><Aprovacao /></Protected>} />
 
             {/* Admin Filial - Rotas padronizadas em /admin-filial */}
             <Route path="/admin-filial" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelHomePage menuKey="adminfilial" title="Admin Filial" /></Protected>} />
@@ -118,9 +119,6 @@ const App = () => (
             <Route path="/admin-filial/comissoes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><RelatorioComissoes /></Protected>} />
             <Route path="/admin-filial/assinaturas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AssinaturasPage /></Protected>} />
             <Route path="/admin-filial/auditoria" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AuditLogsFilialPage /></Protected>} />
-
-            {/* Super Admin - Aprovação */}
-            <Route path="/super-admin/aprovacao" element={<Protected allowedRoles={['superadmin']}><Aprovacao /></Protected>} />
 
             {/* Urbanista */}
             <Route path="/urbanista" element={<Protected allowedRoles={['urbanista']}><PanelHomePage menuKey="urbanista" title="Urbanista" /></Protected>} />
