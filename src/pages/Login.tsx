@@ -7,7 +7,13 @@ import { labelFromScope, pathFromScope } from "@/config/authConfig";
 export default function LoginPage() {
   const [params] = useSearchParams();
   const routeParams = useParams();
-  const scopeParam = params.get("scope") || routeParams.scope || undefined;
+  const rawScope = params.get("scope") || routeParams.scope || undefined;
+  const normalizeScope = (s?: string | null) => {
+    if (!s) return undefined;
+    const key = s.toLowerCase().replace(/-/g, "");
+    return key === "adminfilial" ? "admin" : key;
+  };
+  const scopeParam = normalizeScope(rawScope);
   const msg = params.get("msg");
   const [defaultScope, setDefaultScope] = useState<string | null>(null);
   const [allowedPanels, setAllowedPanels] = useState<string[] | undefined>();
