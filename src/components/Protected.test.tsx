@@ -29,7 +29,13 @@ describe('Protected component', () => {
     mockUseAuthorization.mockReturnValue({ profile: { role: 'adminfilial', panels: ['dashboard'] }, loading: false });
 
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter
+        initialEntries={['/']}
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Protected allowedRoles={['adminfilial']} panelKey="dashboard">
           <div>Allowed</div>
         </Protected>
@@ -45,7 +51,13 @@ describe('Protected component', () => {
     mockUseAuthorization.mockReturnValue({ profile: { role: 'superadmin', panels: [] }, loading: false });
 
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter
+        initialEntries={['/']}
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Protected allowedRoles={['adminfilial']}>
           <div>Super Allowed</div>
         </Protected>
@@ -61,7 +73,13 @@ describe('Protected component', () => {
     mockUseAuthorization.mockReturnValue({ profile: { role: 'user', panels: [] }, loading: false });
 
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter
+        initialEntries={['/']}
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Protected allowedRoles={['adminfilial']}>
           <div>Denied</div>
         </Protected>
