@@ -29,7 +29,7 @@ Este diretório reúne um script SQL unificado e instruções para preparar um n
 
 ## Funções Edge
 
-Todas as funções edge do projeto estão disponíveis no diretório `functions` deste pacote, espelhando `supabase/functions` para facilitar a instalação. Para implantá-las de uma vez, execute:
+Todas as funções edge do projeto estão disponíveis no diretório `functions` deste pacote. Para implantá-las de uma vez, execute:
 ```bash
 ./deploy_functions.sh
 ```
