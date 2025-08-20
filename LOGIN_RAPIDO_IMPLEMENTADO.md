@@ -17,7 +17,7 @@ Implementei botões de **Login Rápido** em todos os pontos de acesso do sistema
 - **Visibilidade**: Apenas quando sem scope específico
 
 ### 3. **Páginas de Login Específicas**
-- **URLs**: `/login?scope=admin`, `/login?scope=juridico`, etc.
+- **URLs**: `/login?scope=adminfilial`, `/login?scope=juridico`, etc.
 - **Localização**: Seção destacada acima do formulário
 - **Tipo**: Botões específicos (Super Admin + usuário do painel)
 
@@ -32,7 +32,7 @@ Implementei botões de **Login Rápido** em todos os pontos de acesso do sistema
 ### 🏢 **Usuários Especializados**
 | Usuário | Email | Senha | Painel |
 |---------|-------|-------|---------|
-| **Admin Filial** | `filial@blockurb.com` | `123` | `/admin` |
+| **Admin Filial** | `filial@blockurb.com` | `123` | `/admin-filial` |
 | **Urbanista** | `urbanista@blockurb.com` | `123` | `/urbanista` |
 | **Jurídico** | `juridico@blockurb.com` | `123` | `/juridico` |
 | **Contabilidade** | `contabilidade@blockurb.com` | `123` | `/contabilidade` |
