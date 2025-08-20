@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createHandler } from "../supabase/functions/pix-webhook/handler.ts";
+import { createHandler } from "../instalar/functions/pix-webhook/handler.ts";
 
 describe("pix-webhook", () => {
   it("returns 500 when PIX_WEBHOOK_SECRET is missing", async () => {

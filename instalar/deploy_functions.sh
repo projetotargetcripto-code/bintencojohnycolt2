@@ -5,6 +5,7 @@ set -euo pipefail
 # Requires supabase CLI to be installed and authenticated.
 
 FUNC_DIR="$(dirname "$0")/functions"
+export SUPABASE_FUNCTIONS_PATH="$FUNC_DIR"
 
 for fn in "$FUNC_DIR"/*; do
   if [ -d "$fn" ]; then
