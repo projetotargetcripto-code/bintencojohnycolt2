@@ -19,7 +19,7 @@
 ### Administrador Filial
 **Email:** `filial@blockurb.com`
 **Senha:** `123`
-**Painel:** `/adminfilial` ou `/admin`
+**Painel:** `/admin-filial`
 **Funcionalidades:** Gestão geral da filial
 
 ### Urbanista
@@ -85,7 +85,7 @@
 ## 🗺️ Funcionalidades Especiais
 
 ### Mapa Interativo
-- **URL:** `/admin/mapa`
+- **URL:** `/admin-filial/mapa`
 - **Acesso:** Usuários admin e superadmin
 - **Funcionalidades:**
   - Visualizar empreendimentos
@@ -94,7 +94,7 @@
   - Overlay de masterplan
 
 ### Adicionar Empreendimento
-- **URL:** `/admin/empreendimentos/novo`
+- **URL:** `/admin-filial/empreendimentos/novo`
 - **Acesso:** Usuários admin e superadmin
 - **Funcionalidades:**
   - Upload de GeoJSON
