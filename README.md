@@ -83,13 +83,28 @@ The quick login widget can load test accounts from environment variables. Create
 ```
 VITE_SUPERADMIN_EMAIL=superadmin@example.com
 VITE_SUPERADMIN_PASSWORD=strong-password
-VITE_ADMIN_EMAIL=admin@example.com
+VITE_ADMIN_EMAIL=filial@example.com
 VITE_ADMIN_PASSWORD=strong-password
 # repeat for other roles using the pattern
 # VITE_<ROLE>_EMAIL and VITE_<ROLE>_PASSWORD
 ```
 
 Only roles with both variables defined will appear in the widget.
+
+When no environment variables are set in development, the widget exposes default test accounts:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin Filial | `filial@blockurb.com` | `123` |
+| Urbanista | `urbanista@blockurb.com` | `123` |
+| Jurídico | `juridico@blockurb.com` | `123` |
+| Contabilidade | `contabilidade@blockurb.com` | `123` |
+| Marketing | `marketing@blockurb.com` | `123` |
+| Comercial | `comercial@blockurb.com` | `123` |
+| Imobiliária | `imobiliaria@blockurb.com` | `123` |
+| Corretor | `corretor@blockurb.com` | `123` |
+| Terrenista | `terrenista@blockurb.com` | `123` |
+| Obras | `obras@blockurb.com` | `123` |
 
 This quick login widget is available only during development and returns nothing in production builds.
 
