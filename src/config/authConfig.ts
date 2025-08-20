@@ -1,6 +1,6 @@
 export const scopeRoutes = {
   superadmin: "/super-admin",
-  admin: "/admin-filial",
+  adminfilial: "/admin-filial",
   imobiliaria: "/imobiliaria",
   corretor: "/corretor",
   juridico: "/juridico",
@@ -19,7 +19,7 @@ export const AUTH_ROLES: AuthScope[] = Object.keys(scopeRoutes) as AuthScope[];
 
 const scopeLabels: Record<AuthScope, string> = {
   superadmin: "Super Admin",
-  admin: "Admin Filial",
+  adminfilial: "Admin Filial",
   imobiliaria: "Imobiliária",
   corretor: "Corretores",
   juridico: "Jurídico",

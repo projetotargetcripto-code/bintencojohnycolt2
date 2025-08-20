@@ -28,7 +28,7 @@ describe('loadAuthorizationProfile', () => {
         eq: () => ({
           maybeSingle: () =>
             Promise.resolve({
-              data: { role: 'admin', panels: ['dash'], filial_id: 1 },
+              data: { role: 'adminfilial', panels: ['dash'], filial_id: 1 },
               error: null,
             }),
         }),
@@ -37,7 +37,7 @@ describe('loadAuthorizationProfile', () => {
 
     const controller = new AbortController();
     const result = await loadAuthorizationProfile(userId, controller.signal);
-    expect(result).toEqual({ role: 'admin', panels: ['dash'], filial_id: 1 });
+    expect(result).toEqual({ role: 'adminfilial', panels: ['dash'], filial_id: 1 });
     expect(mockRpc).toHaveBeenCalled();
     expect(mockFrom).toHaveBeenCalled();
   });

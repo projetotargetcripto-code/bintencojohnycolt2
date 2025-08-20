@@ -40,7 +40,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin");
+        navigate(redirectPath || "/admin-filial");
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");
@@ -65,7 +65,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin");
+        navigate(redirectPath || "/admin-filial");
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");

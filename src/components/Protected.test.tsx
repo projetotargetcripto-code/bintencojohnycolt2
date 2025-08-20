@@ -26,11 +26,11 @@ afterEach(() => {
 describe('Protected component', () => {
   it('renders children when access is allowed', () => {
     mockUseAuth.mockReturnValue({ session: {}, loading: false });
-    mockUseAuthorization.mockReturnValue({ profile: { role: 'admin', panels: ['dashboard'] }, loading: false });
+    mockUseAuthorization.mockReturnValue({ profile: { role: 'adminfilial', panels: ['dashboard'] }, loading: false });
 
     render(
       <MemoryRouter initialEntries={['/']}>
-        <Protected allowedRoles={['admin']} panelKey="dashboard">
+        <Protected allowedRoles={['adminfilial']} panelKey="dashboard">
           <div>Allowed</div>
         </Protected>
       </MemoryRouter>
@@ -46,7 +46,7 @@ describe('Protected component', () => {
 
     render(
       <MemoryRouter initialEntries={['/']}>
-        <Protected allowedRoles={['admin']}>
+        <Protected allowedRoles={['adminfilial']}>
           <div>Super Allowed</div>
         </Protected>
       </MemoryRouter>
@@ -62,7 +62,7 @@ describe('Protected component', () => {
 
     render(
       <MemoryRouter initialEntries={['/']}>
-        <Protected allowedRoles={['admin']}>
+        <Protected allowedRoles={['adminfilial']}>
           <div>Denied</div>
         </Protected>
       </MemoryRouter>
