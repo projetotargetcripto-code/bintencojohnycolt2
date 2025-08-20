@@ -8,6 +8,7 @@ import { filterQuickLoginCredentials } from "@/lib/quickLogin";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { pathFromScope } from "@/config/authConfig";
 
 export interface LoginFormProps {
   title: string;
@@ -40,7 +41,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin-filial");
+        navigate(redirectPath || pathFromScope('adminfilial'));
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");
@@ -65,7 +66,7 @@ export function LoginForm({ title, subtitle, scope, redirectPath, allowedPanels 
       }
       
       if (res?.session) {
-        navigate(redirectPath || "/admin-filial");
+        navigate(redirectPath || pathFromScope('adminfilial'));
       }
     } catch (err) {
       setError("Erro inesperado ao fazer login");
