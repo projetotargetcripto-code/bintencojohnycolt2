@@ -32,17 +32,16 @@ Implementei botões de **Login Rápido** em todos os pontos de acesso do sistema
 ### 🏢 **Usuários Especializados**
 | Usuário | Email | Senha | Painel |
 |---------|-------|-------|---------|
-| **Admin Filial** | `admin@blockurb.com` | `Admin2024!` | `/admin` |
-| **Urbanista** | `urbanista@blockurb.com` | `Urban2024!` | `/urbanista` |
-| **Jurídico** | `juridico@blockurb.com` | `Legal2024!` | `/juridico` |
-| **Contabilidade** | `contabilidade@blockurb.com` | `Conta2024!` | `/contabilidade` |
-| **Marketing** | `marketing@blockurb.com` | `Market2024!` | `/marketing` |
-| **Comercial** | `comercial@blockurb.com` | `Venda2024!` | `/comercial` |
-| **Imobiliária** | `imobiliaria@blockurb.com` | `Imob2024!` | `/imobiliaria` |
-| **Corretor** | `corretor@blockurb.com` | `Corret2024!` | `/corretor` |
-| **Obras** | `obras@blockurb.com` | `Obras2024!` | `/obras` |
-| **Investidor** | `investidor@blockurb.com` | `Invest2024!` | `/investidor` |
-| **Terrenista** | `terrenista@blockurb.com` | `Terra2024!` | `/terrenista` |
+| **Admin Filial** | `filial@blockurb.com` | `123` | `/admin` |
+| **Urbanista** | `urbanista@blockurb.com` | `123` | `/urbanista` |
+| **Jurídico** | `juridico@blockurb.com` | `123` | `/juridico` |
+| **Contabilidade** | `contabilidade@blockurb.com` | `123` | `/contabilidade` |
+| **Marketing** | `marketing@blockurb.com` | `123` | `/marketing` |
+| **Comercial** | `comercial@blockurb.com` | `123` | `/comercial` |
+| **Imobiliária** | `imobiliaria@blockurb.com` | `123` | `/imobiliaria` |
+| **Corretor** | `corretor@blockurb.com` | `123` | `/corretor` |
+| **Obras** | `obras@blockurb.com` | `123` | `/obras` |
+| **Terrenista** | `terrenista@blockurb.com` | `123` | `/terrenista` |
 
 ## 🎨 **Interface dos Botões**
 

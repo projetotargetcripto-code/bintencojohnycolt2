@@ -33,10 +33,24 @@ const configs: QuickLoginConfig[] = [
 ];
 const env = import.meta.env as Record<string, string | undefined>;
 
+const devDefaults: Record<string, { email: string; password: string }> = {
+  ADMIN: { email: "filial@blockurb.com", password: "123" },
+  URBANISTA: { email: "urbanista@blockurb.com", password: "123" },
+  JURIDICO: { email: "juridico@blockurb.com", password: "123" },
+  CONTABILIDADE: { email: "contabilidade@blockurb.com", password: "123" },
+  MARKETING: { email: "marketing@blockurb.com", password: "123" },
+  COMERCIAL: { email: "comercial@blockurb.com", password: "123" },
+  IMOBILIARIA: { email: "imobiliaria@blockurb.com", password: "123" },
+  CORRETOR: { email: "corretor@blockurb.com", password: "123" },
+  TERRENISTA: { email: "terrenista@blockurb.com", password: "123" },
+  OBRAS: { email: "obras@blockurb.com", password: "123" }
+};
+
 export const quickLoginCredentials: QuickLoginCredential[] = configs
   .map((cfg) => {
-    const email = env[`VITE_${cfg.envPrefix}_EMAIL`];
-    const password = env[`VITE_${cfg.envPrefix}_PASSWORD`];
+    const defaults = import.meta.env.DEV ? devDefaults[cfg.envPrefix] : undefined;
+    const email = env[`VITE_${cfg.envPrefix}_EMAIL`] ?? defaults?.email;
+    const password = env[`VITE_${cfg.envPrefix}_PASSWORD`] ?? defaults?.password;
 
     if (!email || !password) return null;
 
