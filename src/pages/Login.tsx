@@ -3,7 +3,6 @@ import { useSearchParams, useParams } from "react-router-dom";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { labelFromScope, pathFromScope } from "@/config/authConfig";
-import { QuickLoginWidget } from "@/components/QuickLoginWidget";
 
 export default function LoginPage() {
   const [params] = useSearchParams();
@@ -62,15 +61,8 @@ export default function LoginPage() {
             subtitle={label ? `Área: ${label}` : undefined}
             scope={scope}
             redirectPath={redirectPath}
-            allowedPanels={allowedPanels}
+            allowedPanels={scope ? [redirectPath] : undefined}
           />
-        
-        {/* Widget de Login Rápido na página de login sem scope específico */}
-          {!scope && (
-            <div className="border-t pt-6">
-              <QuickLoginWidget allowedPanels={allowedPanels} />
-            </div>
-          )}
       </div>
     </AuthLayout>
   );
