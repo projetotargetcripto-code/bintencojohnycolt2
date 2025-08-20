@@ -39,6 +39,7 @@ export default function UsuariosPage() {
   const navigate = useNavigate();
   const { setSession, loading: authLoading } = useAuth();
 
+  // Wait for authentication to finish before triggering initial filial fetch
   useEffect(() => {
     if (authLoading) return;
     document.title = "Usuários | BlockURB";
@@ -91,6 +92,7 @@ export default function UsuariosPage() {
     }
   }, [page, roleFilter, search]);
 
+  // Load users only after authentication has resolved to avoid unauthenticated requests
   useEffect(() => {
     if (authLoading) return;
     void loadUsers();
