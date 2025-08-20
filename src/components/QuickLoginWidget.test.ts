@@ -21,4 +21,9 @@ describe('filterQuickLoginCredentials', () => {
     const result = filterQuickLoginCredentials();
     expect(result).toHaveLength(2);
   });
+
+  it('returns all credentials when allowedPanels is empty', () => {
+    const result = filterQuickLoginCredentials([]);
+    expect(result).toHaveLength(2);
+  });
 });

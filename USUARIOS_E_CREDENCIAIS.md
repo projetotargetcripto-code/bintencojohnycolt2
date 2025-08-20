@@ -17,69 +17,69 @@
 ## 🏢 Painéis Administrativos
 
 ### Administrador Filial
-**Email:** `admin@blockurb.com`  
-**Senha:** `Admin2024!`  
-**Painel:** `/adminfilial` ou `/admin`  
+**Email:** `filial@blockurb.com`
+**Senha:** `123`
+**Painel:** `/adminfilial` ou `/admin`
 **Funcionalidades:** Gestão geral da filial
 
 ### Urbanista
-**Email:** `urbanista@blockurb.com`  
-**Senha:** `Urban2024!`  
-**Painel:** `/urbanista`  
+**Email:** `urbanista@blockurb.com`
+**Senha:** `123`
+**Painel:** `/urbanista`
 **Funcionalidades:** Projetos urbanos e mapas
 
 ### Jurídico
-**Email:** `juridico@blockurb.com`  
-**Senha:** `Legal2024!`  
-**Painel:** `/juridico`  
+**Email:** `juridico@blockurb.com`
+**Senha:** `123`
+**Painel:** `/juridico`
 **Funcionalidades:** Contratos e processos
 
 ### Contabilidade
-**Email:** `contabilidade@blockurb.com`  
-**Senha:** `Conta2024!`  
-**Painel:** `/contabilidade`  
+**Email:** `contabilidade@blockurb.com`
+**Senha:** `123`
+**Painel:** `/contabilidade`
 **Funcionalidades:** Financeiro e fiscal
 
 ### Marketing
-**Email:** `marketing@blockurb.com`  
-**Senha:** `Market2024!`  
-**Painel:** `/marketing`  
+**Email:** `marketing@blockurb.com`
+**Senha:** `123`
+**Painel:** `/marketing`
 **Funcionalidades:** Campanhas e materiais
 
 ### Comercial
-**Email:** `comercial@blockurb.com`  
-**Senha:** `Venda2024!`  
-**Painel:** `/comercial`  
+**Email:** `comercial@blockurb.com`
+**Senha:** `123`
+**Painel:** `/comercial`
 **Funcionalidades:** Leads e propostas
 
 ### Imobiliária
-**Email:** `imobiliaria@blockurb.com`  
-**Senha:** `Imob2024!`  
-**Painel:** `/imobiliaria`  
+**Email:** `imobiliaria@blockurb.com`
+**Senha:** `123`
+**Painel:** `/imobiliaria`
 **Funcionalidades:** Corretores e leads
 
 ### Corretor
-**Email:** `corretor@blockurb.com`  
-**Senha:** `Corret2024!`  
-**Painel:** `/corretor`  
+**Email:** `corretor@blockurb.com`
+**Senha:** `123`
+**Painel:** `/corretor`
 **Funcionalidades:** Leads e vendas
 
 ### Obras
-**Email:** `obras@blockurb.com`  
-**Senha:** `Obras2024!`  
-**Painel:** `/obras`  
+**Email:** `obras@blockurb.com`
+**Senha:** `123`
+**Painel:** `/obras`
 **Funcionalidades:** Cronograma e andamento
 
 ### Investidor
-**Email:** `investidor@blockurb.com`  
-**Senha:** `Invest2024!`  
-**Painel:** `/investidor`  
+**Email:** `investidor@blockurb.com`
+**Senha:** `Invest2024!`
+**Painel:** `/investidor`
 **Funcionalidades:** Carteira e suporte
 
 ### Terrenista
-**Email:** `terrenista@blockurb.com`  
-**Senha:** `Terra2024!`  
-**Painel:** `/terrenista`  
+**Email:** `terrenista@blockurb.com`
+**Senha:** `123`
+**Painel:** `/terrenista`
 **Funcionalidades:** Status e pagamentos
 
 ## 🗺️ Funcionalidades Especiais
