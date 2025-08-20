@@ -8,12 +8,7 @@ export default function LoginPage() {
   const [params] = useSearchParams();
   const routeParams = useParams();
   const rawScope = params.get("scope") || routeParams.scope || undefined;
-  const normalizeScope = (s?: string | null) => {
-    if (!s) return undefined;
-    const key = s.toLowerCase().replace(/-/g, "");
-    return key === "admin" ? "adminfilial" : key;
-  };
-  const scopeParam = normalizeScope(rawScope);
+  const scopeParam = rawScope?.toLowerCase().replace(/-/g, "") || undefined;
   const msg = params.get("msg");
   const [defaultScope, setDefaultScope] = useState<string | null>(null);
   const [allowedPanels, setAllowedPanels] = useState<string[] | undefined>();
@@ -36,7 +31,7 @@ export default function LoginPage() {
 
     useEffect(() => {
       const host = window.location.host;
-      const mapPanelToScope = (p: string) => (p === 'admin' ? 'adminfilial' : p);
+      const mapPanelToScope = (p: string) => p.toLowerCase().replace(/-/g, "");
       const mapPanelToPath = (p: string) => pathFromScope(mapPanelToScope(p));
       fetch(`/resolve-domain?domain=${host}`)
         .then((res) => (res.ok ? res.json() : null))
