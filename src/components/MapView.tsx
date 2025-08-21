@@ -87,7 +87,7 @@ export function MapView({
           console.error('Erro ao carregar lotes:', error);
           // Se a RPC não existir, mostrar mensagem informativa
             if (error.message?.includes('function') || error.message?.includes('does not exist')) {
-              console.warn('⚠️ RPC get_empreendimento_lotes não encontrada. Execute o SQL NovoSetup/sql/sql.final.referenciado.sql');
+              console.warn('⚠️ RPC get_empreendimento_lotes não encontrada. Execute o SQL instalar/banco.sql');
             }
           setError(error.message || 'Erro ao carregar lotes');
           return;
