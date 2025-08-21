@@ -39,7 +39,7 @@
 ## 📁 **ARQUIVOS CRIADOS/MODIFICADOS**
 
 ### 🆕 **Novos Arquivos:**
-1. **`NovoSetup/sql/sql.final.referenciado.sql`** - SQL completo para estrutura de lotes e políticas
+1. **`instalar/banco.sql`** - SQL completo para estrutura de lotes e políticas
 2. **`src/lib/geojsonUtils.ts`** - Utilitários para processamento de GeoJSON
 3. **`src/components/MapView.tsx`** - Componente de mapa interativo
 4. **`src/pages/admin/MapaInterativo.tsx`** - Página principal do mapa
@@ -66,7 +66,7 @@
 ## 🗃️ **ESTRUTURA DO BANCO (EXECUTE NO SUPABASE)**
 
 ```sql
--- Execute: NovoSetup/sql/sql.final.referenciado.sql
+-- Execute: instalar/banco.sql
 -- Contém:
 -- ✅ Tabela lotes completa
 -- ✅ Funções de cálculo de área/centro

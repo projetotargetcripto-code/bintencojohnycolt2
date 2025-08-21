@@ -23,7 +23,7 @@
 - Buckets de storage: **✅ Funcionando**
 
 ### **📝 SQL Para Execução Manual:**
-Todo o SQL necessário agora está centralizado em `NovoSetup/sql/sql.final.referenciado.sql`
+Todo o SQL necessário agora está centralizado em `instalar/banco.sql`
 
 ## 🎯 **EXECUTE AGORA NO SUPABASE DASHBOARD**
 
@@ -31,7 +31,7 @@ Todo o SQL necessário agora está centralizado em `NovoSetup/sql/sql.final.refe
 🌐 **Link:** https://supabase.com/dashboard/project/epsuxumkgakpqykvteij/sql
 
 ### **2. Execute o arquivo completo:**
-📄 **Arquivo:** `NovoSetup/sql/sql.final.referenciado.sql`
+📄 **Arquivo:** `instalar/banco.sql`
 
 ### **3. Principais correções incluídas:**
 
@@ -117,7 +117,7 @@ check();
 
 ## 📋 **Checklist Final**
 
-- [ ] Executar `NovoSetup/sql/sql.final.referenciado.sql` no Supabase Dashboard
+- [ ] Executar `instalar/banco.sql` no Supabase Dashboard
 - [ ] Verificar campo `status` em empreendimentos  
 - [ ] Testar criação de empreendimento
 - [ ] Testar aprovação como admin

@@ -2,12 +2,12 @@
 
 ### 1. Criar e preparar o projeto
 1. Crie um projeto no [Supabase](https://supabase.com/).
-2. No **SQL Editor**, importe o conteúdo completo de `NovoSetup/sql/sql.final.referenciado.sql`. Esse script habilita extensões (`pgcrypto`, `postgis`), cria as tabelas e funções necessárias e já aplica políticas de storage e RLS.
+2. No **SQL Editor**, importe o conteúdo completo de `instalar/banco.sql`. Esse script habilita extensões (`pgcrypto`, `postgis`), cria as tabelas e funções necessárias e já aplica políticas de storage e RLS.
 
 ### 2. Configurar o Storage
 1. No painel do Supabase, acesse **Storage → Create new bucket**.
 2. Nomeie o bucket como `empreendimentos`, marque-o como **Public** e adicione os MIME types permitidos: `application/json`, `application/geo+json`, `image/jpeg`, `image/png`, `image/gif`, `image/webp`.
-3. As políticas de acesso do bucket já estão incluídas em `NovoSetup/sql/sql.final.referenciado.sql`.
+3. As políticas de acesso do bucket já estão incluídas em `instalar/banco.sql`.
 
 ### 3. Variáveis de ambiente da aplicação
 Crie um arquivo `.env.local` no projeto com:
