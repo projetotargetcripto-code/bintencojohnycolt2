@@ -1597,3 +1597,528 @@ as $$
 $$;
 grant execute on function public.update_lote_valor(uuid, numeric) to authenticated;
 -- FIM: supabase/rpc/update_lote_valor.sql
+-- Função para provisionar filiais diretamente via SQL
+-- Para aplicar após carregar `banco.sql`:
+--   psql < provision_filial.sql
+
+create or replace function public.provision_filial(
+    p_nome text,
+    p_kind text default 'interna',
+    p_owner_name text default null,
+    p_owner_email text default null,
+    p_billing_plan text default null,
+    p_billing_status text default null,
+    p_domain text default null
+) returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_filial_id uuid;
+  v_role text;
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    raise exception 'Unauthorized';
+  end if;
+  select role into v_role from public.user_profiles where user_id = v_user_id;
+  if v_role is distinct from 'superadmin' then
+    raise exception 'Forbidden';
+  end if;
+  insert into public.filiais (
+    nome, kind, owner_name, owner_email, billing_plan, billing_status, domain, status
+  ) values (
+    p_nome, p_kind, p_owner_name, p_owner_email, p_billing_plan, p_billing_status, p_domain, 'provisionando'
+  ) returning id into v_filial_id;
+  begin
+    if p_billing_plan is not null or p_billing_status is not null then
+      insert into public.billing (filial_id, plan, status)
+      values (v_filial_id, p_billing_plan, p_billing_status);
+    end if;
+  exception when undefined_table then
+    -- ignora se tabela billing não existir
+  end;
+  begin
+    if p_domain is not null then
+      insert into public.domains (filial_id, domain)
+      values (v_filial_id, p_domain);
+    end if;
+  exception when undefined_table then
+    -- ignora se tabela domains não existir
+  end;
+  begin
+    insert into public.audit_logs (actor, action, target, metadata)
+    values (v_user_id, 'provision-filial', v_filial_id,
+            jsonb_build_object('nome', p_nome, 'kind', p_kind));
+  exception when undefined_table then
+    -- ignora se tabela audit_logs não existir
+  end;
+  return v_filial_id;
+end;
+$$;
+
+grant execute on function public.provision_filial(
+  text, text, text, text, text, text, text
+) to authenticated;
+create table if not exists public.pendencias (
+    id uuid primary key default gen_random_uuid(),
+    tipo text not null,
+    entidade_id uuid not null,
+    status text not null default 'pendente',
+    dados jsonb,
+    rejection_reason text,
+    created_at timestamp with time zone default now()
+);
+create table if not exists public.audit_reservas (
+    id uuid primary key default gen_random_uuid(),
+    reserva_id uuid not null,
+    action text not null,
+    actor uuid,
+    old_row jsonb,
+    new_row jsonb,
+    ip_address text,
+    user_agent text,
+    created_at timestamptz not null default now()
+);
+
+create or replace function public.log_reserva_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_headers json;
+  v_ip text;
+  v_ua text;
+begin
+  v_headers := current_setting('request.headers', true)::json;
+  v_ip := coalesce(v_headers->>'x-forwarded-for', v_headers->>'x-real-ip');
+  v_ua := v_headers->>'user-agent';
+
+  if TG_OP = 'INSERT' then
+    insert into public.audit_reservas(reserva_id, action, actor, new_row, ip_address, user_agent)
+    values (new.id, TG_OP, auth.uid(), to_jsonb(new), v_ip, v_ua);
+    return new;
+  elsif TG_OP = 'UPDATE' then
+    insert into public.audit_reservas(reserva_id, action, actor, old_row, new_row, ip_address, user_agent)
+    values (new.id, TG_OP, auth.uid(), to_jsonb(old), to_jsonb(new), v_ip, v_ua);
+    return new;
+  elsif TG_OP = 'DELETE' then
+    insert into public.audit_reservas(reserva_id, action, actor, old_row, ip_address, user_agent)
+    values (old.id, TG_OP, auth.uid(), to_jsonb(old), v_ip, v_ua);
+    return old;
+  end if;
+end;
+$$;
+
+drop trigger if exists log_reserva_change on public.reservas;
+create trigger log_reserva_change
+after insert or update or delete on public.reservas
+for each row execute function public.log_reserva_change();
+create table if not exists public.reservas (
+    id uuid primary key default gen_random_uuid(),
+    lote_id uuid not null references public.lotes(id) on delete cascade,
+    filial_id uuid not null references public.filiais(id) on delete cascade,
+    nome text,
+    email text,
+    telefone text,
+    expires_at timestamptz not null,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+create index if not exists idx_reservas_lote on public.reservas(lote_id);
+create index if not exists idx_reservas_filial on public.reservas(filial_id);
+
+create or replace function public.reservas_set_filial()
+returns trigger language plpgsql as $$
+begin
+  select filial_id into new.filial_id from public.lotes where id = new.lote_id;
+  return new;
+end $$;
+
+create trigger tg_reservas_set_filial before insert on public.reservas
+    for each row execute function public.reservas_set_filial();
+
+create trigger tg_reservas_updated_at before update on public.reservas
+    for each row execute function public.set_updated_at();
+
+alter table public.reservas enable row level security;
+
+create policy reservas_rls on public.reservas for all
+  using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+  with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid);
+alter table public.lotes add column if not exists reserva_expira_em timestamptz;
+create table if not exists public.conciliacoes (
+    id uuid primary key default gen_random_uuid(),
+    tipo text not null,
+    referencia text,
+    valor numeric,
+    status text not null default 'pendente',
+    dados jsonb,
+    conciliado_em timestamp with time zone,
+    created_at timestamp with time zone default now()
+);
+alter table public.lotes add column if not exists liberado boolean default false;
+
+create table if not exists public.etapas_obras (
+    id uuid primary key default gen_random_uuid(),
+    empreendimento_id uuid not null references public.empreendimentos(id) on delete cascade,
+    nome text not null,
+    ordem int,
+    concluida boolean not null default false,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+create trigger tg_etapas_obras_updated_at before update on public.etapas_obras
+    for each row execute function public.set_updated_at();
+
+create or replace function public.liberar_lotes_se_todas_etapas_concluidas()
+returns trigger language plpgsql as $$
+begin
+  if (select bool_and(concluida) from public.etapas_obras where empreendimento_id = new.empreendimento_id) then
+    update public.lotes set liberado = true where empreendimento_id = new.empreendimento_id;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger tg_liberar_lotes after insert or update on public.etapas_obras
+    for each row execute function public.liberar_lotes_se_todas_etapas_concluidas();
+create table if not exists public.renegociacoes (
+    id uuid primary key default gen_random_uuid(),
+    reserva_id uuid not null references public.reservas(id) on delete cascade,
+    email text not null,
+    status text not null default 'pending',
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+create trigger tg_renegociacoes_updated_at before update on public.renegociacoes
+    for each row execute function public.set_updated_at();
+
+alter table public.renegociacoes enable row level security;
+
+create policy renegociacoes_rls on public.renegociacoes for all
+  using (true) with check (true);
+
+create table if not exists public.audit_renegociacoes (
+    id uuid primary key default gen_random_uuid(),
+    renegociacao_id uuid not null,
+    action text not null,
+    actor uuid,
+    old_row jsonb,
+    new_row jsonb,
+    ip_address text,
+    user_agent text,
+    created_at timestamptz not null default now()
+);
+
+create or replace function public.log_renegociacao_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_headers json;
+  v_ip text;
+  v_ua text;
+begin
+  v_headers := current_setting('request.headers', true)::json;
+  v_ip := coalesce(v_headers->>'x-forwarded-for', v_headers->>'x-real-ip');
+  v_ua := v_headers->>'user-agent';
+
+  if TG_OP = 'INSERT' then
+    insert into public.audit_renegociacoes(renegociacao_id, action, actor, new_row, ip_address, user_agent)
+    values (new.id, TG_OP, auth.uid(), to_jsonb(new), v_ip, v_ua);
+    return new;
+  elsif TG_OP = 'UPDATE' then
+    insert into public.audit_renegociacoes(renegociacao_id, action, actor, old_row, new_row, ip_address, user_agent)
+    values (new.id, TG_OP, auth.uid(), to_jsonb(old), to_jsonb(new), v_ip, v_ua);
+    return new;
+  elsif TG_OP = 'DELETE' then
+    insert into public.audit_renegociacoes(renegociacao_id, action, actor, old_row, ip_address, user_agent)
+    values (old.id, TG_OP, auth.uid(), to_jsonb(old), v_ip, v_ua);
+    return old;
+  end if;
+end;
+$$;
+
+drop trigger if exists log_renegociacao_change on public.renegociacoes;
+create trigger log_renegociacao_change
+after insert or update or delete on public.renegociacoes
+for each row execute function public.log_renegociacao_change();
+create table if not exists public.vendas (
+    id uuid primary key default gen_random_uuid(),
+    lote_id uuid not null references public.lotes(id) on delete cascade,
+    filial_id uuid not null references public.filiais(id) on delete cascade,
+    corretor_id uuid not null references auth.users(id) on delete cascade,
+    valor numeric(12,2) not null,
+    comissao numeric(12,2) not null,
+    created_at timestamptz default now()
+);
+
+create index if not exists idx_vendas_filial on public.vendas(filial_id);
+create index if not exists idx_vendas_corretor on public.vendas(corretor_id);
+
+alter table public.vendas enable row level security;
+
+create policy vendas_rls on public.vendas for all
+  using (
+    filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid and
+    corretor_id = current_setting('request.jwt.claims.corretor_id', true)::uuid
+  )
+  with check (
+    filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid and
+    corretor_id = current_setting('request.jwt.claims.corretor_id', true)::uuid
+  );
+-- Create materialized views for BI
+
+create materialized view if not exists public.mv_kpis_filial as
+  select
+    f.id as filial_id,
+    count(distinct e.id) as empreendimentos,
+    count(distinct u.user_id) filter (where u.role <> 'superadmin') as usuarios,
+    count(l.id) filter (where l.status = 'disponivel') as lotes_disponiveis,
+    count(l.id) filter (where l.status = 'reservado') as lotes_reservados,
+    count(l.id) filter (where l.status = 'vendido') as lotes_vendidos,
+    count(l.id) as total_lotes
+  from public.filiais f
+  left join public.empreendimentos e on e.filial_id = f.id
+  left join public.user_profiles u on u.filial_id = f.id
+  left join public.lotes l on l.filial_id = f.id
+  group by f.id;
+
+create unique index if not exists idx_mv_kpis_filial_filial on public.mv_kpis_filial(filial_id);
+
+create materialized view if not exists public.mv_heatmap_lotes as
+  select
+    filial_id,
+    st_x(geom) as longitude,
+    st_y(geom) as latitude,
+    status
+  from public.lotes
+  where geom is not null;
+
+create index if not exists idx_mv_heatmap_lotes_filial on public.mv_heatmap_lotes(filial_id);
+
+-- Restrict read permissions
+revoke all on public.mv_kpis_filial from public;
+revoke all on public.mv_heatmap_lotes from public;
+grant select on public.mv_kpis_filial to adminfilial, superadmin;
+grant select on public.mv_heatmap_lotes to adminfilial, superadmin;
+
+-- Function to refresh materialized views
+create or replace function public.refresh_bi()
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  refresh materialized view public.mv_kpis_filial;
+  refresh materialized view public.mv_heatmap_lotes;
+end;
+$$;
+
+grant execute on function public.refresh_bi() to adminfilial, superadmin;
+-- Create table for widget telemetry
+create table if not exists public.widget_telemetry (
+  id uuid primary key default gen_random_uuid(),
+  widget_id uuid not null,
+  evento text not null,
+  meta jsonb,
+  created_at timestamptz default now()
+);
+
+-- Function to log widget events
+create or replace function public.log_widget_event(
+  widget_id uuid,
+  evento text,
+  meta jsonb
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.widget_telemetry(widget_id, evento, meta)
+  values (widget_id, evento, meta);
+end;
+$$;
+
+grant execute on function public.log_widget_event(uuid, text, jsonb) to anon;
+create table if not exists public.doc_templates (
+    id uuid primary key default gen_random_uuid(),
+    filial_id uuid references public.filiais(id) on delete cascade,
+    name text not null,
+    storage_path text not null,
+    created_at timestamp with time zone default now()
+);
+
+create index if not exists idx_doc_templates_filial on public.doc_templates(filial_id);
+
+alter table public.doc_templates enable row level security;
+create policy doc_templates_filial_policy on public.doc_templates
+  using (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid)
+  with check (filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid);
+create table if not exists public.cobrancas (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users(id) on delete cascade,
+    filial_id uuid not null references public.filiais(id) on delete cascade,
+    valor numeric(12,2) not null,
+    status text not null default 'pendente',
+    created_at timestamptz default now(),
+    constraint cobrancas_status_check check (status in ('pendente','pago','cancelado'))
+);
+
+create index if not exists idx_cobrancas_user on public.cobrancas(user_id);
+create index if not exists idx_cobrancas_filial on public.cobrancas(filial_id);
+
+alter table public.cobrancas enable row level security;
+
+create policy cobrancas_rls on public.cobrancas for all
+  using (
+    filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid
+    or auth.uid() = user_id
+  )
+  with check (
+    filial_id = current_setting('request.jwt.claims.filial_id', true)::uuid
+    or auth.uid() = user_id
+  );
+create or replace view public.vw_comissoes as
+select
+  v.corretor_id,
+  l.status,
+  sum(v.comissao) as total_comissao
+from public.vendas v
+join public.lotes l on l.id = v.lote_id
+group by v.corretor_id, l.status;
+
+grant select on public.vw_comissoes to adminfilial, comercial, superadmin;
+create table if not exists public.investimentos (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users(id) on delete cascade,
+    quota numeric not null,
+    doc_url text,
+    created_at timestamptz default now()
+);
+
+create index if not exists idx_investimentos_user on public.investimentos(user_id);
+
+alter table public.investimentos enable row level security;
+
+create policy investimentos_rls on public.investimentos for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+create table if not exists public.terrenistas (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users(id) on delete cascade,
+    filial_id uuid not null references public.filiais(id) on delete cascade,
+    created_at timestamptz default now()
+);
+
+create index if not exists idx_terrenistas_user on public.terrenistas(user_id);
+create index if not exists idx_terrenistas_filial on public.terrenistas(filial_id);
+
+alter table public.terrenistas enable row level security;
+
+create policy terrenistas_rls on public.terrenistas for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create table if not exists public.repasses (
+    id uuid primary key default gen_random_uuid(),
+    terrenista_id uuid not null references public.terrenistas(id) on delete cascade,
+    filial_id uuid not null references public.filiais(id) on delete cascade,
+    valor numeric not null,
+    doc_url text,
+    created_at timestamptz default now()
+);
+
+create index if not exists idx_repasses_terrenista on public.repasses(terrenista_id);
+create index if not exists idx_repasses_filial on public.repasses(filial_id);
+
+alter table public.repasses enable row level security;
+
+create policy repasses_rls on public.repasses for all
+  using (
+    exists (
+      select 1 from public.terrenistas t
+      where t.id = terrenista_id and t.user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.terrenistas t
+      where t.id = terrenista_id and t.user_id = auth.uid()
+    )
+  );
+-- Adjust numeric precision and enforce status constraint
+
+-- Round existing values to two decimal places
+update public.vendas set valor = round(valor::numeric, 2), comissao = round(comissao::numeric, 2);
+update public.cobrancas set valor = round(valor::numeric, 2);
+
+-- Normalize status values
+update public.cobrancas set status = 'pendente' where status not in ('pendente','pago','cancelado');
+
+-- Alter column types to numeric(12,2)
+alter table public.vendas
+  alter column valor type numeric(12,2),
+  alter column comissao type numeric(12,2);
+
+alter table public.cobrancas
+  alter column valor type numeric(12,2);
+
+-- Add check constraint for status
+alter table public.cobrancas
+  add constraint if not exists cobrancas_status_check check (status in ('pendente','pago','cancelado'));
+-- Ensure reservar_lote uses security definer and has execute privileges
+
+create or replace function public.reservar_lote(
+  p_lote_id uuid,
+  p_ttl integer default 300
+)
+returns table(success boolean, expires_at timestamptz)
+language plpgsql
+security definer
+as $$
+declare
+  v_expira timestamptz := now() + make_interval(secs => p_ttl);
+begin
+  -- lock row to prevent concurrent reservations
+  perform 1 from public.lotes where id = p_lote_id and status = 'disponivel' for update;
+  if not found then
+    success := false;
+    expires_at := null;
+    return next;
+    return;
+  end if;
+
+  begin
+    update public.lotes
+       set status = 'reservado',
+           reserva_expira_em = v_expira
+     where id = p_lote_id;
+  exception
+    when others then
+      -- rollback on error and rethrow
+      raise;
+  end;
+
+  success := true;
+  expires_at := v_expira;
+  return next;
+exception
+  when others then
+    success := false;
+    expires_at := null;
+    return next;
+end;
+$$;
+
+grant execute on function public.reservar_lote(uuid, integer) to authenticated;
