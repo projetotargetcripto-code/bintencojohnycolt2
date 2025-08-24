@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Protected } from "@/components/Protected";
 import { AppShell } from "@/components/shell/AppShell";
 import { supabase } from "@/lib/dataClient";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DataTable, Column } from "@/components/app/DataTable";
 import { useAuthorization } from "@/hooks/useAuthorization";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Filial {
   id: string;
@@ -21,12 +22,9 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { profile } = useAuthorization();
+  const { loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    load();
-  }, [filter]);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     let query = supabase.from("filiais").select("id, nome").order("nome");
     if (filter) query = query.eq("kind", filter);
@@ -35,7 +33,12 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     });
     setFiliais(data || []);
     setLoading(false);
-  }
+  }, [filter]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    void load();
+  }, [load, authLoading]);
 
   async function handleCreate() {
     if (!nome.trim()) { toast.error("Informe o nome"); return; }
@@ -75,7 +78,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
       () => supabase.from("filiais").update({ nome: nome.trim() }).eq("id", editingId),
       { success: "Filial atualizada", error: "Erro ao editar filial" },
     );
-    if (res) { setEditingId(null); setNome(""); load(); }
+    if (res) { setEditingId(null); setNome(""); void load(); }
   }
 
   async function handleDelete(id: string) {
@@ -86,7 +89,7 @@ export default function FiliaisPage({ filter }: { filter?: "interna" | "saas" })
     );
     if (res) {
       if (editingId === id) { setEditingId(null); setNome(""); }
-      load();
+      void load();
     }
   }
 
