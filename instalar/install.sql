@@ -2076,7 +2076,10 @@ alter table public.cobrancas
 
 -- Add check constraint for status
 alter table public.cobrancas
-  add constraint if not exists cobrancas_status_check check (status in ('pendente','pago','cancelado'));
+  drop constraint if exists cobrancas_status_check;
+
+alter table public.cobrancas
+  add constraint cobrancas_status_check check (status in ('pendente','pago','cancelado'));
 -- Ensure reservar_lote uses security definer and has execute privileges
 
 create or replace function public.reservar_lote(
