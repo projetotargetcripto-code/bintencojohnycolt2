@@ -556,8 +556,14 @@ alter table public.filial_allowed_panels enable row level security;
 alter table public.audit_role_changes enable row level security;
 
 create policy filiais_rls on public.filiais for all
-  using (id = current_setting('request.jwt.claims.filial_id', true)::uuid)
-  with check (id = current_setting('request.jwt.claims.filial_id', true)::uuid); -- app.final.sql
+  using (
+    current_setting('request.jwt.claims.role', true) = 'superadmin'
+    or id = current_setting('request.jwt.claims.filial_id', true)::uuid
+  )
+  with check (
+    current_setting('request.jwt.claims.role', true) = 'superadmin'
+    or id = current_setting('request.jwt.claims.filial_id', true)::uuid
+  ); -- app.final.sql
 
 drop policy if exists empreendimentos_rls on public.empreendimentos;
 
