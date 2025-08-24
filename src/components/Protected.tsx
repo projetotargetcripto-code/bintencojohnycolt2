@@ -17,8 +17,10 @@ function useRequiresLogin(session: unknown, loading: boolean) {
 
 function useRoleDenied(allowedRoles: string[] | undefined, profile: any) {
   return useMemo(() => {
-    if (!allowedRoles?.length || !profile) return false;
-    if (profile.role === "superadmin") return false;
+    if (!profile) return false;
+    // Apenas verifica role para superadmin e adminfilial
+    if (!["superadmin", "adminfilial"].includes(profile.role)) return false;
+    if (!allowedRoles?.length) return false;
     return !allowedRoles.includes(profile.role);
   }, [allowedRoles, profile]);
 }
@@ -26,7 +28,7 @@ function useRoleDenied(allowedRoles: string[] | undefined, profile: any) {
 function usePanelDenied(panelKey: string | undefined, profile: any) {
   return useMemo(() => {
     if (!panelKey || !profile) return false;
-    if (profile.role === "superadmin") return false;
+    if (["superadmin", "adminfilial"].includes(profile.role)) return false;
     const allowed = Array.isArray(profile.panels) && profile.panels.includes(panelKey);
     return !allowed;
   }, [panelKey, profile]);
