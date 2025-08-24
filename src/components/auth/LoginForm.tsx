@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { filterQuickLoginCredentials } from "@/lib/quickLogin";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/dataClient";
+import { pathFromScope } from "@/config/authConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { pathFromScope } from "@/config/authConfig";
 
