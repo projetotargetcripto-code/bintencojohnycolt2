@@ -36,7 +36,7 @@ describe('Protected component', () => {
           v7_relativeSplatPath: true,
         }}
       >
-        <Protected allowedRoles={['adminfilial']} panelKey="dashboard">
+        <Protected allowedRoles={['adminfilial']}>
           <div>Allowed</div>
         </Protected>
       </MemoryRouter>
@@ -46,7 +46,7 @@ describe('Protected component', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('allows superadmin even when not explicitly allowed', () => {
+  it('redirects superadmin when not explicitly allowed', async () => {
     mockUseAuth.mockReturnValue({ session: {}, loading: false });
     mockUseAuthorization.mockReturnValue({ profile: { role: 'superadmin', panels: [] }, loading: false });
 
@@ -59,16 +59,16 @@ describe('Protected component', () => {
         }}
       >
         <Protected allowedRoles={['adminfilial']}>
-          <div>Super Allowed</div>
+          <div>Denied</div>
         </Protected>
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Super Allowed')).toBeInTheDocument();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledTimes(1));
+    expect(mockNavigate).toHaveBeenCalledWith('/acesso-negado', { replace: true });
   });
 
-  it('redirects when role is denied', async () => {
+  it('redirects when panel key is denied for other roles', async () => {
     mockUseAuth.mockReturnValue({ session: {}, loading: false });
     mockUseAuthorization.mockReturnValue({ profile: { role: 'user', panels: [] }, loading: false });
 
@@ -80,7 +80,7 @@ describe('Protected component', () => {
           v7_relativeSplatPath: true,
         }}
       >
-        <Protected allowedRoles={['adminfilial']}>
+        <Protected panelKey="dashboard">
           <div>Denied</div>
         </Protected>
       </MemoryRouter>

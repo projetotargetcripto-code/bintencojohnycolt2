@@ -109,98 +109,98 @@ const App = () => (
             <Route path="/super-admin/aprovacao" element={<Protected allowedRoles={['superadmin']}><Aprovacao /></Protected>} />
 
             {/* Admin Filial - Rotas padronizadas em /admin-filial */}
-            <Route path="/admin-filial" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelHomePage menuKey="adminfilial" title="Admin Filial" /></Protected>} />
-            <Route path="/admin-filial/relatorios" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Relatórios" /></Protected>} />
-            <Route path="/admin-filial/config" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Configurações" /></Protected>} />
-            <Route path="/admin-filial/equipe" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Equipe" /></Protected>} />
-            <Route path="/admin-filial/empreendimentos" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentosPage /></Protected>} />
-            <Route path="/admin-filial/empreendimentos/novo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentoNovo /></Protected>} />
-            <Route path="/admin-filial/empreendimentos/editar/:id" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><EmpreendimentoNovo /></Protected>} />
-            <Route path="/admin-filial/mapa" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AdminMapa /></Protected>} />
-            <Route path="/admin-filial/mapa-interativo" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><MapaInterativo /></Protected>} />
-            <Route path="/admin-filial/lotes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesPage /></Protected>} />
-            <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><LotesVendas /></Protected>} />
-            <Route path="/admin-filial/vendas/novo" element={<Protected allowedRoles={['adminfilial', 'comercial', 'superadmin']} panelKey="adminfilial"><VendaLancamento /></Protected>} />
-            <Route path="/admin-filial/comissoes" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><RelatorioComissoes /></Protected>} />
-            <Route path="/admin-filial/assinaturas" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AssinaturasPage /></Protected>} />
-            <Route path="/admin-filial/auditoria" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="adminfilial"><AuditLogsFilialPage /></Protected>} />
+            <Route path="/admin-filial" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><PanelHomePage menuKey="adminfilial" title="Admin Filial" /></Protected>} />
+            <Route path="/admin-filial/relatorios" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Relatórios" /></Protected>} />
+            <Route path="/admin-filial/config" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Configurações" /></Protected>} />
+            <Route path="/admin-filial/equipe" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><PanelSectionPage menuKey="adminfilial" title="Admin Filial" section="Equipe" /></Protected>} />
+            <Route path="/admin-filial/empreendimentos" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><EmpreendimentosPage /></Protected>} />
+            <Route path="/admin-filial/empreendimentos/novo" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><EmpreendimentoNovo /></Protected>} />
+            <Route path="/admin-filial/empreendimentos/editar/:id" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><EmpreendimentoNovo /></Protected>} />
+            <Route path="/admin-filial/mapa" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><AdminMapa /></Protected>} />
+            <Route path="/admin-filial/mapa-interativo" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><MapaInterativo /></Protected>} />
+            <Route path="/admin-filial/lotes" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><LotesPage /></Protected>} />
+            <Route path="/admin-filial/lotes-vendas" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><LotesVendas /></Protected>} />
+            <Route path="/admin-filial/vendas/novo" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><VendaLancamento /></Protected>} />
+            <Route path="/admin-filial/comissoes" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><RelatorioComissoes /></Protected>} />
+            <Route path="/admin-filial/assinaturas" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><AssinaturasPage /></Protected>} />
+            <Route path="/admin-filial/auditoria" element={<Protected allowedRoles={['adminfilial', 'superadmin']}><AuditLogsFilialPage /></Protected>} />
 
             {/* Urbanista */}
-            <Route path="/urbanista" element={<Protected allowedRoles={['urbanista']}><PanelHomePage menuKey="urbanista" title="Urbanista" /></Protected>} />
-            <Route path="/urbanista/relatorios" element={<Protected allowedRoles={['urbanista']}><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Relatórios" /></Protected>} />
-            <Route path="/urbanista/config" element={<Protected allowedRoles={['urbanista']}><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Configurações" /></Protected>} />
-            <Route path="/urbanista/mapas" element={<Protected allowedRoles={['urbanista']}><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Mapas" /></Protected>} />
-            <Route path="/urbanista/projetos" element={<Protected allowedRoles={['urbanista']}><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Projetos" /></Protected>} />
+            <Route path="/urbanista" element={<Protected panelKey="urbanista"><PanelHomePage menuKey="urbanista" title="Urbanista" /></Protected>} />
+            <Route path="/urbanista/relatorios" element={<Protected panelKey="urbanista"><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Relatórios" /></Protected>} />
+            <Route path="/urbanista/config" element={<Protected panelKey="urbanista"><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Configurações" /></Protected>} />
+            <Route path="/urbanista/mapas" element={<Protected panelKey="urbanista"><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Mapas" /></Protected>} />
+            <Route path="/urbanista/projetos" element={<Protected panelKey="urbanista"><PanelSectionPage menuKey="urbanista" title="Urbanista" section="Projetos" /></Protected>} />
 
             {/* Jurídico */}
-            <Route path="/juridico" element={<Protected allowedRoles={['juridico']}><PanelHomePage menuKey="juridico" title="Jurídico" /></Protected>} />
-            <Route path="/juridico/relatorios" element={<Protected allowedRoles={['juridico']}><PanelSectionPage menuKey="juridico" title="Jurídico" section="Relatórios" /></Protected>} />
-            <Route path="/juridico/config" element={<Protected allowedRoles={['juridico']}><PanelSectionPage menuKey="juridico" title="Jurídico" section="Configurações" /></Protected>} />
-            <Route path="/juridico/contratos" element={<Protected allowedRoles={['juridico']}><PanelSectionPage menuKey="juridico" title="Jurídico" section="Contratos" /></Protected>} />
-            <Route path="/juridico/processos" element={<Protected allowedRoles={['juridico']}><PanelSectionPage menuKey="juridico" title="Jurídico" section="Processos" /></Protected>} />
-            <Route path="/juridico/renegociacoes" element={<Protected allowedRoles={['juridico']}><RenegociacoesPage /></Protected>} />
+            <Route path="/juridico" element={<Protected panelKey="juridico"><PanelHomePage menuKey="juridico" title="Jurídico" /></Protected>} />
+            <Route path="/juridico/relatorios" element={<Protected panelKey="juridico"><PanelSectionPage menuKey="juridico" title="Jurídico" section="Relatórios" /></Protected>} />
+            <Route path="/juridico/config" element={<Protected panelKey="juridico"><PanelSectionPage menuKey="juridico" title="Jurídico" section="Configurações" /></Protected>} />
+            <Route path="/juridico/contratos" element={<Protected panelKey="juridico"><PanelSectionPage menuKey="juridico" title="Jurídico" section="Contratos" /></Protected>} />
+            <Route path="/juridico/processos" element={<Protected panelKey="juridico"><PanelSectionPage menuKey="juridico" title="Jurídico" section="Processos" /></Protected>} />
+            <Route path="/juridico/renegociacoes" element={<Protected panelKey="juridico"><RenegociacoesPage /></Protected>} />
 
             {/* Contabilidade */}
-            <Route path="/contabilidade" element={<Protected allowedRoles={['contabilidade']}><PanelHomePage menuKey="contabilidade" title="Contabilidade" /></Protected>} />
-            <Route path="/contabilidade/relatorios" element={<Protected allowedRoles={['contabilidade']}><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Relatórios" /></Protected>} />
-            <Route path="/contabilidade/config" element={<Protected allowedRoles={['contabilidade']}><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Configurações" /></Protected>} />
-            <Route path="/contabilidade/financeiro" element={<Protected allowedRoles={['contabilidade']}><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Financeiro" /></Protected>} />
-            <Route path="/contabilidade/fiscal" element={<Protected allowedRoles={['contabilidade']}><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Fiscal" /></Protected>} />
+            <Route path="/contabilidade" element={<Protected panelKey="contabilidade"><PanelHomePage menuKey="contabilidade" title="Contabilidade" /></Protected>} />
+            <Route path="/contabilidade/relatorios" element={<Protected panelKey="contabilidade"><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Relatórios" /></Protected>} />
+            <Route path="/contabilidade/config" element={<Protected panelKey="contabilidade"><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Configurações" /></Protected>} />
+            <Route path="/contabilidade/financeiro" element={<Protected panelKey="contabilidade"><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Financeiro" /></Protected>} />
+            <Route path="/contabilidade/fiscal" element={<Protected panelKey="contabilidade"><PanelSectionPage menuKey="contabilidade" title="Contabilidade" section="Fiscal" /></Protected>} />
 
             {/* Marketing */}
-            <Route path="/marketing" element={<Protected allowedRoles={['marketing']}><PanelHomePage menuKey="marketing" title="Marketing" /></Protected>} />
-            <Route path="/marketing/relatorios" element={<Protected allowedRoles={['marketing']}><PanelSectionPage menuKey="marketing" title="Marketing" section="Relatórios" /></Protected>} />
-            <Route path="/marketing/config" element={<Protected allowedRoles={['marketing']}><PanelSectionPage menuKey="marketing" title="Marketing" section="Configurações" /></Protected>} />
-            <Route path="/marketing/campanhas" element={<Protected allowedRoles={['marketing']}><PanelSectionPage menuKey="marketing" title="Marketing" section="Campanhas" /></Protected>} />
-            <Route path="/marketing/materiais" element={<Protected allowedRoles={['marketing']}><PanelSectionPage menuKey="marketing" title="Marketing" section="Materiais" /></Protected>} />
+            <Route path="/marketing" element={<Protected panelKey="marketing"><PanelHomePage menuKey="marketing" title="Marketing" /></Protected>} />
+            <Route path="/marketing/relatorios" element={<Protected panelKey="marketing"><PanelSectionPage menuKey="marketing" title="Marketing" section="Relatórios" /></Protected>} />
+            <Route path="/marketing/config" element={<Protected panelKey="marketing"><PanelSectionPage menuKey="marketing" title="Marketing" section="Configurações" /></Protected>} />
+            <Route path="/marketing/campanhas" element={<Protected panelKey="marketing"><PanelSectionPage menuKey="marketing" title="Marketing" section="Campanhas" /></Protected>} />
+            <Route path="/marketing/materiais" element={<Protected panelKey="marketing"><PanelSectionPage menuKey="marketing" title="Marketing" section="Materiais" /></Protected>} />
 
             {/* Comercial */}
-            <Route path="/comercial" element={<Protected allowedRoles={['comercial']}><PanelHomePage menuKey="comercial" title="Comercial" /></Protected>} />
-            <Route path="/comercial/relatorios" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Relatórios" /></Protected>} />
-            <Route path="/comercial/config" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Configurações" /></Protected>} />
-            <Route path="/comercial/leads" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Leads" /></Protected>} />
-            <Route path="/comercial/propostas" element={<Protected allowedRoles={['comercial']}><PanelSectionPage menuKey="comercial" title="Comercial" section="Propostas" /></Protected>} />
-            <Route path="/comercial/vendas/nova" element={<Protected allowedRoles={['comercial', 'adminfilial', 'superadmin']} panelKey="comercial"><VendaLancamento /></Protected>} />
-            <Route path="/comercial/cobrancas" element={<Protected allowedRoles={['comercial']}><CobrancasPage /></Protected>} />
-            <Route path="/comercial/comissoes" element={<Protected allowedRoles={['comercial', 'superadmin']} panelKey="comercial"><RelatorioComissoes /></Protected>} />
+            <Route path="/comercial" element={<Protected panelKey="comercial"><PanelHomePage menuKey="comercial" title="Comercial" /></Protected>} />
+            <Route path="/comercial/relatorios" element={<Protected panelKey="comercial"><PanelSectionPage menuKey="comercial" title="Comercial" section="Relatórios" /></Protected>} />
+            <Route path="/comercial/config" element={<Protected panelKey="comercial"><PanelSectionPage menuKey="comercial" title="Comercial" section="Configurações" /></Protected>} />
+            <Route path="/comercial/leads" element={<Protected panelKey="comercial"><PanelSectionPage menuKey="comercial" title="Comercial" section="Leads" /></Protected>} />
+            <Route path="/comercial/propostas" element={<Protected panelKey="comercial"><PanelSectionPage menuKey="comercial" title="Comercial" section="Propostas" /></Protected>} />
+            <Route path="/comercial/vendas/nova" element={<Protected allowedRoles={['adminfilial', 'superadmin']} panelKey="comercial"><VendaLancamento /></Protected>} />
+            <Route path="/comercial/cobrancas" element={<Protected panelKey="comercial"><CobrancasPage /></Protected>} />
+            <Route path="/comercial/comissoes" element={<Protected allowedRoles={['superadmin']} panelKey="comercial"><RelatorioComissoes /></Protected>} />
 
             {/* Imobiliária */}
-            <Route path="/imobiliaria" element={<Protected allowedRoles={['imobiliaria']}><PanelHomePage menuKey="imobiliaria" title="Imobiliária" /></Protected>} />
-            <Route path="/imobiliaria/relatorios" element={<Protected allowedRoles={['imobiliaria']}><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Relatórios" /></Protected>} />
-            <Route path="/imobiliaria/config" element={<Protected allowedRoles={['imobiliaria']}><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Configurações" /></Protected>} />
-            <Route path="/imobiliaria/corretores" element={<Protected allowedRoles={['imobiliaria']}><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Corretores" /></Protected>} />
-            <Route path="/imobiliaria/leads" element={<Protected allowedRoles={['imobiliaria']}><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Leads" /></Protected>} />
+            <Route path="/imobiliaria" element={<Protected panelKey="imobiliaria"><PanelHomePage menuKey="imobiliaria" title="Imobiliária" /></Protected>} />
+            <Route path="/imobiliaria/relatorios" element={<Protected panelKey="imobiliaria"><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Relatórios" /></Protected>} />
+            <Route path="/imobiliaria/config" element={<Protected panelKey="imobiliaria"><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Configurações" /></Protected>} />
+            <Route path="/imobiliaria/corretores" element={<Protected panelKey="imobiliaria"><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Corretores" /></Protected>} />
+            <Route path="/imobiliaria/leads" element={<Protected panelKey="imobiliaria"><PanelSectionPage menuKey="imobiliaria" title="Imobiliária" section="Leads" /></Protected>} />
 
             {/* Corretor */}
-            <Route path="/corretor" element={<Protected allowedRoles={['corretor']}><PanelHomePage menuKey="corretor" title="Corretor" /></Protected>} />
-            <Route path="/corretor/relatorios" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Relatórios" /></Protected>} />
-            <Route path="/corretor/config" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Configurações" /></Protected>} />
-            <Route path="/corretor/leads" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Leads" /></Protected>} />
-            <Route path="/corretor/vendas" element={<Protected allowedRoles={['corretor']}><PanelSectionPage menuKey="corretor" title="Corretor" section="Vendas" /></Protected>} />
+            <Route path="/corretor" element={<Protected panelKey="corretor"><PanelHomePage menuKey="corretor" title="Corretor" /></Protected>} />
+            <Route path="/corretor/relatorios" element={<Protected panelKey="corretor"><PanelSectionPage menuKey="corretor" title="Corretor" section="Relatórios" /></Protected>} />
+            <Route path="/corretor/config" element={<Protected panelKey="corretor"><PanelSectionPage menuKey="corretor" title="Corretor" section="Configurações" /></Protected>} />
+            <Route path="/corretor/leads" element={<Protected panelKey="corretor"><PanelSectionPage menuKey="corretor" title="Corretor" section="Leads" /></Protected>} />
+            <Route path="/corretor/vendas" element={<Protected panelKey="corretor"><PanelSectionPage menuKey="corretor" title="Corretor" section="Vendas" /></Protected>} />
 
             {/* Obras */}
-            <Route path="/obras" element={<Protected allowedRoles={['obras']}><PanelHomePage menuKey="obras" title="Obras" /></Protected>} />
-            <Route path="/obras/relatorios" element={<Protected allowedRoles={['obras']}><PanelSectionPage menuKey="obras" title="Obras" section="Relatórios" /></Protected>} />
-            <Route path="/obras/config" element={<Protected allowedRoles={['obras']}><PanelSectionPage menuKey="obras" title="Obras" section="Configurações" /></Protected>} />
-            <Route path="/obras/cronograma" element={<Protected allowedRoles={['obras']}><PanelSectionPage menuKey="obras" title="Obras" section="Cronograma" /></Protected>} />
-            <Route path="/obras/andamento" element={<Protected allowedRoles={['obras']}><PanelSectionPage menuKey="obras" title="Obras" section="Andamento" /></Protected>} />
+            <Route path="/obras" element={<Protected panelKey="obras"><PanelHomePage menuKey="obras" title="Obras" /></Protected>} />
+            <Route path="/obras/relatorios" element={<Protected panelKey="obras"><PanelSectionPage menuKey="obras" title="Obras" section="Relatórios" /></Protected>} />
+            <Route path="/obras/config" element={<Protected panelKey="obras"><PanelSectionPage menuKey="obras" title="Obras" section="Configurações" /></Protected>} />
+            <Route path="/obras/cronograma" element={<Protected panelKey="obras"><PanelSectionPage menuKey="obras" title="Obras" section="Cronograma" /></Protected>} />
+            <Route path="/obras/andamento" element={<Protected panelKey="obras"><PanelSectionPage menuKey="obras" title="Obras" section="Andamento" /></Protected>} />
 
             {/* Investidor */}
-            <Route path="/investidor" element={<Protected allowedRoles={['investidor']}><PanelHomePage menuKey="investidor" title="Investidor" /></Protected>} />
-            <Route path="/investidor/relatorios" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Relatórios" /></Protected>} />
-            <Route path="/investidor/config" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Configurações" /></Protected>} />
-            <Route path="/investidor/extratos" element={<Protected allowedRoles={['investidor']}><InvestidorExtratosPage /></Protected>} />
-            <Route path="/investidor/cobrancas" element={<Protected allowedRoles={['investidor']}><InvestidorCobrancasPage /></Protected>} />
-            <Route path="/investidor/carteira" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Carteira" /></Protected>} />
-            <Route path="/investidor/suporte" element={<Protected allowedRoles={['investidor']}><PanelSectionPage menuKey="investidor" title="Investidor" section="Suporte" /></Protected>} />
+            <Route path="/investidor" element={<Protected panelKey="investidor"><PanelHomePage menuKey="investidor" title="Investidor" /></Protected>} />
+            <Route path="/investidor/relatorios" element={<Protected panelKey="investidor"><PanelSectionPage menuKey="investidor" title="Investidor" section="Relatórios" /></Protected>} />
+            <Route path="/investidor/config" element={<Protected panelKey="investidor"><PanelSectionPage menuKey="investidor" title="Investidor" section="Configurações" /></Protected>} />
+            <Route path="/investidor/extratos" element={<Protected panelKey="investidor"><InvestidorExtratosPage /></Protected>} />
+            <Route path="/investidor/cobrancas" element={<Protected panelKey="investidor"><InvestidorCobrancasPage /></Protected>} />
+            <Route path="/investidor/carteira" element={<Protected panelKey="investidor"><PanelSectionPage menuKey="investidor" title="Investidor" section="Carteira" /></Protected>} />
+            <Route path="/investidor/suporte" element={<Protected panelKey="investidor"><PanelSectionPage menuKey="investidor" title="Investidor" section="Suporte" /></Protected>} />
 
             {/* Terrenista */}
-            <Route path="/terrenista" element={<Protected allowedRoles={['terrenista']}><PanelHomePage menuKey="terrenista" title="Terrenista" /></Protected>} />
-            <Route path="/terrenista/relatorios" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Relatórios" /></Protected>} />
-            <Route path="/terrenista/config" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Configurações" /></Protected>} />
-            <Route path="/terrenista/extratos" element={<Protected allowedRoles={['terrenista']}><TerrenistaExtratosPage /></Protected>} />
-            <Route path="/terrenista/status" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
-            <Route path="/terrenista/pagamentos" element={<Protected allowedRoles={['terrenista']}><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
+            <Route path="/terrenista" element={<Protected panelKey="terrenista"><PanelHomePage menuKey="terrenista" title="Terrenista" /></Protected>} />
+            <Route path="/terrenista/relatorios" element={<Protected panelKey="terrenista"><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Relatórios" /></Protected>} />
+            <Route path="/terrenista/config" element={<Protected panelKey="terrenista"><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Configurações" /></Protected>} />
+            <Route path="/terrenista/extratos" element={<Protected panelKey="terrenista"><TerrenistaExtratosPage /></Protected>} />
+            <Route path="/terrenista/status" element={<Protected panelKey="terrenista"><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Status" /></Protected>} />
+            <Route path="/terrenista/pagamentos" element={<Protected panelKey="terrenista"><PanelSectionPage menuKey="terrenista" title="Terrenista" section="Pagamentos" /></Protected>} />
 
             {/* Debug route */}
               <Route
