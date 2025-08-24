@@ -99,13 +99,14 @@ export function AppSidebar({ menuKey }: { menuKey?: string }) {
   const rawItems: NavItem[] = NAV[key] || [];
   const isSuperAdmin = profile?.role === 'superadmin';
   const panels = Array.isArray(profile?.panels) ? (profile?.panels as string[]) : [];
+  const allowedPanels = new Set([...panels, profile?.role]);
   const items = rawItems.filter((item) => {
     // Se não tiver panelKey, sempre mostra
     if (!item.panelKey) return true;
     // Super Admin sempre vê
     if (isSuperAdmin) return true;
-    // Somente mostra se o painel estiver permitido
-    return panels.includes(item.panelKey);
+    // Sempre permite o painel associado ao role do usuário
+    return allowedPanels.has(item.panelKey);
   });
 
   return (
